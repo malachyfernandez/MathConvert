@@ -57,7 +57,7 @@ const PageImageCard = ({ imageUrl, onChangeImageUrl }: PageImageCardProps) => {
 
     return (
         <Column className='rounded-2xl border-2 border-border bg-inner-background p-4' gap={3}>
-            <PoppinsText weight='bold' className='text-lg'>Page image</PoppinsText>
+            <PoppinsText weight='bold' varient='cardHeader'>Page image</PoppinsText>
             <PoppinsText varient='subtext'>Upload from your device or paste a direct image URL. The URL is checked before it is saved.</PoppinsText>
 
             <PublicImageUpload

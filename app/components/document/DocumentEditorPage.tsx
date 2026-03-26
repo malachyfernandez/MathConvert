@@ -105,7 +105,7 @@ const DocumentEditorPage = ({ documentId, userId }: DocumentEditorPageProps) => 
         <View className={Platform.OS === 'web' ? 'flex-1 flex-row gap-4' : 'flex-1 flex-col gap-4'}>
             <Column className={Platform.OS === 'web' ? 'w-[22rem]' : 'w-full'} gap={4}>
                 <Column className='rounded-2xl border-2 border-border bg-inner-background p-4 flex-1' gap={3}>
-                    <PoppinsText weight='bold' className='text-xl'>Pages</PoppinsText>
+                    <PoppinsText weight='bold' varient='cardHeader'>Pages</PoppinsText>
                     <NewPageDialog documentId={documentId} existingPageCount={highestPageNumber} onCreate={setActivePageId} />
                     <ScrollShadow LinearGradientComponent={LinearGradient} className='flex-1'>
                         <ScrollView className='flex-1'>

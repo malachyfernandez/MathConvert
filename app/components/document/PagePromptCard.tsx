@@ -68,7 +68,7 @@ const PagePromptCard = ({ documentTitle, page, onReplacePage }: PagePromptCardPr
 
     return (
         <Column className='rounded-2xl border-2 border-border bg-inner-background p-4' gap={3}>
-            <PoppinsText weight='bold' className='text-lg'>AI conversion</PoppinsText>
+            <PoppinsText weight='bold' varient='cardHeader'>AI conversion</PoppinsText>
 
             <Column gap={1}>
                 <PoppinsText weight='medium'>Initial guidance</PoppinsText>

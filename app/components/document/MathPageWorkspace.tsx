@@ -86,7 +86,7 @@ const MathPageWorkspace = ({ documentTitle, page, onReplacePage, onDeletePage }:
         <Column gap={4} className='flex-1'>
             <Column className='rounded-2xl border-2 border-border bg-inner-background p-4' gap={3}>
                 <Row className='items-center justify-between'>
-                    <PoppinsText weight='bold' className='text-xl'>Page workspace</PoppinsText>
+                    <PoppinsText weight='bold' varient='cardHeader'>Page workspace</PoppinsText>
                     <AppButton variant='red' className='px-4' onPress={handleDeletePage}>
                         <PoppinsText className='text-red-500 font-medium'>Delete page</PoppinsText>
                     </AppButton>
@@ -121,7 +121,7 @@ const MathPageWorkspace = ({ documentTitle, page, onReplacePage, onDeletePage }:
             <PagePromptCard documentTitle={documentTitle} page={getDraftPage()} onReplacePage={commitPage} />
 
             <Column className='rounded-2xl border-2 border-border bg-inner-background p-4' gap={3}>
-                <PoppinsText weight='bold' className='text-lg'>Markdown + LaTeX editor</PoppinsText>
+                <PoppinsText weight='bold' varient='cardHeader'>Markdown + LaTeX editor</PoppinsText>
                 <PoppinsTextInput
                     value={markdownDraft}
                     onChangeText={setMarkdownDraft}
@@ -136,7 +136,7 @@ const MathPageWorkspace = ({ documentTitle, page, onReplacePage, onDeletePage }:
             </Column>
 
             <Column className='rounded-2xl border-2 border-border bg-inner-background p-4' gap={3}>
-                <PoppinsText weight='bold' className='text-lg'>Rendered preview</PoppinsText>
+                <PoppinsText weight='bold' varient='cardHeader'>Rendered preview</PoppinsText>
                 <MarkdownMathPreview markdown={markdownDraft} />
             </Column>
         </Column>

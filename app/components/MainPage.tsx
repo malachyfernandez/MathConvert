@@ -45,19 +45,23 @@ const MainPage: React.FC<MainPageProps> = () => {
             ) : (
                 <StateAnimatedView.Container stateVar={currentScreen} className='flex-1'>
                     <StateAnimatedView.Option page={1} stateValue='documents'>
-                        <DocumentHomePage
-                            userId={userId}
-                            setActiveDocumentId={setActiveDocumentId}
-                        />
+                        <View className='px-6'>
+                            <DocumentHomePage
+                                userId={userId}
+                                setActiveDocumentId={setActiveDocumentId}
+                            />
+                        </View>
                     </StateAnimatedView.Option>
 
                     <StateAnimatedView.OptionContainer page={2}>
                         <StateAnimatedView.Option stateValue='document'>
                             {activeDocumentId.value ? (
-                                <DocumentEditorPage
-                                    documentId={activeDocumentId.value}
-                                    userId={userId}
-                                />
+                                <View className='px-6 flex-1'>
+                                    <DocumentEditorPage
+                                        documentId={activeDocumentId.value}
+                                        userId={userId}
+                                    />
+                                </View>
                             ) : null}
                         </StateAnimatedView.Option>
                     </StateAnimatedView.OptionContainer>

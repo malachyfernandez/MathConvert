@@ -5,6 +5,7 @@ import PoppinsText from '../ui/text/PoppinsText';
 import PoppinsTextInput from '../ui/forms/PoppinsTextInput';
 import ConvexDialog from '../ui/dialog/ConvexDialog';
 import DialogHeader from '../ui/dialog/DialogHeader';
+import StatusButton from '../ui/StatusButton';
 import { useUserListSet } from 'hooks/useUserListSet';
 import { MathDocument } from 'types/mathDocuments';
 import { generateId } from 'utils/generateId';
@@ -42,6 +43,8 @@ const NewDocumentDialog = ({ onCreate }: NewDocumentDialogProps) => {
         onCreate(documentId);
     };
 
+    const isValidTitle = title.trim().length > 0;
+
     return (
         <ConvexDialog.Root isOpen={isOpen} onOpenChange={setIsOpen}>
             <ConvexDialog.Trigger asChild>
@@ -70,9 +73,17 @@ const NewDocumentDialog = ({ onCreate }: NewDocumentDialogProps) => {
                                     autoGrow={true}
                                 />
                             </Column>
+                            {isValidTitle ? (
                             <AppButton variant='green' className='h-12' onPress={() => void handleCreate()}>
                                 <PoppinsText weight='medium' color='white'>Create document</PoppinsText>
                             </AppButton>
+                        ) : (
+                            <StatusButton 
+                                buttonText="Create document" 
+                                buttonAltText="Add a title"
+                                className="h-12 w-full"
+                            />
+                        )}
                         </Column>
                     </Column>
                 </ConvexDialog.Content>

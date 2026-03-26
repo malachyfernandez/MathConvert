@@ -5,6 +5,7 @@ import PoppinsText from '../ui/text/PoppinsText';
 import PoppinsTextInput from '../ui/forms/PoppinsTextInput';
 import ConvexDialog from '../ui/dialog/ConvexDialog';
 import DialogHeader from '../ui/dialog/DialogHeader';
+import StatusButton from '../ui/StatusButton';
 import { useUserListSet } from 'hooks/useUserListSet';
 import { MathDocumentPage } from 'types/mathDocuments';
 import { generateId } from 'utils/generateId';
@@ -98,6 +99,8 @@ c & d
         onCreate(pageId);
     };
 
+    const isValidTitle = title.trim().length > 0;
+
     return (
         <ConvexDialog.Root isOpen={isOpen} onOpenChange={setIsOpen}>
             <ConvexDialog.Trigger asChild>
@@ -116,9 +119,17 @@ c & d
                                 <PoppinsText weight='medium'>Page title</PoppinsText>
                                 <PoppinsTextInput value={title} onChangeText={setTitle} className='w-full border border-subtle-border bg-inner-background p-3' />
                             </Column>
+                            {isValidTitle ? (
                             <AppButton variant='green' className='h-12' onPress={() => void handleCreate()}>
                                 <PoppinsText weight='medium' color='white'>Create page</PoppinsText>
                             </AppButton>
+                        ) : (
+                            <StatusButton 
+                                buttonText="Create page" 
+                                buttonAltText="Add a title"
+                                className="h-12 w-full"
+                            />
+                        )}
                         </Column>
                     </Column>
                 </ConvexDialog.Content>

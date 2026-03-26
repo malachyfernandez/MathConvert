@@ -34,51 +34,7 @@ const NewPageDialog = ({ documentId, existingPageCount, onCreate }: NewPageDialo
                 pageNumber: nextPageNumber,
                 title: title.trim() || `Page ${nextPageNumber}`,
                 imageUrl: '',
-                markdown: `# Sample Math Content
-
-This is a test page with sample markdown and LaTeX content.
-
-## Basic Math
-
-Here are some basic mathematical expressions:
-
-- Addition: $2 + 3 = 5$
-- Multiplication: $4 \\times 5 = 20$
-- Division: $\\frac{10}{2} = 5$
-
-## Advanced Math
-
-### Quadratic Formula
-
-The quadratic formula is:
-
-$$x = \\frac{-b \\pm \\sqrt{b^2 - 4ac}}{2a}$$
-
-### Integration
-
-The fundamental theorem of calculus:
-
-$$\\int_a^b f(x) \\, dx = F(b) - F(a)$$
-
-### Matrix Example
-
-A 2x2 matrix:
-
-$$\\begin{pmatrix}
-a & b \\\\
-c & d
-\\end{pmatrix}$$
-
-## Steps to Use
-
-1. Upload an image of handwritten math
-2. Add guidance for the AI conversion
-3. Review and edit the generated markdown
-4. Add more pages as needed
-
----
-
-*This is sample content. Replace it with your own math problems and solutions.*`,
+                markdown: '',
                 initialGuidance: '',
                 lastAiPrompt: '',
                 followUps: [],

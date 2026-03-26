@@ -57,7 +57,7 @@ const DocumentHomePage = ({ userId, setActiveDocumentId }: DocumentHomePageProps
             <Column className='rounded-3xl border-2 border-border bg-inner-background p-6' gap={3}>
                 <PoppinsText weight='bold' className='text-3xl'>MathConvert</PoppinsText>
                 <PoppinsText>
-                    Convert handwritten math pages into accessible markdown with LaTeX, review the rendered output, and keep every page organized inside a shareable document.
+                    Convert handwritten math to LaTeX, organize pages in shareable documents.
                 </PoppinsText>
                 <NewDocumentDialog onCreate={setActiveDocumentId} />
             </Column>
@@ -77,7 +77,7 @@ const DocumentHomePage = ({ userId, setActiveDocumentId }: DocumentHomePageProps
                         ) : (
                             <Column className='rounded-2xl border border-subtle-border bg-inner-background p-6' gap={2}>
                                 <PoppinsText weight='bold' className='text-xl'>No documents yet</PoppinsText>
-                                <PoppinsText>Create a document, add pages, upload handwritten math, and let the AI generate markdown with LaTeX.</PoppinsText>
+                                <PoppinsText>Create documents to convert handwritten math to LaTeX.</PoppinsText>
                             </Column>
                         )}
                     </Column>

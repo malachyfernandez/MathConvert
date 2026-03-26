@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Platform, ScrollView, View } from 'react-native';
+import { Platform, ScrollView, TouchableOpacity, View } from 'react-native';
 import { ScrollShadow } from 'heroui-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import Column from '../layout/Column';
@@ -14,6 +14,7 @@ import { MathDocument, MathDocumentPage } from 'types/mathDocuments';
 import PageListItem from './PageListItem';
 import NewPageDialog from './NewPageDialog';
 import MathPageWorkspace from './MathPageWorkspace';
+import EditDocumentDialog from './EditDocumentDialog';
 
 interface DocumentEditorPageProps {
     documentId: string;
@@ -29,19 +30,13 @@ const DocumentEditorPage = ({ documentId, userId }: DocumentEditorPageProps) => 
         key: 'mathDocuments',
         itemId: documentId,
     });
+    const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
     const pages = useUserListGet<MathDocumentPage>({
         key: 'mathDocumentPages',
         filterFor: documentId,
         userIds: scopedUserIds,
     }) ?? [];
     const [activePageId, setActivePageId] = useState('');
-    const [titleDraft, setTitleDraft] = useState(documentRecord.value?.title ?? '');
-    const [descriptionDraft, setDescriptionDraft] = useState(documentRecord.value?.description ?? '');
-
-    useEffect(() => {
-        setTitleDraft(documentRecord.value?.title ?? '');
-        setDescriptionDraft(documentRecord.value?.description ?? '');
-    }, [documentRecord.value?.description, documentRecord.value?.title]);
 
     useEffect(() => {
         if (!pages.length) {
@@ -59,26 +54,6 @@ const DocumentEditorPage = ({ documentId, userId }: DocumentEditorPageProps) => 
     const activePage = pages.find((page) => page.value.id === activePageId)?.value;
     const sortedPages = [...pages].sort((left, right) => left.value.pageNumber - right.value.pageNumber);
     const highestPageNumber = sortedPages.length > 0 ? sortedPages[sortedPages.length - 1].value.pageNumber : 0;
-
-    const saveDocumentDetails = () => {
-        if (!documentRecord.value) {
-            return;
-        }
-
-        const previousDocument = createUndoSnapshot(documentRecord.value);
-        const nextDocument: MathDocument = {
-            ...documentRecord.value,
-            title: titleDraft.trim() || 'Untitled math document',
-            description: descriptionDraft,
-            lastOpenedAt: documentRecord.value.lastOpenedAt,
-        };
-
-        executeCommand({
-            action: () => setDocumentRecord(createUndoSnapshot(nextDocument)),
-            undoAction: () => setDocumentRecord(createUndoSnapshot(previousDocument)),
-            description: 'Updated document details',
-        });
-    };
 
     const replacePage = (nextPage: MathDocumentPage) => {
         void setPage({
@@ -124,18 +99,25 @@ const DocumentEditorPage = ({ documentId, userId }: DocumentEditorPageProps) => 
                 </Column>
 
                 <Column className='rounded-2xl border-2 border-border bg-inner-background p-4' gap={3}>
-                    <PoppinsText weight='bold' varient='cardHeader'>Details</PoppinsText>
-                    <PoppinsTextInput value={titleDraft} onChangeText={setTitleDraft} className='w-full border border-subtle-border bg-background p-3' />
-                    <PoppinsTextInput
-                        value={descriptionDraft}
-                        onChangeText={setDescriptionDraft}
-                        className='w-full border border-subtle-border bg-background p-3 min-h-28'
-                        multiline={true}
-                        autoGrow={true}
-                    />
-                    <AppButton variant='green' className='h-12 px-4' onPress={saveDocumentDetails}>
-                        <PoppinsText weight='medium' color='white'>Save document</PoppinsText>
-                    </AppButton>
+                    <TouchableOpacity onPress={() => setIsEditDialogOpen(true)}>
+                        <Column gap={3}>
+                            <PoppinsText weight='bold' varient='cardHeader'>Details</PoppinsText>
+                            <Column gap={2}>
+                                <Column gap={1}>
+                                    <PoppinsText weight='medium'>Title</PoppinsText>
+                                    <PoppinsText className='text-text opacity-70'>
+                                        {documentRecord.value?.title || 'Untitled math document'}
+                                    </PoppinsText>
+                                </Column>
+                                <Column gap={1}>
+                                    <PoppinsText weight='medium'>Description</PoppinsText>
+                                    <PoppinsText className='text-text opacity-70'>
+                                        {documentRecord.value?.description || 'No description yet.'}
+                                    </PoppinsText>
+                                </Column>
+                            </Column>
+                        </Column>
+                    </TouchableOpacity>
                 </Column>
             </Column>
 
@@ -152,12 +134,23 @@ const DocumentEditorPage = ({ documentId, userId }: DocumentEditorPageProps) => 
                         </ScrollView>
                     </ScrollShadow>
                 ) : (
-                    <Column className='rounded-2xl border-2 border-border bg-inner-background p-6' gap={2}>
-                        <PoppinsText weight='bold' className='text-xl'>No pages yet</PoppinsText>
-                        <PoppinsText>Create the first page for this document to upload a handwritten math image and generate accessible markdown + LaTeX.</PoppinsText>
+                    <Column className='rounded-2xl border-2 border-border bg-inner-background p-6' gap={4}>
+                        <Column gap={2}>
+                            <PoppinsText weight='bold' className='text-xl'>No pages yet</PoppinsText>
+                            <PoppinsText>Create the first page to convert handwritten math to LaTeX.</PoppinsText>
+                        </Column>
+                        <NewPageDialog documentId={documentId} existingPageCount={highestPageNumber} onCreate={setActivePageId} />
                     </Column>
                 )}
             </View>
+            
+            {documentRecord.value && (
+                <EditDocumentDialog
+                    document={documentRecord.value}
+                    isOpen={isEditDialogOpen}
+                    onOpenChange={setIsEditDialogOpen}
+                />
+            )}
         </View>
     );
 };

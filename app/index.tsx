@@ -46,7 +46,7 @@ export default function HomeScreen() {
               <Column className="w-[80vw] p-6 max-w-96 bg-text border-4 border-primary-accent items-center" gap={6}>
                 <DialogHeader
                   text="Welcome to MathConvert"
-                  subtext="Sign in with Google to upload handwritten math and convert it into accessible markdown with LaTeX."
+                  subtext="Sign in with Google to convert handwritten math to LaTeX."
                   className="w-[80vw] max-w-96"
                 />
                 <Column gap={8} className="items-center">

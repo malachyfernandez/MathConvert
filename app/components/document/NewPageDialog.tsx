@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import Column from '../layout/Column';
 import AppButton from '../ui/buttons/AppButton';
 import PoppinsText from '../ui/text/PoppinsText';
@@ -20,13 +20,7 @@ const NewPageDialog = ({ documentId, existingPageCount, onCreate }: NewPageDialo
     const setPage = useUserListSet<MathDocumentPage>();
     const [isOpen, setIsOpen] = useState(false);
     const nextPageNumber = existingPageCount + 1;
-    const [title, setTitle] = useState(`Page ${nextPageNumber}`);
-
-    useEffect(() => {
-        if (!isOpen) {
-            setTitle(`Page ${nextPageNumber}`);
-        }
-    }, [isOpen, nextPageNumber]);
+    const [title, setTitle] = useState('');
 
     const handleCreate = async () => {
         const pageId = generateId();
@@ -113,11 +107,11 @@ c & d
                 <ConvexDialog.Content>
                     <ConvexDialog.Close iconProps={{ color: 'rgb(246, 238, 219)' }} className='w-10 h-10 bg-accent-hover absolute right-4 top-4 z-10' />
                     <Column>
-                        <DialogHeader text='Add page' subtext='Each page is a separate image and AI conversion request.' />
+                        <DialogHeader text='Add page' subtext='Create a new page for your document.' />
                         <Column className='pt-5' gap={3}>
                             <Column gap={1}>
                                 <PoppinsText weight='medium'>Page title</PoppinsText>
-                                <PoppinsTextInput value={title} onChangeText={setTitle} className='w-full border border-subtle-border bg-inner-background p-3' />
+                                <PoppinsTextInput value={title} onChangeText={setTitle} className='w-full border border-subtle-border bg-inner-background p-3' placeholder='Page title' />
                             </Column>
                             {isValidTitle ? (
                             <AppButton variant='green' className='h-12' onPress={() => void handleCreate()}>

@@ -116,19 +116,13 @@ const DocumentEditorPage = ({ documentId, userId }: DocumentEditorPageProps) => 
                             <TouchableOpacity onPress={() => setIsEditDialogOpen(true)}>
                                 <Column gap={3}>
                                     <PoppinsText weight='bold' varient='cardHeader'>Details</PoppinsText>
-                                    <Column gap={2}>
-                                        <Column gap={1}>
-                                            <PoppinsText weight='medium'>Title</PoppinsText>
-                                            <PoppinsText className='text-text opacity-70'>
-                                                {documentRecord.value?.title || 'Untitled math document'}
-                                            </PoppinsText>
-                                        </Column>
-                                        <Column gap={1}>
-                                            <PoppinsText weight='medium'>Description</PoppinsText>
-                                            <PoppinsText className='text-text opacity-70'>
-                                                {documentRecord.value?.description || 'No description yet.'}
-                                            </PoppinsText>
-                                        </Column>
+                                    <Column className='rounded-lg border border-subtle-border bg-background p-3' gap="1">
+                                        <PoppinsText weight='bold' className='text-text opacity-70'>
+                                            {documentRecord.value?.title || 'Untitled math document'}
+                                        </PoppinsText>
+                                        <PoppinsText varient='subtext'>
+                                            {documentRecord.value?.description || 'No description yet.'}
+                                        </PoppinsText>
                                     </Column>
                                 </Column>
                             </TouchableOpacity>

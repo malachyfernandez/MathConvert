@@ -15,7 +15,7 @@ interface NoImageDisplayProps {
 const NoImageDisplay = ({ page, onImageUrlModalOpen, onImageChange }: NoImageDisplayProps) => {
     return (
         <Column className='flex-1 items-center justify-center p-8' gap={4}>
-            <PoppinsText weight='bold' className='text-xl'>No image uploaded</PoppinsText> //HERE - No image uploaded text
+            <PoppinsText weight='bold' className='text-xl'>No image uploaded</PoppinsText>
             <PoppinsText>Upload an image or use a URL to get started with math conversion.</PoppinsText>
             
             <Row gap={2}>

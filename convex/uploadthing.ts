@@ -33,7 +33,7 @@ export const generatePublicImageUploadUrl = action({
         const token = process.env.UPLOADTHING_TOKEN;
 
         if (!token) {
-            throw new Error('UPLOADTHING_TOKEN is missing from the Convex environment.');
+            throw new Error('UPLOADTHING_TOKEN is missing from the Convex environment. Run `npx convex env set UPLOADTHING_TOKEN <your_token>` or add it in the Convex dashboard for this deployment.');
         }
 
         const { apiKey, appId, regions, ingestHost = 'ingest.uploadthing.com' } = parseUploadThingToken(token);

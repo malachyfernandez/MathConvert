@@ -31,7 +31,13 @@ const PageListItem = ({ page, isActive, onPress, onConfigure }: PageListItemProp
                     </PoppinsText>
                 </Column>
                 {onConfigure && (
-                    <TouchableOpacity onPress={onConfigure} className='p-2'>
+                    <TouchableOpacity
+                        onPress={(event) => {
+                            event.stopPropagation();
+                            onConfigure();
+                        }}
+                        className='p-2'
+                    >
                         <MonoIconsOptionsHorizontal className='text-text opacity-50' width={20} height={20} />
                     </TouchableOpacity>
                 )}

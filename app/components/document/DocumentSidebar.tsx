@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { Platform, ScrollView } from 'react-native';
+import { Platform, ScrollView, TouchableOpacity } from 'react-native';
 import { ScrollShadow } from 'heroui-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import Column from '../layout/Column';
 import PoppinsText from '../ui/text/PoppinsText';
+import { useUserList } from 'hooks/useUserList';
 import { useUserListGet } from 'hooks/useUserListGet';
 import { useUserListRemove } from 'hooks/useUserListRemove';
 import { useUserListSet } from 'hooks/useUserListSet';
@@ -15,17 +16,21 @@ import EditDocumentDialog from './EditDocumentDialog';
 import PageConfigDialog from './PageConfigDialog';
 
 interface DocumentSidebarProps {
-    document: MathDocument;
     documentId: string;
     userId: string;
     activePageId: string;
     onSetActivePageId: (pageId: string) => void;
 }
 
-const DocumentSidebar = ({ document, documentId, userId, activePageId, onSetActivePageId }: DocumentSidebarProps) => {
+const DocumentSidebar = ({ documentId, userId, activePageId, onSetActivePageId }: DocumentSidebarProps) => {
     const { executeCommand } = useUndoRedo();
     const createUndoSnapshot = useCreateUndoSnapshot();
     const scopedUserIds = userId ? [userId] : ['__loading__'];
+    const [documentRecord] = useUserList<MathDocument>({
+        key: 'mathDocuments',
+        itemId: documentId,
+    });
+    const setPage = useUserListSet<MathDocumentPage>();
     const removePage = useUserListRemove();
     const restorePage = useUserListSet<MathDocumentPage>();
     
@@ -47,8 +52,15 @@ const DocumentSidebar = ({ document, documentId, userId, activePageId, onSetActi
         setPageConfigDialogOpen(true);
     };
 
+    const handlePageConfigOpenChange = (open: boolean) => {
+        setPageConfigDialogOpen(open);
+
+        if (!open) {
+            setConfiguringPage(null);
+        }
+    };
+
     const handlePageUpdate = (updatedPage: MathDocumentPage) => {
-        const setPage = useUserListSet<MathDocumentPage>();
         void setPage({
             key: 'mathDocumentPages',
             itemId: updatedPage.id,
@@ -86,8 +98,12 @@ const DocumentSidebar = ({ document, documentId, userId, activePageId, onSetActi
         }
     };
 
+    if (!documentRecord.value) {
+        return null;
+    }
+
     return (
-        <Column className={Platform.OS === 'web' ? 'w-[22rem]' : 'w-full'} gap={4}>
+        <Column className={Platform.OS === 'web' ? 'w-88' : 'w-full'} gap={4}>
             <Column className='rounded-2xl border-2 border-border bg-inner-background p-4 flex-1' gap={3}>
                 <PoppinsText weight='bold' varient='cardHeader'>Pages</PoppinsText>
                 <NewPageDialog documentId={documentId} existingPageCount={highestPageNumber} onCreate={onSetActivePageId} />
@@ -109,21 +125,23 @@ const DocumentSidebar = ({ document, documentId, userId, activePageId, onSetActi
             </Column>
 
             <Column className='rounded-2xl border-2 border-border bg-inner-background p-4' gap={3}>
-                <Column gap={3}>
-                    <PoppinsText weight='bold' varient='cardHeader'>Details</PoppinsText>
-                    <Column className='rounded-lg border border-subtle-border bg-background p-3 gap={1}>
-                        <PoppinsText weight='bold' className='text-text opacity-70'>
-                            {document.title || 'Untitled math document'}
-                        </PoppinsText>
-                        <PoppinsText varient='subtext'>
-                            {document.description || 'No description yet.'}
-                        </PoppinsText>
+                <TouchableOpacity onPress={() => setIsEditDialogOpen(true)}>
+                    <Column gap={3}>
+                        <PoppinsText weight='bold' varient='cardHeader'>Details</PoppinsText>
+                        <Column className='rounded-lg border border-subtle-border bg-background p-3' gap={1}>
+                            <PoppinsText weight='bold' className='text-text opacity-70'>
+                                {documentRecord.value.title || 'Untitled math document'}
+                            </PoppinsText>
+                            <PoppinsText varient='subtext'>
+                                {documentRecord.value.description || 'No description yet.'}
+                            </PoppinsText>
+                        </Column>
                     </Column>
-                </Column>
+                </TouchableOpacity>
             </Column>
 
             <EditDocumentDialog
-                document={document}
+                document={documentRecord.value}
                 isOpen={isEditDialogOpen}
                 onOpenChange={setIsEditDialogOpen}
             />
@@ -132,7 +150,7 @@ const DocumentSidebar = ({ document, documentId, userId, activePageId, onSetActi
                 <PageConfigDialog
                     page={configuringPage}
                     isOpen={pageConfigDialogOpen}
-                    onOpenChange={setPageConfigDialogOpen}
+                    onOpenChange={handlePageConfigOpenChange}
                     onUpdate={handlePageUpdate}
                     onDelete={handlePageDelete}
                 />

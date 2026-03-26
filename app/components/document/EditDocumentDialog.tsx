@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import Column from '../layout/Column';
 import AppButton from '../ui/buttons/AppButton';
 import PoppinsText from '../ui/text/PoppinsText';
@@ -19,6 +19,15 @@ const EditDocumentDialog = ({ document, isOpen, onOpenChange }: EditDocumentDial
     const setDocument = useUserListSet<MathDocument>();
     const [title, setTitle] = useState(document.title);
     const [description, setDescription] = useState(document.description);
+
+    useEffect(() => {
+        if (!isOpen) {
+            return;
+        }
+
+        setTitle(document.title);
+        setDescription(document.description);
+    }, [document, isOpen]);
 
     const handleSave = async () => {
         await setDocument({

@@ -45,7 +45,7 @@ const DocumentHomePage = ({ userId, setActiveDocumentId }: DocumentHomePageProps
 
     if (!userId) {
         return (
-            <Column className='flex-1 rounded-3xl border-2 border-border bg-inner-background p-6' gap={2}>
+            <Column className='flex-1 full rounded-3xl border-2 border-border bg-inner-background p-6' gap={2}>
                 <PoppinsText weight='bold' className='text-2xl'>MathConvert</PoppinsText>
                 <PoppinsText>Syncing your account…</PoppinsText>
             </Column>

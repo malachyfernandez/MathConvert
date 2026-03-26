@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import Column from '../layout/Column';
 import AppButton from '../ui/buttons/AppButton';
 import PoppinsText from '../ui/text/PoppinsText';
@@ -19,6 +19,15 @@ interface PageConfigDialogProps {
 const PageConfigDialog = ({ page, isOpen, onOpenChange, onUpdate, onDelete }: PageConfigDialogProps) => {
     const [title, setTitle] = useState(page.title);
     const [initialGuidance, setInitialGuidance] = useState(page.initialGuidance);
+
+    useEffect(() => {
+        if (!isOpen) {
+            return;
+        }
+
+        setTitle(page.title);
+        setInitialGuidance(page.initialGuidance);
+    }, [isOpen, page]);
 
     const handleSave = () => {
         const updatedPage: MathDocumentPage = {

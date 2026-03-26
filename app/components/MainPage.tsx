@@ -45,7 +45,7 @@ const MainPage: React.FC<MainPageProps> = () => {
             ) : (
                 <StateAnimatedView.Container stateVar={currentScreen} className='flex-1'>
                     <StateAnimatedView.Option page={1} stateValue='documents'>
-                        <View className='px-6'>
+                        <View className='px-6 h-full'>
                             <DocumentHomePage
                                 userId={userId}
                                 setActiveDocumentId={setActiveDocumentId}

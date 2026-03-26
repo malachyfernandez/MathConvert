@@ -1,22 +1,14 @@
 import React, { useEffect, useState } from 'react';
-import { Platform, ScrollView, TouchableOpacity, View } from 'react-native';
-import { ScrollShadow } from 'heroui-native';
-import { LinearGradient } from 'expo-linear-gradient';
+import { Platform, View } from 'react-native';
 import Column from '../layout/Column';
-import AppButton from '../ui/buttons/AppButton';
 import PoppinsText from '../ui/text/PoppinsText';
-import PoppinsTextInput from '../ui/forms/PoppinsTextInput';
 import { useUserList } from 'hooks/useUserList';
 import { useUserListGet } from 'hooks/useUserListGet';
 import { useUserListSet } from 'hooks/useUserListSet';
-import { useUserListRemove } from 'hooks/useUserListRemove';
-import { useCreateUndoSnapshot, useUndoRedo } from 'hooks/useUndoRedo';
 import { MathDocument, MathDocumentPage } from 'types/mathDocuments';
-import PageListItem from './PageListItem';
+import DocumentSidebar from './DocumentSidebar';
+import DocumentContent from './DocumentContent';
 import NewPageDialog from './NewPageDialog';
-import MathPageWorkspace from './MathPageWorkspace';
-import EditDocumentDialog from './EditDocumentDialog';
-import PageConfigDialog from './PageConfigDialog';
 
 interface DocumentEditorPageProps {
     documentId: string;
@@ -24,25 +16,21 @@ interface DocumentEditorPageProps {
 }
 
 const DocumentEditorPage = ({ documentId, userId }: DocumentEditorPageProps) => {
-    const { executeCommand } = useUndoRedo();
-    const createUndoSnapshot = useCreateUndoSnapshot();
     const scopedUserIds = userId ? [userId] : ['__loading__'];
-    const setPage = useUserListSet<MathDocumentPage>();
-    const removePage = useUserListRemove();
-    const restorePage = useUserListSet<MathDocumentPage>();
-    const [documentRecord, setDocumentRecord] = useUserList<MathDocument>({
+    const [documentRecord] = useUserList<MathDocument>({
         key: 'mathDocuments',
         itemId: documentId,
     });
-    const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-    const [pageConfigDialogOpen, setPageConfigDialogOpen] = useState(false);
-    const [configuringPage, setConfiguringPage] = useState<MathDocumentPage | null>(null);
+    const setPage = useUserListSet<MathDocumentPage>();
+    const [activePageId, setActivePageId] = useState('');
+
     const pages = useUserListGet<MathDocumentPage>({
         key: 'mathDocumentPages',
         filterFor: documentId,
         userIds: scopedUserIds,
     }) ?? [];
-    const [activePageId, setActivePageId] = useState('');
+
+    const activePage = pages.find((page) => page.value.id === activePageId)?.value || null;
 
     useEffect(() => {
         if (!pages.length) {
@@ -57,11 +45,7 @@ const DocumentEditorPage = ({ documentId, userId }: DocumentEditorPageProps) => 
         }
     }, [activePageId, pages]);
 
-    const activePage = pages.find((page) => page.value.id === activePageId)?.value;
-    const sortedPages = [...pages].sort((left, right) => left.value.pageNumber - right.value.pageNumber);
-    const highestPageNumber = sortedPages.length > 0 ? sortedPages[sortedPages.length - 1].value.pageNumber : 0;
-
-    const replacePage = (nextPage: MathDocumentPage) => {
+    const replacePage = (nextPage: MathDocumentPage, _description: string) => {
         void setPage({
             key: 'mathDocumentPages',
             itemId: nextPage.id,
@@ -71,41 +55,6 @@ const DocumentEditorPage = ({ documentId, userId }: DocumentEditorPageProps) => 
             searchKeys: ['title', 'markdown', 'initialGuidance'],
             sortKey: 'pageNumber',
         });
-    };
-
-    const handlePageConfig = (page: MathDocumentPage) => {
-        setConfiguringPage(page);
-        setPageConfigDialogOpen(true);
-    };
-
-    const handlePageUpdate = (updatedPage: MathDocumentPage) => {
-        replacePage(updatedPage);
-    };
-
-    const handlePageDelete = () => {
-        if (configuringPage) {
-            const deletedPage = createUndoSnapshot(configuringPage);
-
-            executeCommand({
-                action: () => {
-                    void removePage({ key: 'mathDocumentPages', itemId: configuringPage.id });
-                    setActivePageId('');
-                },
-                undoAction: () => {
-                    void restorePage({
-                        key: 'mathDocumentPages',
-                        itemId: deletedPage.id,
-                        value: deletedPage,
-                        privacy: 'PUBLIC',
-                        filterKey: 'documentId',
-                        searchKeys: ['title', 'markdown', 'initialGuidance'],
-                        sortKey: 'pageNumber',
-                    });
-                    setActivePageId(deletedPage.id);
-                },
-                description: 'Deleted page',
-            });
-        }
     };
 
     if (!documentRecord.value) {
@@ -127,88 +76,29 @@ const DocumentEditorPage = ({ documentId, userId }: DocumentEditorPageProps) => 
                             <PoppinsText weight='bold' className='text-xl'>No pages yet</PoppinsText>
                             <PoppinsText>Create the first page to convert handwritten math to LaTeX.</PoppinsText>
                         </Column>
-                        <NewPageDialog documentId={documentId} existingPageCount={highestPageNumber} onCreate={setActivePageId} />
+                        <NewPageDialog documentId={documentId} existingPageCount={0} onCreate={setActivePageId} />
                     </Column>
                 </View>
             ) : (
                 // Normal layout with sidebar when pages exist
-                <View className={Platform.OS === 'web' ? 'flex-1 flex-row gap-4' : 'flex-1 flex-col gap-4'}>
-                    <Column className={Platform.OS === 'web' ? 'w-[22rem]' : 'w-full'} gap={4}>
-                        <Column className='rounded-2xl border-2 border-border bg-inner-background p-4 flex-1' gap={3}>
-                            <PoppinsText weight='bold' varient='cardHeader'>Pages</PoppinsText>
-                            <NewPageDialog documentId={documentId} existingPageCount={highestPageNumber} onCreate={setActivePageId} />
-                            <ScrollShadow LinearGradientComponent={LinearGradient} className='flex-1'>
-                                <ScrollView className='flex-1'>
-                                    <Column gap={2} className='pb-6'>
-                                        {sortedPages.map((page) => (
-                                            <PageListItem
-                                                key={page.itemId ?? page.value.id}
-                                                page={page.value}
-                                                isActive={page.value.id === activePageId}
-                                                onPress={() => setActivePageId(page.value.id)}
-                                                onConfigure={() => handlePageConfig(page.value)}
-                                            />
-                                        ))}
-                                    </Column>
-                                </ScrollView>
-                            </ScrollShadow>
-                        </Column>
-
-                        <Column className='rounded-2xl border-2 border-border bg-inner-background p-4' gap={3}>
-                            <TouchableOpacity onPress={() => setIsEditDialogOpen(true)}>
-                                <Column gap={3}>
-                                    <PoppinsText weight='bold' varient='cardHeader'>Details</PoppinsText>
-                                    <Column className='rounded-lg border border-subtle-border bg-background p-3' gap={1}>
-                                        <PoppinsText weight='bold' className='text-text opacity-70'>
-                                            {documentRecord.value?.title || 'Untitled math document'}
-                                        </PoppinsText>
-                                        <PoppinsText varient='subtext'>
-                                            {documentRecord.value?.description || 'No description yet.'}
-                                        </PoppinsText>
-                                    </Column>
-                                </Column>
-                            </TouchableOpacity>
-                        </Column>
-                    </Column>
-
+                <View className={'flex-1 flex-row gap-4'}>
+                    <DocumentSidebar
+                        documentId={documentId}
+                        userId={userId}
+                        activePageId={activePageId}
+                        onSetActivePageId={setActivePageId}
+                    />
                     <View className='flex-1'>
-                        {activePage ? (
-                            <ScrollShadow LinearGradientComponent={LinearGradient} className='flex-1'>
-                                <ScrollView className='flex-1'>
-                                    <MathPageWorkspace
-                                        documentTitle={documentRecord.value?.title ?? 'Untitled math document'}
-                                        page={activePage}
-                                        onReplacePage={replacePage}
-                                        onDeletePage={(nextPageId) => setActivePageId(nextPageId)}
-                                    />
-                                </ScrollView>
-                            </ScrollShadow>
-                        ) : (
-                            <Column className='rounded-2xl border-2 border-border bg-inner-background p-6' gap={2}>
-                                <PoppinsText weight='bold' className='text-xl'>No pages yet</PoppinsText>
-                                <PoppinsText>Create the first page to convert handwritten math to LaTeX.</PoppinsText>
-                            </Column>
+                        {activePage && (
+                            <DocumentContent
+                                documentTitle={documentRecord.value?.title ?? 'Untitled math document'}
+                                activePage={activePage}
+                                onReplacePage={replacePage}
+                                onDeletePage={(nextPageId) => setActivePageId(nextPageId)}
+                            />
                         )}
                     </View>
                 </View>
-            )}
-            
-            {documentRecord.value && (
-                <EditDocumentDialog
-                    document={documentRecord.value}
-                    isOpen={isEditDialogOpen}
-                    onOpenChange={setIsEditDialogOpen}
-                />
-            )}
-            
-            {configuringPage && (
-                <PageConfigDialog
-                    page={configuringPage}
-                    isOpen={pageConfigDialogOpen}
-                    onOpenChange={setPageConfigDialogOpen}
-                    onUpdate={handlePageUpdate}
-                    onDelete={handlePageDelete}
-                />
             )}
         </View>
     );

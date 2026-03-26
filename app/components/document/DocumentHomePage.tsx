@@ -1,0 +1,90 @@
+import React from 'react';
+import { ScrollView } from 'react-native';
+import { ScrollShadow } from 'heroui-native';
+import { LinearGradient } from 'expo-linear-gradient';
+import Column from '../layout/Column';
+import PoppinsText from '../ui/text/PoppinsText';
+import { useUserListGet } from 'hooks/useUserListGet';
+import { useUserListSet } from 'hooks/useUserListSet';
+import { MathDocument, MathDocumentPage } from 'types/mathDocuments';
+import DocumentCard from './DocumentCard';
+import NewDocumentDialog from './NewDocumentDialog';
+
+interface DocumentHomePageProps {
+    userId: string;
+    setActiveDocumentId: (documentId: string) => void;
+}
+
+const DocumentHomePage = ({ userId, setActiveDocumentId }: DocumentHomePageProps) => {
+    const scopedUserIds = userId ? [userId] : ['__loading__'];
+    const setDocument = useUserListSet<MathDocument>();
+    const documents = useUserListGet<MathDocument>({
+        key: 'mathDocuments',
+        userIds: scopedUserIds,
+    });
+    const pages = useUserListGet<MathDocumentPage>({
+        key: 'mathDocumentPages',
+        userIds: scopedUserIds,
+    });
+
+    const openDocument = async (document: MathDocument) => {
+        await setDocument({
+            key: 'mathDocuments',
+            itemId: document.id,
+            value: {
+                ...document,
+                lastOpenedAt: Date.now(),
+            },
+            privacy: 'PUBLIC',
+            searchKeys: ['title', 'description'],
+            sortKey: 'lastOpenedAt',
+        });
+
+        setActiveDocumentId(document.id);
+    };
+
+    if (!userId) {
+        return (
+            <Column className='flex-1 rounded-3xl border-2 border-border bg-inner-background p-6' gap={2}>
+                <PoppinsText weight='bold' className='text-2xl'>MathConvert</PoppinsText>
+                <PoppinsText>Syncing your account…</PoppinsText>
+            </Column>
+        );
+    }
+
+    return (
+        <Column className='flex-1' gap={4}>
+            <Column className='rounded-3xl border-2 border-border bg-inner-background p-6' gap={3}>
+                <PoppinsText weight='bold' className='text-3xl'>MathConvert</PoppinsText>
+                <PoppinsText>
+                    Convert handwritten math pages into accessible markdown with LaTeX, review the rendered output, and keep every page organized inside a shareable document.
+                </PoppinsText>
+                <NewDocumentDialog onCreate={setActiveDocumentId} />
+            </Column>
+
+            <ScrollShadow LinearGradientComponent={LinearGradient} className='flex-1'>
+                <ScrollView className='flex-1'>
+                    <Column gap={3} className='pb-8'>
+                        {documents && documents.length > 0 ? (
+                            documents.map((document) => (
+                                <DocumentCard
+                                    key={document.itemId ?? document.value.id}
+                                    document={document.value}
+                                    pageCount={pages?.filter((page) => page.value.documentId === document.value.id).length ?? 0}
+                                    onPress={() => void openDocument(document.value)}
+                                />
+                            ))
+                        ) : (
+                            <Column className='rounded-2xl border border-subtle-border bg-inner-background p-6' gap={2}>
+                                <PoppinsText weight='bold' className='text-xl'>No documents yet</PoppinsText>
+                                <PoppinsText>Create a document, add pages, upload handwritten math, and let the AI generate markdown with LaTeX.</PoppinsText>
+                            </Column>
+                        )}
+                    </Column>
+                </ScrollView>
+            </ScrollShadow>
+        </Column>
+    );
+};
+
+export default DocumentHomePage;

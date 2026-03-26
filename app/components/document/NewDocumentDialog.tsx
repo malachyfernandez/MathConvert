@@ -1,0 +1,84 @@
+import React, { useState } from 'react';
+import Column from '../layout/Column';
+import AppButton from '../ui/buttons/AppButton';
+import PoppinsText from '../ui/text/PoppinsText';
+import PoppinsTextInput from '../ui/forms/PoppinsTextInput';
+import ConvexDialog from '../ui/dialog/ConvexDialog';
+import DialogHeader from '../ui/dialog/DialogHeader';
+import { useUserListSet } from 'hooks/useUserListSet';
+import { MathDocument } from 'types/mathDocuments';
+import { generateId } from 'utils/generateId';
+
+interface NewDocumentDialogProps {
+    onCreate: (documentId: string) => void;
+}
+
+const NewDocumentDialog = ({ onCreate }: NewDocumentDialogProps) => {
+    const setDocument = useUserListSet<MathDocument>();
+    const [isOpen, setIsOpen] = useState(false);
+    const [title, setTitle] = useState('Untitled math document');
+    const [description, setDescription] = useState('Handwritten math converted to accessible markdown and LaTeX.');
+
+    const handleCreate = async () => {
+        const documentId = generateId();
+        const now = Date.now();
+
+        await setDocument({
+            key: 'mathDocuments',
+            itemId: documentId,
+            value: {
+                id: documentId,
+                title: title.trim() || 'Untitled math document',
+                description: description.trim(),
+                createdAt: now,
+                lastOpenedAt: now,
+            },
+            privacy: 'PUBLIC',
+            searchKeys: ['title', 'description'],
+            sortKey: 'lastOpenedAt',
+        });
+
+        setIsOpen(false);
+        onCreate(documentId);
+    };
+
+    return (
+        <ConvexDialog.Root isOpen={isOpen} onOpenChange={setIsOpen}>
+            <ConvexDialog.Trigger asChild>
+                <AppButton variant='green' className='h-12 px-5'>
+                    <PoppinsText weight='medium' color='white'>New document</PoppinsText>
+                </AppButton>
+            </ConvexDialog.Trigger>
+            <ConvexDialog.Portal>
+                <ConvexDialog.Overlay />
+                <ConvexDialog.Content>
+                    <ConvexDialog.Close iconProps={{ color: 'rgb(246, 238, 219)' }} className='w-10 h-10 bg-accent-hover absolute right-4 top-4 z-10' />
+                    <Column>
+                        <DialogHeader text='Create document' subtext='Start a new handwritten math conversion document.' />
+                        <Column className='pt-5' gap={3}>
+                            <Column gap={1}>
+                                <PoppinsText weight='medium'>Title</PoppinsText>
+                                <PoppinsTextInput value={title} onChangeText={setTitle} className='w-full border border-subtle-border bg-inner-background p-3' />
+                            </Column>
+                            <Column gap={1}>
+                                <PoppinsText weight='medium'>Description</PoppinsText>
+                                <PoppinsTextInput
+                                    value={description}
+                                    onChangeText={setDescription}
+                                    className='w-full border border-subtle-border bg-inner-background p-3 min-h-28'
+                                    multiline={true}
+                                    autoGrow={true}
+                                />
+                            </Column>
+                            <AppButton variant='green' className='h-12' onPress={() => void handleCreate()}>
+                                <PoppinsText weight='medium' color='white'>Create document</PoppinsText>
+                            </AppButton>
+                        </Column>
+                    </Column>
+                </ConvexDialog.Content>
+            </ConvexDialog.Portal>
+        </ConvexDialog.Root>
+    );
+};
+
+export default NewDocumentDialog;

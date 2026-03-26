@@ -9,12 +9,14 @@ import PoppinsTextInput from '../ui/forms/PoppinsTextInput';
 import { useUserList } from 'hooks/useUserList';
 import { useUserListGet } from 'hooks/useUserListGet';
 import { useUserListSet } from 'hooks/useUserListSet';
+import { useUserListRemove } from 'hooks/useUserListRemove';
 import { useCreateUndoSnapshot, useUndoRedo } from 'hooks/useUndoRedo';
 import { MathDocument, MathDocumentPage } from 'types/mathDocuments';
 import PageListItem from './PageListItem';
 import NewPageDialog from './NewPageDialog';
 import MathPageWorkspace from './MathPageWorkspace';
 import EditDocumentDialog from './EditDocumentDialog';
+import PageConfigDialog from './PageConfigDialog';
 
 interface DocumentEditorPageProps {
     documentId: string;
@@ -26,11 +28,15 @@ const DocumentEditorPage = ({ documentId, userId }: DocumentEditorPageProps) => 
     const createUndoSnapshot = useCreateUndoSnapshot();
     const scopedUserIds = userId ? [userId] : ['__loading__'];
     const setPage = useUserListSet<MathDocumentPage>();
+    const removePage = useUserListRemove();
+    const restorePage = useUserListSet<MathDocumentPage>();
     const [documentRecord, setDocumentRecord] = useUserList<MathDocument>({
         key: 'mathDocuments',
         itemId: documentId,
     });
     const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+    const [pageConfigDialogOpen, setPageConfigDialogOpen] = useState(false);
+    const [configuringPage, setConfiguringPage] = useState<MathDocumentPage | null>(null);
     const pages = useUserListGet<MathDocumentPage>({
         key: 'mathDocumentPages',
         filterFor: documentId,
@@ -65,6 +71,41 @@ const DocumentEditorPage = ({ documentId, userId }: DocumentEditorPageProps) => 
             searchKeys: ['title', 'markdown', 'initialGuidance'],
             sortKey: 'pageNumber',
         });
+    };
+
+    const handlePageConfig = (page: MathDocumentPage) => {
+        setConfiguringPage(page);
+        setPageConfigDialogOpen(true);
+    };
+
+    const handlePageUpdate = (updatedPage: MathDocumentPage) => {
+        replacePage(updatedPage);
+    };
+
+    const handlePageDelete = () => {
+        if (configuringPage) {
+            const deletedPage = createUndoSnapshot(configuringPage);
+
+            executeCommand({
+                action: () => {
+                    void removePage({ key: 'mathDocumentPages', itemId: configuringPage.id });
+                    setActivePageId('');
+                },
+                undoAction: () => {
+                    void restorePage({
+                        key: 'mathDocumentPages',
+                        itemId: deletedPage.id,
+                        value: deletedPage,
+                        privacy: 'PUBLIC',
+                        filterKey: 'documentId',
+                        searchKeys: ['title', 'markdown', 'initialGuidance'],
+                        sortKey: 'pageNumber',
+                    });
+                    setActivePageId(deletedPage.id);
+                },
+                description: 'Deleted page',
+            });
+        }
     };
 
     if (!documentRecord.value) {
@@ -105,6 +146,7 @@ const DocumentEditorPage = ({ documentId, userId }: DocumentEditorPageProps) => 
                                                 page={page.value}
                                                 isActive={page.value.id === activePageId}
                                                 onPress={() => setActivePageId(page.value.id)}
+                                                onConfigure={() => handlePageConfig(page.value)}
                                             />
                                         ))}
                                     </Column>
@@ -156,6 +198,16 @@ const DocumentEditorPage = ({ documentId, userId }: DocumentEditorPageProps) => 
                     document={documentRecord.value}
                     isOpen={isEditDialogOpen}
                     onOpenChange={setIsEditDialogOpen}
+                />
+            )}
+            
+            {configuringPage && (
+                <PageConfigDialog
+                    page={configuringPage}
+                    isOpen={pageConfigDialogOpen}
+                    onOpenChange={setPageConfigDialogOpen}
+                    onUpdate={handlePageUpdate}
+                    onDelete={handlePageDelete}
                 />
             )}
         </View>

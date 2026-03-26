@@ -1,14 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { ScrollView, TouchableOpacity } from 'react-native';
+import { ScrollView } from 'react-native';
 import Column from '../layout/Column';
-import Row from '../layout/Row';
 import AppButton from '../ui/buttons/AppButton';
 import PoppinsText from '../ui/text/PoppinsText';
 import PoppinsTextInput from '../ui/forms/PoppinsTextInput';
 import MarkdownMathPreview from '../ui/markdown/MarkdownMathPreview';
 import PageImageCard from './PageImageCard';
 import PagePromptCard from './PagePromptCard';
-import EditPageDialog from './EditPageDialog';
 import { useCreateUndoSnapshot, useUndoRedo } from 'hooks/useUndoRedo';
 import { useUserListRemove } from 'hooks/useUserListRemove';
 import { useUserListSet } from 'hooks/useUserListSet';
@@ -26,7 +24,6 @@ const MathPageWorkspace = ({ documentTitle, page, onReplacePage, onDeletePage }:
     const createUndoSnapshot = useCreateUndoSnapshot();
     const removePage = useUserListRemove();
     const restorePage = useUserListSet<MathDocumentPage>();
-    const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
     const [titleDraft, setTitleDraft] = useState(page.title);
     const [guidanceDraft, setGuidanceDraft] = useState(page.initialGuidance);
     const [markdownDraft, setMarkdownDraft] = useState(page.markdown);
@@ -85,27 +82,8 @@ const MathPageWorkspace = ({ documentTitle, page, onReplacePage, onDeletePage }:
         });
     };
 
-    const handlePageUpdate = (updatedPage: MathDocumentPage) => {
-        commitPage(updatedPage, 'Updated page details');
-    };
-
     return (
         <Column gap={4} className='flex-1'>
-            <Column className='rounded-2xl border-2 border-border bg-inner-background p-4' gap={3}>
-                <Row className='items-center justify-between'>
-                    <TouchableOpacity onPress={() => setIsEditDialogOpen(true)}>
-                        <Column className='rounded-lg border border-subtle-border bg-background p-3 flex-1'>
-                            <PoppinsText weight='bold' className='text-text opacity-70'>
-                                {titleDraft || `Page ${page.pageNumber}`}
-                            </PoppinsText>
-                        </Column>
-                    </TouchableOpacity>
-                    <AppButton variant='red' className='px-4' onPress={handleDeletePage}>
-                        <PoppinsText className='text-red-500 font-medium'>Delete page</PoppinsText>
-                    </AppButton>
-                </Row>
-            </Column>
-
             <PageImageCard
                 imageUrl={page.imageUrl}
                 onChangeImageUrl={(nextUrl) => {
@@ -134,13 +112,6 @@ const MathPageWorkspace = ({ documentTitle, page, onReplacePage, onDeletePage }:
                 <PoppinsText weight='bold' varient='cardHeader'>Rendered preview</PoppinsText>
                 <MarkdownMathPreview markdown={markdownDraft} />
             </Column>
-            
-            <EditPageDialog
-                page={page}
-                isOpen={isEditDialogOpen}
-                onOpenChange={setIsEditDialogOpen}
-                onUpdate={handlePageUpdate}
-            />
         </Column>
     );
 };

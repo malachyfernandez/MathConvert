@@ -4,7 +4,7 @@ import { useFonts } from 'expo-font';
 
 type FontWeight = 'regular' | 'medium' | 'bold';
 type PoppinsTextVarient = 'default' | 'heading' | 'subtext' | 'cardHeader';
-type TextColor = 'black' | 'white';
+type TextColor = 'black' | 'white' | 'red';
 
 interface PoppinsTextProps extends PropsWithChildren {
     className?: string;
@@ -53,7 +53,7 @@ const PoppinsText = ({
         }
     };
 
-    const tailwindColor = color === 'black' ? 'text-text' : 'text-white';
+    const tailwindColor = color === 'black' ? 'text-text' : color === 'red' ? 'text-red-500' : 'text-white';
 
     return (
         <Text

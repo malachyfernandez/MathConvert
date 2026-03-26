@@ -116,7 +116,7 @@ const DocumentEditorPage = ({ documentId, userId }: DocumentEditorPageProps) => 
                             <TouchableOpacity onPress={() => setIsEditDialogOpen(true)}>
                                 <Column gap={3}>
                                     <PoppinsText weight='bold' varient='cardHeader'>Details</PoppinsText>
-                                    <Column className='rounded-lg border border-subtle-border bg-background p-3' gap="1">
+                                    <Column className='rounded-lg border border-subtle-border bg-background p-3' gap={1}>
                                         <PoppinsText weight='bold' className='text-text opacity-70'>
                                             {documentRecord.value?.title || 'Untitled math document'}
                                         </PoppinsText>

@@ -93,31 +93,17 @@ const MathPageWorkspace = ({ documentTitle, page, onReplacePage, onDeletePage }:
         <Column gap={4} className='flex-1'>
             <Column className='rounded-2xl border-2 border-border bg-inner-background p-4' gap={3}>
                 <Row className='items-center justify-between'>
-                    <PoppinsText weight='bold' varient='cardHeader'>Page workspace</PoppinsText>
-                    <AppButton variant='red' className='px-4' onPress={handleDeletePage}>
-                        <PoppinsText className='text-red-500 font-medium'>Delete page</PoppinsText>
-                    </AppButton>
-                </Row>
-                <TouchableOpacity onPress={() => setIsEditDialogOpen(true)}>
-                    <Column gap={1}>
-                        <PoppinsText weight='medium'>Page title</PoppinsText>
-                        <Column className='rounded-lg border border-subtle-border bg-background p-3'>
+                    <TouchableOpacity onPress={() => setIsEditDialogOpen(true)}>
+                        <Column className='rounded-lg border border-subtle-border bg-background p-3 flex-1'>
                             <PoppinsText weight='bold' className='text-text opacity-70'>
                                 {titleDraft || `Page ${page.pageNumber}`}
                             </PoppinsText>
                         </Column>
-                    </Column>
-                </TouchableOpacity>
-                <TouchableOpacity onPress={() => setIsEditDialogOpen(true)}>
-                    <Column gap={1}>
-                        <PoppinsText weight='medium'>Initial guidance</PoppinsText>
-                        <Column className='rounded-lg border border-subtle-border bg-background p-3 min-h-28 justify-start'>
-                            <PoppinsText varient='subtext' className='text-text opacity-70'>
-                                {guidanceDraft || 'No guidance set'}
-                            </PoppinsText>
-                        </Column>
-                    </Column>
-                </TouchableOpacity>
+                    </TouchableOpacity>
+                    <AppButton variant='red' className='px-4' onPress={handleDeletePage}>
+                        <PoppinsText className='text-red-500 font-medium'>Delete page</PoppinsText>
+                    </AppButton>
+                </Row>
             </Column>
 
             <PageImageCard

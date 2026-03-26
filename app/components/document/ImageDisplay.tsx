@@ -4,7 +4,7 @@ import Column from '../layout/Column';
 import Row from '../layout/Row';
 import PoppinsText from '../ui/text/PoppinsText';
 import AppButton from '../ui/buttons/AppButton';
-import PublicImageUpload from '../ui/imageUpload/PublicImageUpload';
+import SimpleImageUpload from './SimpleImageUpload';
 import { MathDocumentPage } from 'types/mathDocuments';
 
 interface ImageDisplayProps {
@@ -25,12 +25,12 @@ const ImageDisplay = ({ page, onImageUrlModalOpen, onImageChange }: ImageDisplay
                 <Row gap={2}>
                     <AppButton 
                         variant='outline-alt' 
-                        className='h-12 px-4 flex-1' 
+                        className='h-12 px-5 flex-1' 
                         onPress={onImageUrlModalOpen}
                     >
                         <PoppinsText weight='medium'>Use Image URL</PoppinsText>
                     </AppButton>
-                    <PublicImageUpload
+                    <SimpleImageUpload
                         url={page.imageUrl}
                         setUrl={(nextUrl: string | ((previousValue: string) => string)) => {
                             if (typeof nextUrl === 'string') {

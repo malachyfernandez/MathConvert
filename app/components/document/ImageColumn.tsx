@@ -19,7 +19,7 @@ const ImageColumn = ({ page, onImageChange }: ImageColumnProps) => {
     };
 
     return (
-        <View className={page?.imageUrl ? 'w-1/2 border-r border-border' : 'w-full'}>
+        <View className={page?.imageUrl ? 'flex-1 border-r border-subtle-border' : 'w-full'}>
             {page?.imageUrl ? (
                 <ImageDisplay
                     page={page}

@@ -94,7 +94,7 @@ const DocumentEditor = ({ documentId, userId, activePageId, onSetActivePageId }:
             />
 
             {activePage?.imageUrl && (
-                <View className='w-1/2'>
+                <View className='flex-1'>
                     <DocumentContent
                         documentTitle={documentRecord.value?.title ?? 'Untitled math document'}
                         activePage={activePage}

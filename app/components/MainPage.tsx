@@ -56,7 +56,7 @@ const MainPage: React.FC<MainPageProps> = () => {
                     <StateAnimatedView.OptionContainer page={2}>
                         <StateAnimatedView.Option stateValue='document'>
                             {activeDocumentId.value ? (
-                                <View className='px-6 flex-1'>
+                                <View className='px-6 w-full h-full'>
                                     <DocumentEditorPage
                                         documentId={activeDocumentId.value}
                                         userId={userId}

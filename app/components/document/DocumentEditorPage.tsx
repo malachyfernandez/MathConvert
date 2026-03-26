@@ -104,21 +104,6 @@ const DocumentEditorPage = ({ documentId, userId }: DocumentEditorPageProps) => 
     return (
         <View className={Platform.OS === 'web' ? 'flex-1 flex-row gap-4' : 'flex-1 flex-col gap-4'}>
             <Column className={Platform.OS === 'web' ? 'w-[22rem]' : 'w-full'} gap={4}>
-                <Column className='rounded-2xl border-2 border-border bg-inner-background p-4' gap={3}>
-                    <PoppinsText weight='bold' className='text-2xl'>Document details</PoppinsText>
-                    <PoppinsTextInput value={titleDraft} onChangeText={setTitleDraft} className='w-full border border-subtle-border bg-background p-3' />
-                    <PoppinsTextInput
-                        value={descriptionDraft}
-                        onChangeText={setDescriptionDraft}
-                        className='w-full border border-subtle-border bg-background p-3 min-h-28'
-                        multiline={true}
-                        autoGrow={true}
-                    />
-                    <AppButton variant='green' className='h-12 px-4' onPress={saveDocumentDetails}>
-                        <PoppinsText weight='medium' color='white'>Save document</PoppinsText>
-                    </AppButton>
-                </Column>
-
                 <Column className='rounded-2xl border-2 border-border bg-inner-background p-4 flex-1' gap={3}>
                     <PoppinsText weight='bold' className='text-xl'>Pages</PoppinsText>
                     <NewPageDialog documentId={documentId} existingPageCount={highestPageNumber} onCreate={setActivePageId} />
@@ -136,6 +121,21 @@ const DocumentEditorPage = ({ documentId, userId }: DocumentEditorPageProps) => 
                             </Column>
                         </ScrollView>
                     </ScrollShadow>
+                </Column>
+
+                <Column className='rounded-2xl border-2 border-border bg-inner-background p-4' gap={3}>
+                    <PoppinsText weight='bold' varient='cardHeader'>Details</PoppinsText>
+                    <PoppinsTextInput value={titleDraft} onChangeText={setTitleDraft} className='w-full border border-subtle-border bg-background p-3' />
+                    <PoppinsTextInput
+                        value={descriptionDraft}
+                        onChangeText={setDescriptionDraft}
+                        className='w-full border border-subtle-border bg-background p-3 min-h-28'
+                        multiline={true}
+                        autoGrow={true}
+                    />
+                    <AppButton variant='green' className='h-12 px-4' onPress={saveDocumentDetails}>
+                        <PoppinsText weight='medium' color='white'>Save document</PoppinsText>
+                    </AppButton>
                 </Column>
             </Column>
 

@@ -47,8 +47,6 @@ const AiConversionPanel = ({ documentTitle, page, onUpdatePage, onUpdateMarkdown
                 guidance: getContextualPrompt(),
                 currentMarkdown: page.markdown,
                 followUpPrompt: page.markdown ? prompt : undefined,
-                documentTitle,
-                pageTitle: page.title,
             });
 
             const nextPage: MathDocumentPage = {

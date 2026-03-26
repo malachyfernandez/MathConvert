@@ -1,11 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ScrollView, View } from 'react-native';
 import Column from '../layout/Column';
 import PoppinsText from '../ui/text/PoppinsText';
 import AppButton from '../ui/buttons/AppButton';
+import { Tabs } from 'heroui-native';
 import { useAction } from 'convex/react';
 import { api } from '../../../convex/_generated/api';
 import { MathDocumentPage } from 'types/mathDocuments';
+import DocumentHeader from './DocumentHeader';
 import ContentEditor from './ContentEditor';
 import ContentPreview from './ContentPreview';
 import AiConversionPanel from './AiConversionPanel';
@@ -20,8 +22,16 @@ interface DocumentContentProps {
 const DocumentContent = ({ documentTitle, activePage, onReplacePage, onDeletePage }: DocumentContentProps) => {
     const convertMathImageToMarkdown = useAction(api.mathAi.convertMathImageToMarkdown);
     const [markdownDraft, setMarkdownDraft] = useState(activePage.markdown);
+    const [activeTab, setActiveTab] = useState('editor');
     const [isGenerating, setIsGenerating] = useState(false);
     const [errorMessage, setErrorMessage] = useState('');
+
+    const hasChanges = markdownDraft !== activePage.markdown;
+
+    // Sync markdownDraft when activePage changes (e.g., after AI generation)
+    useEffect(() => {
+        setMarkdownDraft(activePage.markdown);
+    }, [activePage.markdown]);
 
     const handleInitialGeneration = async () => {
         if (!activePage.imageUrl) {
@@ -38,8 +48,6 @@ const DocumentContent = ({ documentTitle, activePage, onReplacePage, onDeletePag
                 guidance: 'Convert this handwritten math to LaTeX',
                 currentMarkdown: activePage.markdown,
                 followUpPrompt: undefined,
-                documentTitle,
-                pageTitle: activePage.title,
             });
 
             const nextPage = {
@@ -64,21 +72,37 @@ const DocumentContent = ({ documentTitle, activePage, onReplacePage, onDeletePag
             markdown,
         };
         onReplacePage(nextPage, 'Updated page markdown');
+        // Update the activePage reference to reflect saved state
+        // This will be updated when the parent component re-renders with the new activePage
     };
 
     return (
         <View className='flex-1'>
             {activePage.markdown ? (
                 <>
-                    {/* Scrollable Content Section */}
-                    <ScrollView className='flex-1' style={{ paddingBottom: 200 }}>
-                        <Column gap={4} className='p-4'>
-                            <ContentEditor
-                                page={activePage}
-                                onSave={handleSaveMarkdown}
-                            />
+                    {/* Sticky Header with Tabs */}
+                    <DocumentHeader
+                        activeTab={activeTab}
+                        onTabChange={setActiveTab}
+                        hasChanges={hasChanges}
+                        onSave={() => handleSaveMarkdown(markdownDraft)}
+                    />
 
-                            <ContentPreview markdown={markdownDraft} />
+                    {/* Scrollable Content Section */}
+                    <ScrollView className='flex-1' style={{ paddingTop: 80, paddingBottom: 200 }}>
+                        <Column gap={4} className='p-4'>
+                            <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1">
+                                <Tabs.Content value="editor">
+                                    <ContentEditor
+                                        markdown={markdownDraft}
+                                        onChange={setMarkdownDraft}
+                                    />
+                                </Tabs.Content>
+                                
+                                <Tabs.Content value="preview">
+                                    <ContentPreview markdown={markdownDraft} />
+                                </Tabs.Content>
+                            </Tabs>
                         </Column>
                     </ScrollView>
 

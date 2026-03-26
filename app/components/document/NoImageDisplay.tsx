@@ -35,6 +35,7 @@ const NoImageDisplay = ({ page, onImageUrlModalOpen, onImageChange }: NoImageDis
                     }}
                     buttonLabel='Upload Image'
                     emptyLabel='Upload page image'
+                    className='flex-1'
                 />
             </Row>
         </Column>

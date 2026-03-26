@@ -12,6 +12,7 @@ interface SimpleImageUploadProps {
     setUrl: (url: string | ((previousValue: string) => string)) => void;
     buttonLabel?: string;
     emptyLabel?: string;
+    className?: string;
 }
 
 interface UploadThingSignedUpload {
@@ -59,7 +60,7 @@ const uploadFileToPresignedUrl = async (
     });
 };
 
-const SimpleImageUpload = ({ url, setUrl, buttonLabel = 'Upload Image', emptyLabel = 'Upload image' }: SimpleImageUploadProps) => {
+const SimpleImageUpload = ({ url, setUrl, buttonLabel = 'Upload Image', emptyLabel = 'Upload image', className = 'h-12 px-5' }: SimpleImageUploadProps) => {
     const [isUploading, setIsUploading] = useState(false);
     const [error, setError] = useState('');
     const generatePublicImageUploadUrl = useAction(api.uploadthing.generatePublicImageUploadUrl);
@@ -113,10 +114,10 @@ const SimpleImageUpload = ({ url, setUrl, buttonLabel = 'Upload Image', emptyLab
     };
 
     return (
-        <Column gap={2}>
+        <Column gap={2} className={className}>
             <AppButton 
                 variant='green' 
-                className='h-12 px-5' 
+                className={`h-12 px-5 ${className}`}
                 onPress={handleFileUpload}
             >
                 <PoppinsText weight='medium' color='white'>

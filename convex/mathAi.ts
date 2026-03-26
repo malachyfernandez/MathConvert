@@ -92,7 +92,7 @@ export const convertMathImageToMarkdown = action({
         const apiKey = process.env.OPENAI_API_KEY;
 
         if (!apiKey) {
-            throw new Error('OPENAI_API_KEY is missing from the Convex environment.');
+            throw new Error('OPENAI_API_KEY is missing from the Convex environment. Run `npx convex env set OPENAI_API_KEY <your_key>` or add it in the Convex dashboard for this deployment.');
         }
 
         const response = await fetch('https://api.openai.com/v1/responses', {

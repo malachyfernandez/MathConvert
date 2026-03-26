@@ -87,8 +87,8 @@ const MathPageWorkspace = ({ documentTitle, page, onReplacePage, onDeletePage }:
             <Column className='rounded-2xl border-2 border-border bg-inner-background p-4' gap={3}>
                 <Row className='items-center justify-between'>
                     <PoppinsText weight='bold' className='text-xl'>Page workspace</PoppinsText>
-                    <AppButton variant='outline' className='px-4' onPress={handleDeletePage}>
-                        <PoppinsText>Delete page</PoppinsText>
+                    <AppButton variant='red' className='px-4' onPress={handleDeletePage}>
+                        <PoppinsText className='text-red-500 font-medium'>Delete page</PoppinsText>
                     </AppButton>
                 </Row>
                 <Column gap={1}>

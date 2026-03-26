@@ -13,7 +13,7 @@
  * 
  * @example Different Variants
  * ```tsx
- * <AppButton variant="outline" onPress={handleCancel}>
+ * <AppButton variant="outline-alt" onPress={handleCancel}>
  *   <PoppinsText>Cancel</PoppinsText>
  * </AppButton>
  * 
@@ -27,17 +27,18 @@
  * ```
  * 
  * @props {React.ReactNode} children - Content to display inside the button
- * @props {'outline' | 'outline-alt' | 'black' | 'grey' | 'green'} variant - Visual style variant (default: 'outline')
+ * @props {'outline' | 'outline-alt' | 'black' | 'grey' | 'green' | 'red'} variant - Visual style variant (default: 'outline-alt')
  * @props {string} className - Additional CSS classes for styling
  * @props {() => void} onPress - Function called when button is pressed
  * @props {boolean} dropShadow - Whether to show drop shadow (default: true)
  * 
  * @variants
+ * - outline-alt: Similar to outline but with lighter hover effect (default)
  * - outline: Transparent background with border, hover effect fills background
- * - outline-alt: Similar to outline but with lighter hover effect
  * - black: Solid black/dark background with brightness hover effect
  * - grey: Solid grey background (#374559ae) with brightness hover effect
  * - green: Solid green background (primary-accent) with brightness hover effect
+ * - red: Transparent background with red border and red text styling
  * 
  * @features
  * - Built-in press animation with brightness changes
@@ -58,7 +59,7 @@ import Row from '../../layout/Row';
 
 interface AppButtonProps {
     children: React.ReactNode;
-    variant?: 'outline' | 'outline-alt' | 'black' | 'grey' | 'green';
+    variant?: 'outline' | 'outline-alt' | 'black' | 'grey' | 'green' | 'red';
     className?: string;
     onPress?: () => void;
     dropShadow?: boolean;
@@ -66,7 +67,7 @@ interface AppButtonProps {
 
 const AppButton = ({
     children,
-    variant = 'outline',
+    variant = 'outline-alt',
     className = '',
     onPress,
     dropShadow = true
@@ -78,13 +79,13 @@ const AppButton = ({
 
     let pressedStyles = 'brightness-50';
 
-    if (variant === 'outline') {
-        const bg = 'bg-none';
-        extraStyles = `border-2 border-border ${bg} group hover:bg-border`;
-        
-    } else if (variant === 'outline-alt') {
+    if (variant === 'outline-alt') {
         const bg = 'bg-none';
         extraStyles = `border-2 border-border ${bg} group hover:bg-border/10`;
+        
+    } else if (variant === 'outline') {
+        const bg = 'bg-none';
+        extraStyles = `border-2 border-border ${bg} group hover:bg-border`;
         
     } else if (variant === 'grey') {
         const bg = 'bg-[#374559ae]';
@@ -93,6 +94,9 @@ const AppButton = ({
     } else if (variant === 'green') {
         const bg = 'bg-primary-accent';
         extraStyles = `${bg} group hover:brightness-125 active:brightness-50`;
+    } else if (variant === 'red') {
+        const bg = 'bg-none';
+        extraStyles = `border-2 border-red-500 ${bg} group hover:bg-red-500/10`;
     } else {
         const bg = 'bg-text';
         extraStyles = `${bg} group hover:brightness-150 active:brightness-50`;

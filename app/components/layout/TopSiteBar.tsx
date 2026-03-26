@@ -22,7 +22,7 @@ const TopSiteBar = ({ className = '', isInDocument, onHomePress }: TopSiteBarPro
                 <TouchableOpacity onPress={onHomePress}>
                     <PoppinsText weight='bold' className='text-lg'>{isInDocument ? '< MathConvert' : 'MathConvert'}</PoppinsText>
                 </TouchableOpacity>
-                <AppButton variant="outline" className="h-14 w-14" onPress={() => signOut()}>
+                <AppButton variant="outline-alt" className="h-14 w-14" onPress={() => signOut()}>
                     <UserIcon size={24} />
                 </AppButton>
             </Row>

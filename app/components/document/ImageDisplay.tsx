@@ -1,5 +1,5 @@
 import React from 'react';
-import { View } from 'react-native';
+import { View, Image } from 'react-native';
 import Column from '../layout/Column';
 import Row from '../layout/Row';
 import PoppinsText from '../ui/text/PoppinsText';
@@ -16,10 +16,10 @@ interface ImageDisplayProps {
 const ImageDisplay = ({ page, onImageUrlModalOpen, onImageChange }: ImageDisplayProps) => {
     return (
         <View className='flex-1 relative'>
-            <img 
-                src={page.imageUrl} 
-                alt="Page image" 
-                className='w-full h-full object-contain'
+            <Image 
+                source={{ uri: page.imageUrl }}
+                className='w-full h-full'
+                resizeMode='contain'
             />
             <View className='absolute bottom-0 left-0 right-0 p-4 bg-linear-to-t from-black/50 to-transparent'>
                 <Row gap={2}>

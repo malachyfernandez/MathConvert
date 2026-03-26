@@ -5,7 +5,6 @@ import AppButton from '../ui/buttons/AppButton';
 import PoppinsText from '../ui/text/PoppinsText';
 import PoppinsTextInput from '../ui/forms/PoppinsTextInput';
 import MarkdownMathPreview from '../ui/markdown/MarkdownMathPreview';
-import PageImageCard from './PageImageCard';
 import PagePromptCard from './PagePromptCard';
 import { useCreateUndoSnapshot, useUndoRedo } from 'hooks/useUndoRedo';
 import { useUserListRemove } from 'hooks/useUserListRemove';
@@ -84,13 +83,6 @@ const MathPageWorkspace = ({ documentTitle, page, onReplacePage, onDeletePage }:
 
     return (
         <Column gap={4} className='flex-1'>
-            <PageImageCard
-                imageUrl={page.imageUrl}
-                onChangeImageUrl={(nextUrl) => {
-                    commitPage({ ...getDraftPage(), imageUrl: nextUrl }, 'Updated page image');
-                }}
-            />
-
             <PagePromptCard documentTitle={documentTitle} page={getDraftPage()} onReplacePage={commitPage} />
 
             <Column className='rounded-2xl border-2 border-border bg-inner-background p-4' gap={3}>

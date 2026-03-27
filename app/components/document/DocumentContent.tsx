@@ -107,22 +107,24 @@ const DocumentContent = ({ documentTitle, activePage, onReplacePage }: DocumentC
                     {/* <View className='h-full bg-l'>
                             <PoppinsText className='text-lg'>No markdown yet</PoppinsText>
                         </View> */}
-                    <View className='flex-1' style={{ paddingTop: headerHeight, paddingBottom: footerHeight }}>
+                    <View className='flex-1'>
                         <Column gap={4} className='flex-1'>
                             <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1">
                                 <Tabs.Content value="editor" className='flex-1' style={{ minHeight: 0 }}>
-                                    <View className='flex-1 bg-accent-hover' style={{ minHeight: 0 }}>
+                                    <View className='flex-1' style={{ minHeight: 0 }}>
                                         <ContentEditor
                                             markdown={markdownDraft}
                                             onChange={setMarkdownDraft}
+                                            headerHeight={headerHeight}
+                                            footerHeight={footerHeight}
                                         />
                                         {/* <PoppinsText>Editor content</PoppinsText> */}
                                     </View>
                                 </Tabs.Content>
 
                                 <Tabs.Content value="preview" className='flex-1' style={{ minHeight: 0 }}>
-                                    <View className='flex-1 bg-accent-hover' style={{ minHeight: 0 }}>
-                                        <ContentPreview markdown={markdownDraft} />
+                                    <View className='flex-1' style={{ minHeight: 0 }}>
+                                        <ContentPreview markdown={markdownDraft} headerHeight={headerHeight} footerHeight={footerHeight} />
                                     </View>
                                 </Tabs.Content>
                             </Tabs>

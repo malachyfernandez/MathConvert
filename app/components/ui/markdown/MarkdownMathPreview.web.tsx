@@ -6,9 +6,11 @@ import React from 'react';
 interface MarkdownMathPreviewProps {
     markdown: string;
     className?: string;
+    headerHeight?: number;
+    footerHeight?: number;
 }
 
-const createSourceDocument = (markdown: string) => {
+const createSourceDocument = (markdown: string, headerHeight: number = 0, footerHeight: number = 0) => {
   return String.raw`<!DOCTYPE html>
 <html>
 <head>
@@ -21,7 +23,9 @@ const createSourceDocument = (markdown: string) => {
     body {
       margin: 0;
       padding: 24px;
-      background: rgb(253, 251, 246);
+      padding-top: calc(24px + ${headerHeight}px);
+      padding-bottom: calc(24px + ${footerHeight}px);
+      background: rgb(246, 238, 219);
       color: #1a1a1a;
       font-family:
         -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
@@ -214,11 +218,11 @@ const createSourceDocument = (markdown: string) => {
 </html>`;
 };
 
-const MarkdownMathPreview = ({ markdown, className = '' }: MarkdownMathPreviewProps) => {
+const MarkdownMathPreview = ({ markdown, className = '', headerHeight = 0, footerHeight = 0 }: MarkdownMathPreviewProps) => {
     return (
         <iframe
             title='Math markdown preview'
-            srcDoc={createSourceDocument(markdown)}
+            srcDoc={createSourceDocument(markdown, headerHeight, footerHeight)}
             className={`w-full rounded-xl border border-gray-300 bg-gray-50 ${className}`}
             style={{ 
                 width: '100%',

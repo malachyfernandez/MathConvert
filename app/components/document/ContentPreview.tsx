@@ -3,11 +3,13 @@ import MarkdownMathPreview from '../ui/markdown/MarkdownMathPreview';
 
 interface ContentPreviewProps {
     markdown: string;
+    headerHeight?: number;
+    footerHeight?: number;
 }
 
-const ContentPreview = ({ markdown }: ContentPreviewProps) => {
+const ContentPreview = ({ markdown, headerHeight = 0, footerHeight = 0 }: ContentPreviewProps) => {
     return (
-        <MarkdownMathPreview markdown={markdown} />
+        <MarkdownMathPreview markdown={markdown} headerHeight={headerHeight} footerHeight={footerHeight} />
     );
 };
 

@@ -4,9 +4,11 @@ import { LayoutChangeEvent, TextInput, View, Text, ScrollView, KeyboardAvoidingV
 interface ContentEditorProps {
     markdown: string;
     onChange: (markdown: string) => void;
+    headerHeight?: number;
+    footerHeight?: number;
 }
 
-const ContentEditor = ({ markdown, onChange }: ContentEditorProps) => {
+const ContentEditor = ({ markdown, onChange, headerHeight = 0, footerHeight = 0 }: ContentEditorProps) => {
     const [lines, setLines] = useState<string[]>(() => markdown.split('\n'));
     const scrollViewRef = useRef<ScrollView>(null);
     const [renderedContentHeight, setRenderedContentHeight] = useState(0);
@@ -351,7 +353,11 @@ const createLineParser = () => {
                     ref={scrollViewRef}
                     className='flex-1'
                     showsVerticalScrollIndicator={true}
-                    contentContainerStyle={{ flexGrow: 1 }}
+                    contentContainerStyle={{ 
+                        flexGrow: 1,
+                        paddingTop: headerHeight,
+                        paddingBottom: footerHeight
+                    }}
                     keyboardShouldPersistTaps='handled'
                 >
                     <View className='relative' style={{ minHeight: editorHeight }}>

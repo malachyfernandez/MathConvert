@@ -1,0 +1,203 @@
+export const createMarkdownMathSourceDocument = (markdown: string, headerHeight: number = 0, footerHeight: number = 0) => {
+  return String.raw`<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1"
+  />
+  <style>
+    body {
+      margin: 0;
+      padding: 24px;
+      padding-top: calc(24px + ${headerHeight}px);
+      padding-bottom: calc(24px + ${footerHeight}px);
+      background: rgb(246, 238, 219);
+      color: #1a1a1a;
+      font-family:
+        -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+      line-height: 1.7;
+    }
+
+    #content {
+      min-height: 100%;
+    }
+
+    h1,
+    h2,
+    h3,
+    h4,
+    h5,
+    h6 {
+      margin-top: 0;
+      margin-bottom: 16px;
+      color: #1a1a1a;
+      font-weight: 600;
+    }
+
+    h1 {
+      font-size: 2em;
+    }
+
+    h2 {
+      font-size: 1.5em;
+    }
+
+    h3 {
+      font-size: 1.25em;
+    }
+
+    p {
+      margin-bottom: 16px;
+    }
+
+    code {
+      background: rgba(45, 90, 45, 0.12);
+      padding: 2px 6px;
+      border-radius: 6px;
+      font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+    }
+
+    pre {
+      background: #f6f8fa;
+      border-radius: 6px;
+      padding: 16px;
+      overflow-x: auto;
+      margin-bottom: 16px;
+    }
+
+    pre code {
+      background: none;
+      padding: 0;
+    }
+
+    blockquote {
+      border-left: 4px solid #1a1a1a;
+      margin: 0 0 16px 0;
+      padding-left: 16px;
+      opacity: 0.9;
+      font-style: italic;
+    }
+
+    ul,
+    ol {
+      margin-bottom: 16px;
+      padding-left: 24px;
+    }
+
+    li {
+      margin-bottom: 4px;
+    }
+
+    hr {
+      border: none;
+      border-top: 1px solid #e1e4e8;
+      margin: 24px 0;
+    }
+
+    .MathJax {
+      font-size: 1.1em !important;
+    }
+  </style>
+
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
+  <script>
+    window.MathJax = {
+      tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']],
+        displayMath: [['$$', '$$'], ['\\[', '\\]']],
+        processEscapes: true,
+        processEnvironments: true
+      },
+      options: {
+        ignoreHtmlClass: 'tex2jax_ignore',
+        processHtmlClass: 'tex2jax_process'
+      },
+      startup: {
+        typeset: false
+      }
+    };
+  </script>
+
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+</head>
+<body>
+  <div id="content"></div>
+
+  <script>
+    function escapeHtml(text) {
+      return text
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
+    }
+
+    function protectMath(source) {
+      var math = [];
+
+      function store(match) {
+        var token = 'MATHBLOCK' + math.length + 'TOKEN';
+        math.push(match);
+        return token;
+      }
+
+      var protectedSource = source
+        .replace(/\\\[[\s\S]*?\\\]/g, store)
+        .replace(/\$\$[\s\S]*?\$\$/g, store)
+        .replace(/\\\([\s\S]*?\\\)/g, store)
+        .replace(/\$(?!\$)(?:\\.|[^$\n])+\$/g, store)
+        .replace(/\\begin\{([a-zA-Z*]+)\}[\s\S]*?\\end\{\1\}/g, store);
+
+      return {
+        protectedSource: protectedSource,
+        math: math
+      };
+    }
+
+    function restoreMath(html, math) {
+      var restoredHtml = html;
+      var hasTokens = true;
+      
+      while (hasTokens) {
+        hasTokens = false;
+        restoredHtml = restoredHtml.replace(/MATHBLOCK(\d+)TOKEN/g, function (_, index) {
+          hasTokens = true;
+          return escapeHtml(math[Number(index)]);
+        });
+      }
+      
+      return restoredHtml;
+    }
+
+    try {
+      var markdown = ${JSON.stringify(markdown)};
+      var protectedMath = protectMath(markdown);
+      var html = window.marked.parse(protectedMath.protectedSource);
+      html = restoreMath(html, protectedMath.math);
+
+      if (/MATHBLOCK\d+TOKEN/.test(html)) {
+        console.error('ERROR: Math tokens still present after restore:', html);
+        throw new Error('Math protection system failed - tokens still present');
+      }
+
+      console.log('Final HTML before innerHTML:', html);
+
+      var content = document.getElementById('content');
+      content.innerHTML = html;
+
+      if (window.MathJax && window.MathJax.typesetPromise) {
+        window.MathJax.typesetPromise([content]).catch(function (error) {
+          console.error('MathJax typeset failed:', error);
+        });
+      }
+    } catch (error) {
+      console.error('Markdown parsing failed:', error);
+      document.getElementById('content').innerHTML =
+        '<p>Error rendering markdown</p>';
+    }
+  </script>
+</body>
+</html>`;
+};

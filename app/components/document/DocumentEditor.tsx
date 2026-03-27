@@ -35,6 +35,12 @@ const DocumentEditor = ({ documentId, userId, activePageId, onSetActivePageId }:
     const activePage = pages.find((page) => page.value.id === activePageId)?.value || null;
 
     useEffect(() => {
+        // Don't reset during initial loading
+        if (!pages[0] || activePageId !== '') {
+            return;
+        }
+
+        // Only reset to empty if pages are explicitly empty (not loading)
         if (!pages.length) {
             onSetActivePageId('');
             return;
@@ -97,6 +103,7 @@ const DocumentEditor = ({ documentId, userId, activePageId, onSetActivePageId }:
                 <View className='flex-1 pr-4'>
                     <DocumentContent
                         documentTitle={documentRecord.value?.title ?? 'Untitled math document'}
+                        documentId={documentId}
                         activePage={activePage}
                         onReplacePage={replacePage}
                         onDeletePage={(nextPageId) => onSetActivePageId(nextPageId)}

@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Platform, View } from 'react-native';
 import Column from '../layout/Column';
 import PoppinsText from '../ui/text/PoppinsText';
+import { useUserVariable } from 'hooks/useUserVariable';
 import { MathDocument, MathDocumentPage } from 'types/mathDocuments';
 import DocumentSidebar from './DocumentSidebar';
 import DocumentEditor from './DocumentEditor';
@@ -13,7 +14,11 @@ interface DocumentEditorPageProps {
 }
 
 const DocumentEditorPage = ({ documentId, userId }: DocumentEditorPageProps) => {
-    const [activePageId, setActivePageId] = useState('');
+    const [activePageId, setActivePageId] = useUserVariable<string>({
+        key: "activePage",
+        defaultValue: "",
+        privacy: "PUBLIC"
+    });
 
     return (
         <View className='flex-1'>
@@ -22,13 +27,13 @@ const DocumentEditorPage = ({ documentId, userId }: DocumentEditorPageProps) => 
                 <DocumentSidebar
                     documentId={documentId}
                     userId={userId}
-                    activePageId={activePageId}
+                    activePageId={activePageId.value}
                     onSetActivePageId={setActivePageId}
                 />
                 <DocumentEditor
                     documentId={documentId}
                     userId={userId}
-                    activePageId={activePageId}
+                    activePageId={activePageId.value}
                     onSetActivePageId={setActivePageId}
                 />
             </View>

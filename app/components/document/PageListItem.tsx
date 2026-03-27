@@ -1,5 +1,5 @@
 import React from 'react';
-import { TouchableOpacity } from 'react-native';
+import { TouchableOpacity, Image } from 'react-native';
 import { Spinner } from 'heroui-native';
 import Column from '../layout/Column';
 import Row from '../layout/Row';
@@ -16,9 +16,16 @@ interface PageListItemProps {
 }
 
 const PageListItem = ({ page, isActive, onPress, onConfigure }: PageListItemProps) => {
-    const { isPageGenerating } = useGeneration();
+    const { isPageGenerating, isPageRecentlyCompleted, clearRecentlyCompleted } = useGeneration();
     const isGenerating = isPageGenerating(page.id);
+    const isRecentlyCompleted = isPageRecentlyCompleted(page.id);
+
     const handlePress = () => {
+        // Clear recently completed status when user interacts with the page
+        if (isRecentlyCompleted) {
+            clearRecentlyCompleted(page.id);
+        }
+        
         if (isActive && onConfigure) {
             onConfigure();
         } else {
@@ -40,6 +47,12 @@ const PageListItem = ({ page, isActive, onPress, onConfigure }: PageListItemProp
                 </Column>
                 {isGenerating ? (
                     <Spinner size="sm" color="primary" />
+                ) : isRecentlyCompleted ? (
+                    <Image 
+                        source={require('../../../assets/svgs/check-mark.svg')}
+                        className='w-5 h-5 text-primary'
+                        style={{ tintColor: '#3B82F6' }}
+                    />
                 ) : (
                     isActive && onConfigure && (
                         <MonoIconsOptionsHorizontal className='text-text opacity-50' width={20} height={20} />

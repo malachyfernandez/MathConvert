@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { LayoutChangeEvent, View } from 'react-native';
+import { LayoutChangeEvent, Platform, View } from 'react-native';
 import { Spinner } from 'heroui-native';
 import Column from '../layout/Column';
 import Row from '../layout/Row';
@@ -10,6 +10,9 @@ import { useAction } from 'convex/react';
 import { api } from '../../../convex/_generated/api';
 import { MathDocumentPage } from 'types/mathDocuments';
 import { useGeneration } from '../../../contexts/GenerationContext';
+import { useToast } from '../../../contexts/ToastContext';
+import { useUserListSet } from 'hooks/useUserListSet';
+import { buildViewOnlyDocumentUrl } from '../../../utils/buildViewOnlyDocumentUrl';
 import DocumentHeader from './DocumentHeader';
 import ContentEditor from './ContentEditor';
 import ContentPreview from './ContentPreview';
@@ -17,20 +20,25 @@ import AiConversionPanel from './AiConversionPanel';
 
 interface DocumentContentProps {
     documentTitle: string;
+    documentId: string;
     activePage: MathDocumentPage;
     onReplacePage: (nextPage: MathDocumentPage, description: string) => void;
     onDeletePage: (pageId: string) => void;
 }
 
-const DocumentContent = ({ documentTitle, activePage, onReplacePage }: DocumentContentProps) => {
+const DocumentContent = ({ documentTitle, documentId, activePage, onReplacePage }: DocumentContentProps) => {
     const convertMathImageToMarkdown = useAction(api.mathAi.convertMathImageToMarkdown);
     const { setGeneratingPage, isPageGenerating } = useGeneration();
+    const { showToast } = useToast();
+    const setDocument = useUserListSet();
+    const setPage = useUserListSet<MathDocumentPage>();
     const [markdownDraft, setMarkdownDraft] = useState(activePage.markdown);
     const [activeTab, setActiveTab] = useState('preview');
     const [errorMessage, setErrorMessage] = useState('');
     const [headerHeight, setHeaderHeight] = useState(0);
     const [footerHeight, setFooterHeight] = useState(0);
     const [dotCount, setDotCount] = useState(1);
+    const [isSharing, setIsSharing] = useState(false);
     
     const isGenerating = isPageGenerating(activePage.id);
 
@@ -111,6 +119,63 @@ const DocumentContent = ({ documentTitle, activePage, onReplacePage }: DocumentC
         // This will be updated when the parent component re-renders with the new activePage
     };
 
+    const handleShareLink = async () => {
+        if (Platform.OS !== 'web' || typeof window === 'undefined') {
+            return;
+        }
+
+        // TODO: This "share link" currently relies on PUBLIC userVariables records.
+        // A true private share-link/token system would require backend support.
+        
+        setIsSharing(true);
+        
+        try {
+            // Ensure the document is PUBLIC
+            await setDocument({
+                key: 'mathDocuments',
+                itemId: documentId,
+                value: {
+                    id: documentId,
+                    title: documentTitle,
+                    description: '', // We don't have description here, but it's okay
+                    createdAt: Date.now(), // This should be preserved but we don't have it
+                    lastOpenedAt: Date.now(),
+                },
+                privacy: 'PUBLIC',
+                searchKeys: ['title', 'description'],
+                sortKey: 'lastOpenedAt',
+            });
+
+            // Ensure the current page is PUBLIC
+            await setPage({
+                key: 'mathDocumentPages',
+                itemId: activePage.id,
+                value: activePage,
+                privacy: 'PUBLIC',
+                filterKey: 'documentId',
+                searchKeys: ['title', 'markdown', 'initialGuidance'],
+                sortKey: 'pageNumber',
+            });
+
+            // Build and copy the URL
+            const shareUrl = buildViewOnlyDocumentUrl(documentId);
+            
+            try {
+                await navigator.clipboard.writeText(shareUrl);
+                showToast('View-only link copied. Document is now publicly viewable.');
+            } catch (clipboardError) {
+                // Fallback for browsers that don't support clipboard API
+                window.prompt('Copy this view-only link:', shareUrl);
+                showToast('View-only link copied. Document is now publicly viewable.');
+            }
+        } catch (error) {
+            console.error('Failed to share document:', error);
+            showToast('Failed to create share link. Please try again.');
+        } finally {
+            setIsSharing(false);
+        }
+    };
+
     return (
         <View className='flex-1'>
             {activePage.markdown ? (
@@ -121,6 +186,8 @@ const DocumentContent = ({ documentTitle, activePage, onReplacePage }: DocumentC
                         onTabChange={setActiveTab}
                         hasChanges={hasChanges}
                         onSave={() => handleSaveMarkdown(markdownDraft)}
+                        onShareLink={handleShareLink}
+                        isSharing={isSharing}
                         onLayout={handleHeaderLayout}
                     />
 

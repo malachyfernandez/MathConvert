@@ -13,10 +13,12 @@ interface DocumentHeaderProps {
     onTabChange: (tab: string) => void;
     hasChanges: boolean;
     onSave: () => void;
+    onShareLink?: () => void;
+    isSharing?: boolean;
     onLayout?: (event: LayoutChangeEvent) => void;
 }
 
-const DocumentHeader = ({ activeTab, onTabChange, hasChanges, onSave, onLayout }: DocumentHeaderProps) => {
+const DocumentHeader = ({ activeTab, onTabChange, hasChanges, onSave, onShareLink, isSharing, onLayout }: DocumentHeaderProps) => {
     return (
         <View className='absolute top-0 left-0 right-0 z-10' onLayout={onLayout}>
             <BlurView 
@@ -47,17 +49,32 @@ const DocumentHeader = ({ activeTab, onTabChange, hasChanges, onSave, onLayout }
                             </Tabs.List>
                         </Tabs>
                         
-                        {hasChanges ? (
-                            <AppButton variant='green' className='h-10 w-36 ml-4' onPress={onSave}>
-                                <PoppinsText weight='medium' color='white'>Save Changes</PoppinsText>
-                            </AppButton>
-                        ) : (
-                            <StatusButton 
-                                buttonText="Save Changes" 
-                                buttonAltText="No changes"
-                                className="h-10 w-36 ml-4"
-                            />
-                        )}
+                        <Row gap={2} className='ml-4'>
+                            {onShareLink && (
+                                <AppButton 
+                                    variant='outline' 
+                                    className='h-10 px-3' 
+                                    onPress={onShareLink}
+                                    disabled={isSharing}
+                                >
+                                    <PoppinsText weight='medium'>
+                                        {isSharing ? 'Sharing...' : 'Share Link'}
+                                    </PoppinsText>
+                                </AppButton>
+                            )}
+                            
+                            {hasChanges ? (
+                                <AppButton variant='green' className='h-10 w-36' onPress={onSave}>
+                                    <PoppinsText weight='medium' color='white'>Save Changes</PoppinsText>
+                                </AppButton>
+                            ) : (
+                                <StatusButton 
+                                    buttonText="Save Changes" 
+                                    buttonAltText="No changes"
+                                    className="h-10 w-36"
+                                />
+                            )}
+                        </Row>
                     </Row>
                 </Column>
             </View>

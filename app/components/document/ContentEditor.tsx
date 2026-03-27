@@ -19,27 +19,69 @@ const ContentEditor = ({ markdown, onChange }: ContentEditorProps) => {
         setLines(newLines);
     }, [markdown]);
 
-    // Detect LaTeX content in a line
-    const isLatexLine = (line: string): boolean => {
-        return /\$.*\$|\\[a-zA-Z]+|\\begin\{|\\end\{|\\[a-zA-Z]+\{.*\}/.test(line);
-    };
+    // Parse line into segments with syntax highlighting
+    const parseLineWithHighlighting = (line: string): Array<{text: string, color: string}> => {
+        const segments: Array<{text: string, color: string}> = [];
+        let currentIndex = 0;
+        
+        // Helper functions
+        const isHeaderLine = (text: string): boolean => {
+            return /^#{1,6}\s/.test(text);
+        };
 
-    // Detect markdown headers
-    const isHeaderLine = (line: string): boolean => {
-        return /^#{1,6}\s/.test(line);
-    };
-
-    // Detect markdown list items
-    const isListItem = (line: string): boolean => {
-        return /^\s*[-*+]\s|^\s*\d+\.\s/.test(line);
-    };
-
-    // Get syntax highlighting color for a line
-    const getLineColor = (line: string): string => {
-        if (isLatexLine(line)) return '#8B5CF6'; // Purple for LaTeX
-        if (isHeaderLine(line)) return '#059669'; // Green for headers
-        if (isListItem(line)) return '#DC2626'; // Red for lists
-        return '#1F2937'; // Default gray
+        const isListItem = (text: string): boolean => {
+            return /^\s*[-*+]\s|^\s*\d+\.\s/.test(text);
+        };
+        
+        // Regex to find LaTeX content (inline math, display math, and commands)
+        const latexRegex = /(\$[^$\n]*\$|\\[a-zA-Z]+(?:\{[^}]*\}|_\{[^}]*\}|\^{[^}]*\})?|\\begin\{[^}]+\}|\\end\{[^}]+\})/g;
+        let match;
+        
+        while ((match = latexRegex.exec(line)) !== null) {
+            // Add text before LaTeX match
+            if (match.index > currentIndex) {
+                const beforeText = line.substring(currentIndex, match.index);
+                if (beforeText) {
+                    segments.push({
+                        text: beforeText,
+                        color: isHeaderLine(beforeText.trim()) ? '#059669' : 
+                               isListItem(beforeText.trim()) ? '#DC2626' : '#1F2937'
+                    });
+                }
+            }
+            
+            // Add LaTeX content
+            const latexContent = match[0];
+            segments.push({
+                text: latexContent,
+                color: '#8B5CF6' // Purple for LaTeX
+            });
+            
+            currentIndex = match.index + latexContent.length;
+        }
+        
+        // Add remaining text after last LaTeX match
+        if (currentIndex < line.length) {
+            const remainingText = line.substring(currentIndex);
+            if (remainingText) {
+                segments.push({
+                    text: remainingText,
+                    color: isHeaderLine(remainingText.trim()) ? '#059669' : 
+                           isListItem(remainingText.trim()) ? '#DC2626' : '#1F2937'
+                });
+            }
+        }
+        
+        // If no LaTeX found, check for headers/lists on the whole line
+        if (segments.length === 0) {
+            segments.push({
+                text: line,
+                color: isHeaderLine(line) ? '#059669' : 
+                       isListItem(line) ? '#DC2626' : '#1F2937'
+            });
+        }
+        
+        return segments.length > 0 ? segments : [{text: line || ' ', color: '#1F2937'}];
     };
 
     // Handle text changes
@@ -106,18 +148,21 @@ const ContentEditor = ({ markdown, onChange }: ContentEditorProps) => {
                             pointerEvents='none'
                         >
                             {lines.map((line, index) => (
-                                <Text
-                                    key={index}
-                                    className='text-base'
-                                    style={{
-                                        color: getLineColor(line),
-                                        lineHeight: 24,
-                                        fontFamily: 'monospace',
-                                        minHeight: 24,
-                                    }}
-                                >
-                                    {line || ' '}
-                                </Text>
+                                <View key={index} className='flex-row flex-wrap' style={{ minHeight: 24 }}>
+                                    {parseLineWithHighlighting(line).map((segment, segIndex) => (
+                                        <Text
+                                            key={segIndex}
+                                            className='text-base'
+                                            style={{
+                                                color: segment.color,
+                                                lineHeight: 24,
+                                                fontFamily: 'monospace',
+                                            }}
+                                        >
+                                            {segment.text}
+                                        </Text>
+                                    ))}
+                                </View>
                             ))}
                         </View>
                     </View>

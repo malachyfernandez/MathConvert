@@ -18,7 +18,7 @@ const DocumentEditorPage = ({ documentId, userId }: DocumentEditorPageProps) => 
     return (
         <View className='flex-1'>
             {/* This will be handled by DocumentEditor component */}
-            <View className={'flex-1 flex-row gap-4'}>
+            <View className={'flex-1 flex-row'}>
                 <DocumentSidebar
                     documentId={documentId}
                     userId={userId}

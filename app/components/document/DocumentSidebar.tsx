@@ -103,8 +103,8 @@ const DocumentSidebar = ({ documentId, userId, activePageId, onSetActivePageId }
 
     return (
         <Column gap={0} className='h-full'>
-            <Column className={`flex-1 ${Platform.OS === 'web' ? 'w-88' : 'w-full'}`} gap={4}>
-                <Column className='rounded-2xl border-2 border-border bg-inner-background p-4 flex-1' gap={3}>
+            <Column className={`flex-1 ${Platform.OS === 'web' ? 'w-64' : 'w-full'}`} gap={4}>
+                <Column className='rounded-tr-2xl border-t-2 border-r-2 border-border bg-inner-background p-4 flex-1' gap={3}>
                     <PoppinsText weight='bold' varient='cardHeader'>Pages</PoppinsText>
                     <NewPageDialog documentId={documentId} existingPageCount={highestPageNumber} onCreate={onSetActivePageId} />
                     <ScrollShadow LinearGradientComponent={LinearGradient} className='flex-1'>

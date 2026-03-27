@@ -22,7 +22,7 @@ interface DocumentContentProps {
 const DocumentContent = ({ documentTitle, activePage, onReplacePage }: DocumentContentProps) => {
     const convertMathImageToMarkdown = useAction(api.mathAi.convertMathImageToMarkdown);
     const [markdownDraft, setMarkdownDraft] = useState(activePage.markdown);
-    const [activeTab, setActiveTab] = useState('editor');
+    const [activeTab, setActiveTab] = useState('preview');
     const [isGenerating, setIsGenerating] = useState(false);
     const [errorMessage, setErrorMessage] = useState('');
     const [headerHeight, setHeaderHeight] = useState(0);

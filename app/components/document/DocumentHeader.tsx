@@ -30,17 +30,17 @@ const DocumentHeader = ({ activeTab, onTabChange, hasChanges, onSave, onLayout }
                         <Tabs value={activeTab} onValueChange={onTabChange} variant="secondary" className="flex-1">
                             <Tabs.List>
                                 <Tabs.Indicator />
-                                <Tabs.Trigger value="editor">
-                                    {({ isSelected }) => (
-                                        <Tabs.Label className={isSelected ? 'text-black font-medium' : 'text-gray-500'}>
-                                            Editor
-                                        </Tabs.Label>
-                                    )}
-                                </Tabs.Trigger>
                                 <Tabs.Trigger value="preview">
                                     {({ isSelected }) => (
                                         <Tabs.Label className={isSelected ? 'text-black font-medium' : 'text-gray-500'}>
                                             Preview
+                                        </Tabs.Label>
+                                    )}
+                                </Tabs.Trigger>
+                                <Tabs.Trigger value="editor">
+                                    {({ isSelected }) => (
+                                        <Tabs.Label className={isSelected ? 'text-black font-medium' : 'text-gray-500'}>
+                                            Editor
                                         </Tabs.Label>
                                     )}
                                 </Tabs.Trigger>

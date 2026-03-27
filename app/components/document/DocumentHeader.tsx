@@ -1,5 +1,5 @@
 import React from 'react';
-import { View } from 'react-native';
+import { LayoutChangeEvent, View } from 'react-native';
 import Column from '../layout/Column';
 import Row from '../layout/Row';
 import PoppinsText from '../ui/text/PoppinsText';
@@ -13,11 +13,12 @@ interface DocumentHeaderProps {
     onTabChange: (tab: string) => void;
     hasChanges: boolean;
     onSave: () => void;
+    onLayout?: (event: LayoutChangeEvent) => void;
 }
 
-const DocumentHeader = ({ activeTab, onTabChange, hasChanges, onSave }: DocumentHeaderProps) => {
+const DocumentHeader = ({ activeTab, onTabChange, hasChanges, onSave, onLayout }: DocumentHeaderProps) => {
     return (
-        <View className='absolute top-0 left-0 right-0 z-10'>
+        <View className='absolute top-0 left-0 right-0 z-10' onLayout={onLayout}>
             <BlurView 
                 intensity={20} 
                 tint='light'

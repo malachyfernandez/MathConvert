@@ -1,3 +1,6 @@
+// Used by: ContentPreview.tsx and MathPageWorkspace.tsx
+// Web-only markdown renderer with MathJax support for mathematical content
+
 import React from 'react';
 
 interface MarkdownMathPreviewProps {
@@ -6,47 +9,64 @@ interface MarkdownMathPreviewProps {
 }
 
 const createSourceDocument = (markdown: string) => {
-    return `<!DOCTYPE html>
+  return String.raw`<!DOCTYPE html>
 <html>
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1"
+  />
   <style>
     body {
       margin: 0;
       padding: 24px;
       background: rgb(253, 251, 246);
       color: #1a1a1a;
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+      font-family:
+        -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
       line-height: 1.7;
     }
-    
+
     #content {
       min-height: 100%;
     }
-    
-    h1, h2, h3, h4, h5, h6 {
+
+    h1,
+    h2,
+    h3,
+    h4,
+    h5,
+    h6 {
       margin-top: 0;
       margin-bottom: 16px;
       color: #1a1a1a;
       font-weight: 600;
     }
-    
-    h1 { font-size: 2em; }
-    h2 { font-size: 1.5em; }
-    h3 { font-size: 1.25em; }
-    
+
+    h1 {
+      font-size: 2em;
+    }
+
+    h2 {
+      font-size: 1.5em;
+    }
+
+    h3 {
+      font-size: 1.25em;
+    }
+
     p {
       margin-bottom: 16px;
     }
-    
+
     code {
       background: rgba(45, 90, 45, 0.12);
       padding: 2px 6px;
       border-radius: 6px;
       font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
     }
-    
+
     pre {
       background: #f6f8fa;
       border-radius: 6px;
@@ -54,12 +74,12 @@ const createSourceDocument = (markdown: string) => {
       overflow-x: auto;
       margin-bottom: 16px;
     }
-    
+
     pre code {
       background: none;
       padding: 0;
     }
-    
+
     blockquote {
       border-left: 4px solid #1a1a1a;
       margin: 0 0 16px 0;
@@ -67,27 +87,30 @@ const createSourceDocument = (markdown: string) => {
       opacity: 0.9;
       font-style: italic;
     }
-    
-    ul, ol {
+
+    ul,
+    ol {
       margin-bottom: 16px;
       padding-left: 24px;
     }
-    
+
     li {
       margin-bottom: 4px;
     }
-    
+
     hr {
       border: none;
       border-top: 1px solid #e1e4e8;
       margin: 24px 0;
     }
-    
+
     .MathJax {
       font-size: 1.1em !important;
     }
   </style>
+
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
   <script>
     window.MathJax = {
       tex: {
@@ -105,26 +128,86 @@ const createSourceDocument = (markdown: string) => {
       }
     };
   </script>
+
   <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
 </head>
 <body>
   <div id="content"></div>
+
   <script>
-    try {
-      const markdown = ${JSON.stringify(markdown)};
-      const html = window.marked.parse(markdown);
-      const content = document.getElementById('content');
-      content.innerHTML = html;
+    function escapeHtml(text) {
+      return text
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
+    }
+
+    function protectMath(source) {
+      var math = [];
+
+      function store(match) {
+        var token = 'MATHBLOCK' + math.length + 'TOKEN';
+        math.push(match);
+        return token;
+      }
+
+      // Protect outer math wrappers FIRST to prevent nesting
+      var protectedSource = source
+        .replace(/\\\[[\s\S]*?\\\]/g, store)  // \[...\] display math
+        .replace(/\$\$[\s\S]*?\$\$/g, store)  // $$...$$ display math
+        .replace(/\\\([\s\S]*?\\\)/g, store)  // \(...\) inline math
+        .replace(/\$(?!\$)(?:\\.|[^$\n])+\$/g, store)  // $...$ inline math
+        .replace(/\\begin\{([a-zA-Z*]+)\}[\s\S]*?\\end\{\1\}/g, store);  // standalone environments
+
+      return {
+        protectedSource: protectedSource,
+        math: math
+      };
+    }
+
+    function restoreMath(html, math) {
+      // Restore repeatedly until no tokens remain (handles nested cases)
+      var restoredHtml = html;
+      var hasTokens = true;
       
-      // Typeset MathJax after content is loaded
+      while (hasTokens) {
+        hasTokens = false;
+        restoredHtml = restoredHtml.replace(/MATHBLOCK(\d+)TOKEN/g, function (_, index) {
+          hasTokens = true;
+          return escapeHtml(math[Number(index)]);
+        });
+      }
+      
+      return restoredHtml;
+    }
+
+    try {
+      var markdown = ${JSON.stringify(markdown)};
+      var protectedMath = protectMath(markdown);
+      var html = window.marked.parse(protectedMath.protectedSource);
+      html = restoreMath(html, protectedMath.math);
+
+      // Safety check: log error if any tokens remain
+      if (/MATHBLOCK\d+TOKEN/.test(html)) {
+        console.error('ERROR: Math tokens still present after restore:', html);
+        throw new Error('Math protection system failed - tokens still present');
+      }
+
+      // Debug: log final HTML
+      console.log('Final HTML before innerHTML:', html);
+
+      var content = document.getElementById('content');
+      content.innerHTML = html;
+
       if (window.MathJax && window.MathJax.typesetPromise) {
-        window.MathJax.typesetPromise([content]).catch(function(error) {
+        window.MathJax.typesetPromise([content]).catch(function (error) {
           console.error('MathJax typeset failed:', error);
         });
       }
     } catch (error) {
       console.error('Markdown parsing failed:', error);
-      document.getElementById('content').innerHTML = '<p>Error rendering markdown</p>';
+      document.getElementById('content').innerHTML =
+        '<p>Error rendering markdown</p>';
     }
   </script>
 </body>
@@ -138,11 +221,12 @@ const MarkdownMathPreview = ({ markdown, className = '' }: MarkdownMathPreviewPr
             srcDoc={createSourceDocument(markdown)}
             className={`w-full rounded-xl border border-gray-300 bg-gray-50 ${className}`}
             style={{ 
-                minHeight: '400px',
                 width: '100%',
                 border: '1px solid #d1d5db',
                 borderRadius: '12px',
-                backgroundColor: '#f9fafb'
+                backgroundColor: '#f9fafb',
+                // minHeight: '70vh',
+                height: '100%',
             }}
         />
     );

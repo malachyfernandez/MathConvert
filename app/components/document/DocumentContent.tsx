@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ScrollView, View } from 'react-native';
+import { LayoutChangeEvent, View } from 'react-native';
 import Column from '../layout/Column';
 import PoppinsText from '../ui/text/PoppinsText';
 import AppButton from '../ui/buttons/AppButton';
@@ -19,12 +19,14 @@ interface DocumentContentProps {
     onDeletePage: (pageId: string) => void;
 }
 
-const DocumentContent = ({ documentTitle, activePage, onReplacePage, onDeletePage }: DocumentContentProps) => {
+const DocumentContent = ({ documentTitle, activePage, onReplacePage }: DocumentContentProps) => {
     const convertMathImageToMarkdown = useAction(api.mathAi.convertMathImageToMarkdown);
     const [markdownDraft, setMarkdownDraft] = useState(activePage.markdown);
     const [activeTab, setActiveTab] = useState('editor');
     const [isGenerating, setIsGenerating] = useState(false);
     const [errorMessage, setErrorMessage] = useState('');
+    const [headerHeight, setHeaderHeight] = useState(0);
+    const [footerHeight, setFooterHeight] = useState(0);
 
     const hasChanges = markdownDraft !== activePage.markdown;
 
@@ -32,6 +34,14 @@ const DocumentContent = ({ documentTitle, activePage, onReplacePage, onDeletePag
     useEffect(() => {
         setMarkdownDraft(activePage.markdown);
     }, [activePage.markdown]);
+
+    const handleHeaderLayout = (event: LayoutChangeEvent) => {
+        setHeaderHeight(event.nativeEvent.layout.height);
+    };
+
+    const handleFooterLayout = (event: LayoutChangeEvent) => {
+        setFooterHeight(event.nativeEvent.layout.height);
+    };
 
     const handleInitialGeneration = async () => {
         if (!activePage.imageUrl) {
@@ -86,25 +96,41 @@ const DocumentContent = ({ documentTitle, activePage, onReplacePage, onDeletePag
                         onTabChange={setActiveTab}
                         hasChanges={hasChanges}
                         onSave={() => handleSaveMarkdown(markdownDraft)}
+                        onLayout={handleHeaderLayout}
                     />
 
                     {/* Scrollable Content Section */}
-                    <ScrollView className='flex-1' style={{ paddingTop: 80, paddingBottom: 200 }}>
-                        <Column gap={4} className='p-4'>
+                    {/* <ScrollView
+                        className='h-full bg-accent-hover'
+                    // style={{ paddingTop: 80, paddingBottom: 200 }}
+                    > */}
+                    {/* <View className='h-full bg-l'>
+                            <PoppinsText className='text-lg'>No markdown yet</PoppinsText>
+                        </View> */}
+                    <View className='flex-1' style={{ paddingTop: headerHeight, paddingBottom: footerHeight }}>
+                        <Column gap={4} className='flex-1'>
                             <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1">
-                                <Tabs.Content value="editor">
-                                    <ContentEditor
-                                        markdown={markdownDraft}
-                                        onChange={setMarkdownDraft}
-                                    />
+                                <Tabs.Content value="editor" className='flex-1' style={{ minHeight: 0 }}>
+                                    <View className='flex-1 bg-accent-hover' style={{ minHeight: 0 }}>
+                                        <ContentEditor
+                                            markdown={markdownDraft}
+                                            onChange={setMarkdownDraft}
+                                        />
+                                        {/* <PoppinsText>Editor content</PoppinsText> */}
+                                    </View>
                                 </Tabs.Content>
-                                
-                                <Tabs.Content value="preview">
-                                    <ContentPreview markdown={markdownDraft} />
+
+                                <Tabs.Content value="preview" className='flex-1' style={{ minHeight: 0 }}>
+                                    <View className='flex-1 bg-accent-hover' style={{ minHeight: 0 }}>
+                                        <ContentPreview markdown={markdownDraft} />
+                                    </View>
                                 </Tabs.Content>
                             </Tabs>
+
                         </Column>
-                    </ScrollView>
+                    </View>
+
+
 
                     {/* Sticky AI Section */}
                     <AiConversionPanel
@@ -112,6 +138,7 @@ const DocumentContent = ({ documentTitle, activePage, onReplacePage, onDeletePag
                         page={activePage}
                         onUpdatePage={onReplacePage}
                         onUpdateMarkdown={setMarkdownDraft}
+                        onLayout={handleFooterLayout}
                     />
                 </>
             ) : (
@@ -124,7 +151,7 @@ const DocumentContent = ({ documentTitle, activePage, onReplacePage, onDeletePag
                         <PoppinsText varient='subtext' className='text-center'>
                             Click to generate LaTeX from handwritten math image.
                         </PoppinsText>
-                        <AppButton 
+                        <AppButton
                             variant='green'
                             onPress={handleInitialGeneration}
                             className='h-12 w-40'

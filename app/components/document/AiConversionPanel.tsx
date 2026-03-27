@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View } from 'react-native';
+import { LayoutChangeEvent, View } from 'react-native';
 import { BlurView } from 'expo-blur';
 import Column from '../layout/Column';
 import PoppinsText from '../ui/text/PoppinsText';
@@ -9,16 +9,16 @@ import { MathDocumentPage } from 'types/mathDocuments';
 import { generateId } from 'utils/generateId';
 import AiPromptInput from './AiPromptInput';
 import FollowUpHistory from './FollowUpHistory';
-import { Image } from 'react-native';
 
 interface AiConversionPanelProps {
     documentTitle: string;
     page: MathDocumentPage;
     onUpdatePage: (nextPage: MathDocumentPage, description: string) => void;
     onUpdateMarkdown: (markdown: string) => void;
+    onLayout?: (event: LayoutChangeEvent) => void;
 }
 
-const AiConversionPanel = ({ documentTitle, page, onUpdatePage, onUpdateMarkdown }: AiConversionPanelProps) => {
+const AiConversionPanel = ({ page, onUpdatePage, onUpdateMarkdown, onLayout }: AiConversionPanelProps) => {
     const convertMathImageToMarkdown = useAction(api.mathAi.convertMathImageToMarkdown);
     const [prompt, setPrompt] = useState('');
     const [isGenerating, setIsGenerating] = useState(false);
@@ -78,7 +78,7 @@ const AiConversionPanel = ({ documentTitle, page, onUpdatePage, onUpdateMarkdown
     };
 
     return (
-        <View className='absolute bottom-0 left-0 right-0'>
+        <View className='absolute bottom-0 left-0 right-0' onLayout={onLayout}>
             <BlurView 
                 intensity={20} 
                 tint='light'

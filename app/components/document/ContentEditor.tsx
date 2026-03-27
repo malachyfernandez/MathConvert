@@ -1,6 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { TextInput, View, Text, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
-import PoppinsText from '../ui/text/PoppinsText';
+import { LayoutChangeEvent, TextInput, View, Text, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
 
 interface ContentEditorProps {
     markdown: string;
@@ -9,9 +8,30 @@ interface ContentEditorProps {
 
 const ContentEditor = ({ markdown, onChange }: ContentEditorProps) => {
     const [lines, setLines] = useState<string[]>(() => markdown.split('\n'));
-    const [isFocused, setIsFocused] = useState(false);
     const scrollViewRef = useRef<ScrollView>(null);
-    const textInputRef = useRef<TextInput>(null);
+    const [renderedContentHeight, setRenderedContentHeight] = useState(0);
+    const [containerHeight, setContainerHeight] = useState(0);
+    const renderedContentHeightRef = useRef(0);
+    const containerHeightRef = useRef(0);
+
+    const lineHeight = 24;
+    const editorPadding = 16;
+    const minimumEditorHeight = lineHeight * 10 + editorPadding * 2;
+    const editorHeight = Math.max(renderedContentHeight + editorPadding * 2, containerHeight, minimumEditorHeight);
+
+    // Shared text style for perfect alignment between TextInput and visual overlay
+    const editorTextStyle = {
+        fontFamily: Platform.select({
+            ios: 'Menlo',
+            android: 'monospace',
+            web: 'monospace',
+            default: 'monospace',
+        }),
+        fontSize: 16,
+        lineHeight,
+        fontWeight: '400' as const,
+        includeFontPadding: false,
+    };
 
     // Update lines when markdown changes externally
     useEffect(() => {
@@ -19,70 +39,277 @@ const ContentEditor = ({ markdown, onChange }: ContentEditorProps) => {
         setLines(newLines);
     }, [markdown]);
 
-    // Parse line into segments with syntax highlighting
-    const parseLineWithHighlighting = (line: string): Array<{text: string, color: string}> => {
-        const segments: Array<{text: string, color: string}> = [];
-        let currentIndex = 0;
-        
-        // Helper functions
-        const isHeaderLine = (text: string): boolean => {
-            return /^#{1,6}\s/.test(text);
-        };
+    // Types and constants for stateful parser
+type Segment = { text: string; color: string };
+type ParserState = { closingDelimiter: string } | null;
 
-        const isListItem = (text: string): boolean => {
-            return /^\s*[-*+]\s|^\s*\d+\.\s/.test(text);
-        };
-        
-        // Regex to find LaTeX content (inline math, display math, and commands)
-        const latexRegex = /(\$[^$\n]*\$|\\[a-zA-Z]+(?:\{[^}]*\}|_\{[^}]*\}|\^{[^}]*\})?|\\begin\{[^}]+\}|\\end\{[^}]+\})/g;
-        let match;
-        
-        while ((match = latexRegex.exec(line)) !== null) {
-            // Add text before LaTeX match
-            if (match.index > currentIndex) {
-                const beforeText = line.substring(currentIndex, match.index);
-                if (beforeText) {
-                    segments.push({
-                        text: beforeText,
-                        color: isHeaderLine(beforeText.trim()) ? '#059669' : 
-                               isListItem(beforeText.trim()) ? '#DC2626' : '#1F2937'
-                    });
-                }
-            }
-            
-            // Add LaTeX content
-            const latexContent = match[0];
-            segments.push({
-                text: latexContent,
-                color: '#8B5CF6' // Purple for LaTeX
-            });
-            
-            currentIndex = match.index + latexContent.length;
-        }
-        
-        // Add remaining text after last LaTeX match
-        if (currentIndex < line.length) {
-            const remainingText = line.substring(currentIndex);
-            if (remainingText) {
-                segments.push({
-                    text: remainingText,
-                    color: isHeaderLine(remainingText.trim()) ? '#059669' : 
-                           isListItem(remainingText.trim()) ? '#DC2626' : '#1F2937'
-                });
-            }
-        }
-        
-        // If no LaTeX found, check for headers/lists on the whole line
-        if (segments.length === 0) {
-            segments.push({
-                text: line,
-                color: isHeaderLine(line) ? '#059669' : 
-                       isListItem(line) ? '#DC2626' : '#1F2937'
-            });
-        }
-        
-        return segments.length > 0 ? segments : [{text: line || ' ', color: '#1F2937'}];
+const LATEX_COLOR = '#8B5CF6';
+const HEADER_COLOR = '#059669';
+const LIST_COLOR = '#DC2626';
+const TEXT_COLOR = '#1F2937';
+
+const isHeaderLine = (text: string): boolean => /^#{1,6}\s/.test(text);
+
+const isListItem = (text: string): boolean =>
+  /^\s*[-*+]\s|^\s*\d+\.\s/.test(text);
+
+const getBaseColor = (line: string): string =>
+  isHeaderLine(line)
+    ? HEADER_COLOR
+    : isListItem(line)
+      ? LIST_COLOR
+      : TEXT_COLOR;
+
+const isEscaped = (text: string, index: number): boolean => {
+  let backslashCount = 0;
+
+  for (let i = index - 1; i >= 0 && text[i] === '\\'; i--) {
+    backslashCount++;
+  }
+
+  return backslashCount % 2 === 1;
+};
+
+const findUnescapedSingleDollar = (
+  text: string,
+  fromIndex: number
+): number => {
+  let index = text.indexOf('$', fromIndex);
+
+  while (index !== -1) {
+    const isDoubleDollar = text[index - 1] === '$' || text[index + 1] === '$';
+
+    if (!isEscaped(text, index) && !isDoubleDollar) {
+      return index;
+    }
+
+    index = text.indexOf('$', index + 1);
+  }
+
+  return -1;
+};
+
+const findUnescapedDoubleDollar = (
+  text: string,
+  fromIndex: number
+): number => {
+  let index = text.indexOf('$$', fromIndex);
+
+  while (index !== -1) {
+    if (!isEscaped(text, index)) {
+      return index;
+    }
+
+    index = text.indexOf('$$', index + 2);
+  }
+
+  return -1;
+};
+
+type LatexStart =
+  | { index: number; type: 'paren' }
+  | { index: number; type: 'bracket' }
+  | { index: number; type: 'doubleDollar' }
+  | { index: number; type: 'singleDollar' }
+  | { index: number; type: 'begin'; env: string; raw: string }
+  | { index: number; type: 'command'; raw: string };
+
+const findNextLatexStart = (
+  line: string,
+  fromIndex: number
+): LatexStart | null => {
+  const candidates: LatexStart[] = [];
+
+  const parenIndex = line.indexOf('\\(', fromIndex);
+  if (parenIndex !== -1) {
+    candidates.push({ index: parenIndex, type: 'paren' });
+  }
+
+  const bracketIndex = line.indexOf('\\[', fromIndex);
+  if (bracketIndex !== -1) {
+    candidates.push({ index: bracketIndex, type: 'bracket' });
+  }
+
+  const doubleDollarIndex = findUnescapedDoubleDollar(line, fromIndex);
+  if (doubleDollarIndex !== -1) {
+    candidates.push({ index: doubleDollarIndex, type: 'doubleDollar' });
+  }
+
+  const singleDollarIndex = findUnescapedSingleDollar(line, fromIndex);
+  if (singleDollarIndex !== -1) {
+    candidates.push({ index: singleDollarIndex, type: 'singleDollar' });
+  }
+
+  const beginRegex = /\\begin\{([^}]+)\}/g;
+  beginRegex.lastIndex = fromIndex;
+  const beginMatch = beginRegex.exec(line);
+
+  if (beginMatch) {
+    candidates.push({
+      index: beginMatch.index,
+      type: 'begin',
+      env: beginMatch[1],
+      raw: beginMatch[0],
+    });
+  }
+
+  const commandRegex =
+    /\\[a-zA-Z]+(?:\{[^}]*\}|_\{[^}]*\}|\^\{[^}]*\})?/g;
+  commandRegex.lastIndex = fromIndex;
+  const commandMatch = commandRegex.exec(line);
+
+  if (commandMatch) {
+    candidates.push({
+      index: commandMatch.index,
+      type: 'command',
+      raw: commandMatch[0],
+    });
+  }
+
+  if (candidates.length === 0) {
+    return null;
+  }
+
+  const priority: Record<LatexStart['type'], number> = {
+    paren: 0,
+    bracket: 0,
+    doubleDollar: 0,
+    singleDollar: 0,
+    begin: 1,
+    command: 2,
+  };
+
+  candidates.sort(
+    (a, b) => a.index - b.index || priority[a.type] - priority[b.type]
+  );
+
+  return candidates[0];
+};
+
+const findClosingDelimiter = (
+  line: string,
+  closingDelimiter: string,
+  fromIndex: number
+): number => {
+  if (closingDelimiter === '$$') {
+    return findUnescapedDoubleDollar(line, fromIndex);
+  }
+
+  if (closingDelimiter === '$') {
+    return findUnescapedSingleDollar(line, fromIndex);
+  }
+
+  return line.indexOf(closingDelimiter, fromIndex);
+};
+
+const createLineParser = () => {
+  let state: ParserState = null;
+
+  return (line: string): Segment[] => {
+    const segments: Segment[] = [];
+    const baseColor = getBaseColor(line);
+    let cursor = 0;
+
+    const pushPlain = (text: string): void => {
+      if (text) {
+        segments.push({ text, color: baseColor });
+      }
     };
+
+    const pushLatex = (text: string): void => {
+      if (text) {
+        segments.push({ text, color: LATEX_COLOR });
+      }
+    };
+
+    if (state) {
+      const endIndex = findClosingDelimiter(line, state.closingDelimiter, 0);
+
+      if (endIndex === -1) {
+        return [{ text: line || ' ', color: LATEX_COLOR }];
+      }
+
+      const end = endIndex + state.closingDelimiter.length;
+      pushLatex(line.slice(0, end));
+      cursor = end;
+      state = null;
+    }
+
+    while (cursor < line.length) {
+      const next = findNextLatexStart(line, cursor);
+
+      if (!next) {
+        pushPlain(line.slice(cursor));
+        break;
+      }
+
+      if (next.index > cursor) {
+        pushPlain(line.slice(cursor, next.index));
+      }
+
+      if (next.type === 'command') {
+        pushLatex(next.raw);
+        cursor = next.index + next.raw.length;
+        continue;
+      }
+
+      let closingDelimiter = '';
+      let tokenLength = 0;
+
+      switch (next.type) {
+        case 'paren':
+          closingDelimiter = '\\)';
+          tokenLength = 2;
+          break;
+        case 'bracket':
+          closingDelimiter = '\\]';
+          tokenLength = 2;
+          break;
+        case 'doubleDollar':
+          closingDelimiter = '$$';
+          tokenLength = 2;
+          break;
+        case 'singleDollar':
+          closingDelimiter = '$';
+          tokenLength = 1;
+          break;
+        case 'begin':
+          closingDelimiter = `\\end{${next.env}}`;
+          tokenLength = next.raw.length;
+          break;
+      }
+
+      const endIndex = findClosingDelimiter(
+        line,
+        closingDelimiter,
+        next.index + tokenLength
+      );
+
+      if (endIndex === -1) {
+        pushLatex(line.slice(next.index));
+        state = { closingDelimiter };
+        cursor = line.length;
+        break;
+      }
+
+      const end = endIndex + closingDelimiter.length;
+      pushLatex(line.slice(next.index, end));
+      cursor = end;
+    }
+
+    if (segments.length === 0) {
+      segments.push({
+        text: line || ' ',
+        color: state ? LATEX_COLOR : baseColor,
+      });
+    }
+
+    return segments;
+  };
+};
+
+    // Create parser instance for this component
+    const parseLineWithHighlighting = createLineParser();
 
     // Handle text changes
     const handleTextChange = (text: string) => {
@@ -91,13 +318,24 @@ const ContentEditor = ({ markdown, onChange }: ContentEditorProps) => {
         onChange(text);
     };
 
-    // Handle focus
-    const handleFocus = () => {
-        setIsFocused(true);
+    const handleContainerLayout = (nextHeight: number) => {
+        if (Math.abs(containerHeightRef.current - nextHeight) < 1) {
+            return;
+        }
+
+        containerHeightRef.current = nextHeight;
+        setContainerHeight(nextHeight);
     };
 
-    const handleBlur = () => {
-        setIsFocused(false);
+    const handleRenderedContentLayout = (event: LayoutChangeEvent) => {
+        const nextHeight = event.nativeEvent.layout.height;
+
+        if (Math.abs(renderedContentHeightRef.current - nextHeight) < 1) {
+            return;
+        }
+
+        renderedContentHeightRef.current = nextHeight;
+        setRenderedContentHeight(nextHeight);
     };
 
     return (
@@ -105,32 +343,36 @@ const ContentEditor = ({ markdown, onChange }: ContentEditorProps) => {
             behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
             className='flex-1'
         >
-            <View className='flex-1 border border-subtle-border bg-background rounded-lg overflow-hidden'>
+            <View
+                className='flex-1 border border-subtle-border bg-background rounded-lg overflow-hidden'
+                onLayout={(event) => handleContainerLayout(event.nativeEvent.layout.height)}
+            >
                 <ScrollView
                     ref={scrollViewRef}
                     className='flex-1'
-                    nestedScrollEnabled={true}
                     showsVerticalScrollIndicator={true}
+                    contentContainerStyle={{ flexGrow: 1 }}
+                    keyboardShouldPersistTaps='handled'
                 >
-                    <View className='flex-1 p-4 relative'>
+                    <View className='relative' style={{ minHeight: editorHeight }}>
                         {/* Hidden text input for actual editing */}
                         <TextInput
-                            ref={textInputRef}
                             value={markdown}
                             onChangeText={handleTextChange}
-                            onFocus={handleFocus}
-                            onBlur={handleBlur}
                             placeholder='Your markdown and LaTeX will appear here...'
                             placeholderTextColor='transparent'
                             multiline={true}
                             autoCapitalize='none'
                             autoCorrect={false}
                             spellCheck={false}
+                            scrollEnabled={false}
                             selectionColor='rgba(59, 130, 246, 0.3)'
-                            className='absolute inset-0 p-4'
+                            className='absolute inset-0'
                             style={{
-                                fontFamily: 'monospace',
-                                lineHeight: 24,
+                                padding: editorPadding,
+                                minHeight: editorHeight,
+                                height: editorHeight,
+                                ...editorTextStyle,
                                 color: 'transparent', // Text completely transparent
                                 backgroundColor: 'transparent',
                                 textAlignVertical: 'top',
@@ -140,30 +382,39 @@ const ContentEditor = ({ markdown, onChange }: ContentEditorProps) => {
                         />
 
                         {/* Visual display with syntax highlighting */}
-                        <View 
-                            className='relative'
-                            style={{ 
-                                minHeight: 24 * Math.max(lines.length, 10),
-                            }}
-                            pointerEvents='none'
-                        >
-                            {lines.map((line, index) => (
-                                <View key={index} className='flex-row flex-wrap' style={{ minHeight: 24 }}>
-                                    {parseLineWithHighlighting(line).map((segment, segIndex) => (
-                                        <Text
-                                            key={segIndex}
-                                            className='text-base'
-                                            style={{
-                                                color: segment.color,
-                                                lineHeight: 24,
-                                                fontFamily: 'monospace',
-                                            }}
-                                        >
-                                            {segment.text}
-                                        </Text>
-                                    ))}
+                        <View className='absolute inset-0' pointerEvents='none'>
+                            <View
+                                className='relative'
+                                style={{
+                                    padding: editorPadding,
+                                    minHeight: editorHeight,
+                                }}
+                            >
+                                <View onLayout={handleRenderedContentLayout}>
+                                    {lines.map((line: string, index: number) => {
+                                        const segments = parseLineWithHighlighting(line);
+
+                                        return (
+                                            <View key={index} style={{ minHeight: lineHeight }}>
+                                                <Text style={editorTextStyle}>
+                                                    {segments.length > 0 ? (
+                                                        segments.map((segment: Segment, segIndex: number) => (
+                                                            <Text
+                                                                key={segIndex}
+                                                                style={[editorTextStyle, { color: segment.color }]}
+                                                            >
+                                                                {segment.text || ' '}
+                                                            </Text>
+                                                        ))
+                                                    ) : (
+                                                        <Text style={[editorTextStyle, { color: TEXT_COLOR }]}>{' '}</Text>
+                                                    )}
+                                                </Text>
+                                            </View>
+                                        );
+                                    })}
                                 </View>
-                            ))}
+                            </View>
                         </View>
                     </View>
                 </ScrollView>

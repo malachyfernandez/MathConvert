@@ -102,19 +102,76 @@
 <body>
   <div id="content"></div>
   <script>
+    function escapeHtml(text) {
+      return text
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
+    }
+
+    function protectMath(source) {
+      var math = [];
+
+      function store(match) {
+        var token = 'MATHBLOCK' + math.length + 'TOKEN';
+        math.push(match);
+        return token;
+      }
+
+      // Protect outer math wrappers FIRST to prevent nesting
+      var protectedSource = source
+        .replace(/\\\[[\s\S]*?\\\]/g, store)  // \[...\] display math
+        .replace(/\$\$[\s\S]*?\$\$/g, store)  // $$...$$ display math
+        .replace(/\\\([\s\S]*?\\\)/g, store)  // \(...\) inline math
+        .replace(/\$(?!\$)(?:\\.|[^$\n])+\$/g, store)  // $...$ inline math
+        .replace(/\\begin\{([a-zA-Z*]+)\}[\s\S]*?\\end\{\1\}/g, store);  // standalone environments
+
+      return {
+        protectedSource: protectedSource,
+        math: math
+      };
+    }
+
+    function restoreMath(html, math) {
+      // Restore repeatedly until no tokens remain (handles nested cases)
+      var restoredHtml = html;
+      var hasTokens = true;
+      
+      while (hasTokens) {
+        hasTokens = false;
+        restoredHtml = restoredHtml.replace(/MATHBLOCK(\d+)TOKEN/g, function (_, index) {
+          hasTokens = true;
+          return escapeHtml(math[Number(index)]);
+        });
+      }
+      
+      return restoredHtml;
+    }
+
     try {
-      const markdown = `# Math Test
+      const markdown = String.raw`# Math Test
 
 This is a test of inline math: $x^2 + y^2 = z^2$
 
 And display math:
 
-$$\\frac{d}{dx}(x^2) = 2x$$
+$$\frac{d}{dx}(x^2) = 2x$$
 
-## More Examples
+## Complex Examples
 
-- The quadratic formula: $x = \\frac{-b \\pm \\sqrt{b^2 - 4ac}}{2a}$
-- Euler's identity: $e^{i\\pi} + 1 = 0$
+### Matrix with LaTeX environments
+\[
+\begin{pmatrix}
+x_{11} & x_{12} \\
+x_{21} & x_{22}
+\end{pmatrix}
+\]
+
+### Various math notations
+- The quadratic formula: $x = \frac{-b \pm \sqrt{b^2 - 4ac}}{2a}$
+- Euler's identity: $e^{i\pi} + 1 = 0$
+- Inline with parentheses: \(\sum_{i=1}^{n} i = \frac{n(n+1)}{2}\)
+- Display with brackets: \[\int_0^1 x^2 dx = \frac{1}{3}\]
 
 ### Code Example
 
@@ -126,9 +183,38 @@ function add(a, b) {
 }
 \`\`\`
 
-> This is a blockquote with math: $\\sum_{i=1}^{n} i = \\frac{n(n+1)}{2}$`;
+> This is a blockquote with math: $\sum_{i=1}^{n} i = \frac{n(n+1)}{2}$
+
+### More complex LaTeX
+\[
+\begin{bmatrix}
+a & b \\
+c & d
+\end{bmatrix}
+\begin{bmatrix}
+x \\
+y
+\end{bmatrix}
+=
+\begin{bmatrix}
+ax + by \\
+cx + dy
+\end{bmatrix}
+\]`;
       
-      const html = window.marked.parse(markdown);
+      var protectedMath = protectMath(markdown);
+      var html = window.marked.parse(protectedMath.protectedSource);
+      html = restoreMath(html, protectedMath.math);
+
+      // Safety check: log error if any tokens remain
+      if (/MATHBLOCK\d+TOKEN/.test(html)) {
+        console.error('ERROR: Math tokens still present after restore:', html);
+        throw new Error('Math protection system failed - tokens still present');
+      }
+
+      // Debug: log final HTML
+      console.log('Final HTML before innerHTML:', html);
+      
       const content = document.getElementById('content');
       content.innerHTML = html;
       

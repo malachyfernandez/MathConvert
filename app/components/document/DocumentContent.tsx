@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { LayoutChangeEvent, View } from 'react-native';
+import { Spinner } from 'heroui-native';
 import Column from '../layout/Column';
+import Row from '../layout/Row';
 import PoppinsText from '../ui/text/PoppinsText';
 import AppButton from '../ui/buttons/AppButton';
 import { Tabs } from 'heroui-native';
@@ -27,6 +29,7 @@ const DocumentContent = ({ documentTitle, activePage, onReplacePage }: DocumentC
     const [errorMessage, setErrorMessage] = useState('');
     const [headerHeight, setHeaderHeight] = useState(0);
     const [footerHeight, setFooterHeight] = useState(0);
+    const [dotCount, setDotCount] = useState(1);
 
     const hasChanges = markdownDraft !== activePage.markdown;
 
@@ -34,6 +37,18 @@ const DocumentContent = ({ documentTitle, activePage, onReplacePage }: DocumentC
     useEffect(() => {
         setMarkdownDraft(activePage.markdown);
     }, [activePage.markdown]);
+
+    // Animate dots during generation
+    useEffect(() => {
+        if (isGenerating) {
+            const interval = setInterval(() => {
+                setDotCount((prev) => (prev % 3) + 1);
+            }, 500);
+            return () => clearInterval(interval);
+        } else {
+            setDotCount(1);
+        }
+    }, [isGenerating]);
 
     const handleHeaderLayout = (event: LayoutChangeEvent) => {
         setHeaderHeight(event.nativeEvent.layout.height);
@@ -148,19 +163,23 @@ const DocumentContent = ({ documentTitle, activePage, onReplacePage }: DocumentC
                 <View className='flex-1 items-center justify-center p-8'>
                     <Column className='items-center gap-4' style={{ maxWidth: '700px' }}>
                         <PoppinsText weight='bold' className='text-xl text-center'>
-                            Convert to LaTeX
+                            {isGenerating ? `Converting${'.'.repeat(dotCount)}` : 'Convert to LaTeX'}
                         </PoppinsText>
                         <PoppinsText varient='subtext' className='text-center'>
-                            Click to generate LaTeX from handwritten math image.
+                            {isGenerating ? 'Generating LaTeX from your handwritten math image.' : 'Click to generate LaTeX from handwritten math image.'}
                         </PoppinsText>
                         <AppButton
-                            variant='green'
+                            variant={isGenerating ? 'grey' : 'green'}
                             onPress={handleInitialGeneration}
                             className='h-12 w-40'
+                            disabled={isGenerating}
                         >
-                            <PoppinsText weight='medium' color='white'>
-                                {isGenerating ? 'Generating...' : 'Generate LaTeX'}
-                            </PoppinsText>
+                            <Row className='items-center' gap={2}>
+                                {isGenerating && <Spinner size="sm" color="white" />}
+                                <PoppinsText weight='medium' color='white'>
+                                    Generate LaTeX
+                                </PoppinsText>
+                            </Row>
                         </AppButton>
 
                         {errorMessage ? <PoppinsText className='text-red-500 text-center mt-2'>{errorMessage}</PoppinsText> : null}

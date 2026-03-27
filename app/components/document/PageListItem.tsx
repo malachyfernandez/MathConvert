@@ -14,9 +14,17 @@ interface PageListItemProps {
 }
 
 const PageListItem = ({ page, isActive, onPress, onConfigure }: PageListItemProps) => {
+    const handlePress = () => {
+        if (isActive && onConfigure) {
+            onConfigure();
+        } else {
+            onPress();
+        }
+    };
+
     return (
         <TouchableOpacity
-            onPress={onPress}
+            onPress={handlePress}
             activeOpacity={0.85}
             className={`rounded-xl border p-3 ${isActive ? 'border-primary-accent bg-primary-accent/10' : 'border-subtle-border bg-inner-background'}`}
         >
@@ -26,16 +34,8 @@ const PageListItem = ({ page, isActive, onPress, onConfigure }: PageListItemProp
                         {page.title || `Page ${page.pageNumber}`}
                     </PoppinsText>
                 </Column>
-                {onConfigure && (
-                    <TouchableOpacity
-                        onPress={(event) => {
-                            event.stopPropagation();
-                            onConfigure();
-                        }}
-                        className='p-2'
-                    >
-                        <MonoIconsOptionsHorizontal className='text-text opacity-50' width={20} height={20} />
-                    </TouchableOpacity>
+                {isActive && onConfigure && (
+                    <MonoIconsOptionsHorizontal className='text-text opacity-50' width={20} height={20} />
                 )}
             </Row>
         </TouchableOpacity>

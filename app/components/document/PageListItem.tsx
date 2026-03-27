@@ -23,11 +23,7 @@ const PageListItem = ({ page, isActive, onPress, onConfigure }: PageListItemProp
             <Row className='items-center justify-between'>
                 <Column gap={1} className='flex-1'>
                     <PoppinsText weight='medium'>
-                        Page {page.pageNumber}
-                    </PoppinsText>
-                    <PoppinsText>{page.title || `Page ${page.pageNumber}`}</PoppinsText>
-                    <PoppinsText varient='subtext'>
-                        {page.imageUrl ? 'Image attached' : 'No image yet'}
+                        {page.title || `Page ${page.pageNumber}`}
                     </PoppinsText>
                 </Column>
                 {onConfigure && (

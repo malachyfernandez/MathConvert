@@ -18,7 +18,6 @@ interface PageConfigDialogProps {
 
 const PageConfigDialog = ({ page, isOpen, onOpenChange, onUpdate, onDelete }: PageConfigDialogProps) => {
     const [title, setTitle] = useState(page.title);
-    const [initialGuidance, setInitialGuidance] = useState(page.initialGuidance);
 
     useEffect(() => {
         if (!isOpen) {
@@ -26,14 +25,12 @@ const PageConfigDialog = ({ page, isOpen, onOpenChange, onUpdate, onDelete }: Pa
         }
 
         setTitle(page.title);
-        setInitialGuidance(page.initialGuidance);
     }, [isOpen, page]);
 
     const handleSave = () => {
         const updatedPage: MathDocumentPage = {
             ...page,
             title: title.trim() || page.title,
-            initialGuidance: initialGuidance.trim(),
         };
         
         onUpdate(updatedPage);
@@ -59,17 +56,6 @@ const PageConfigDialog = ({ page, isOpen, onOpenChange, onUpdate, onDelete }: Pa
                             <Column gap={1}>
                                 <PoppinsText weight='medium'>Page title</PoppinsText>
                                 <PoppinsTextInput value={title} onChangeText={setTitle} className='w-full border border-subtle-border bg-inner-background p-3' placeholder='Page title' />
-                            </Column>
-                            <Column gap={1}>
-                                <PoppinsText weight='medium'>Initial guidance</PoppinsText>
-                                <PoppinsTextInput
-                                    value={initialGuidance}
-                                    onChangeText={setInitialGuidance}
-                                    className='w-full border border-subtle-border bg-inner-background p-3 min-h-28'
-                                    multiline={true}
-                                    autoGrow={true}
-                                    placeholder='Optional guidance for AI conversion'
-                                />
                             </Column>
                             <Column gap={2}>
                                 {isValidTitle ? (

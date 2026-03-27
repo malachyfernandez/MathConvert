@@ -50,6 +50,7 @@ const AiConversionPanel = ({ page, onUpdatePage, onUpdateMarkdown, onLayout }: A
         try {
             setGeneratingPage(currentPage.id, true);
             setErrorMessage('');
+            setPrompt(''); // Clear text immediately when generation starts
 
             const result = await convertMathImageToMarkdown({
                 imageUrl: currentPage.imageUrl,
@@ -78,9 +79,8 @@ const AiConversionPanel = ({ page, onUpdatePage, onUpdateMarkdown, onLayout }: A
 
             onUpdatePage(nextPage, currentPage.markdown ? 'Applied AI follow-up to page' : 'Generated page markdown from image');
             
-            // Only clear prompt and update markdown if we're still on the same page
+            // Only update markdown if we're still on the same page
             if (page.id === currentPage.id) {
-                setPrompt('');
                 onUpdateMarkdown(result.markdown);
             }
         } catch (error) {

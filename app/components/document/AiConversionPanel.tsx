@@ -38,30 +38,34 @@ const AiConversionPanel = ({ page, onUpdatePage, onUpdateMarkdown, onLayout }: A
     };
 
     const handleGenerate = async () => {
-        if (!page.imageUrl) {
+        // Capture the current page data at the start of generation
+        const currentPage = page;
+        const currentPrompt = prompt;
+        
+        if (!currentPage.imageUrl) {
             setErrorMessage('Add an image before asking the AI to convert the page.');
             return;
         }
 
         try {
-            setGeneratingPage(page.id, true);
+            setGeneratingPage(currentPage.id, true);
             setErrorMessage('');
 
             const result = await convertMathImageToMarkdown({
-                imageUrl: page.imageUrl,
+                imageUrl: currentPage.imageUrl,
                 guidance: getContextualPrompt(),
-                currentMarkdown: page.markdown,
-                followUpPrompt: page.markdown ? prompt : undefined,
+                currentMarkdown: currentPage.markdown,
+                followUpPrompt: currentPage.markdown ? currentPrompt : undefined,
             });
 
             const nextPage: MathDocumentPage = {
-                ...page,
+                ...currentPage,
                 markdown: result.markdown,
                 lastAiPrompt: getContextualPrompt(),
                 lastGeneratedAt: Date.now(),
-                followUps: prompt.trim()
+                followUps: currentPrompt.trim()
                     ? [
-                          ...page.followUps,
+                          ...currentPage.followUps,
                           {
                               id: generateId(),
                               prompt: getContextualPrompt(),
@@ -69,16 +73,20 @@ const AiConversionPanel = ({ page, onUpdatePage, onUpdateMarkdown, onLayout }: A
                               resultingMarkdown: result.markdown,
                           },
                       ]
-                    : page.followUps,
+                    : currentPage.followUps,
             };
 
-            onUpdatePage(nextPage, page.markdown ? 'Applied AI follow-up to page' : 'Generated page markdown from image');
-            setPrompt('');
-            onUpdateMarkdown(result.markdown);
+            onUpdatePage(nextPage, currentPage.markdown ? 'Applied AI follow-up to page' : 'Generated page markdown from image');
+            
+            // Only clear prompt and update markdown if we're still on the same page
+            if (page.id === currentPage.id) {
+                setPrompt('');
+                onUpdateMarkdown(result.markdown);
+            }
         } catch (error) {
             setErrorMessage(error instanceof Error ? error.message : 'AI conversion failed.');
         } finally {
-            setGeneratingPage(page.id, false);
+            setGeneratingPage(currentPage.id, false);
         }
     };
 

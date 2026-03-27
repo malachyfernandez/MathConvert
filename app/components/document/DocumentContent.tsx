@@ -62,35 +62,42 @@ const DocumentContent = ({ documentTitle, activePage, onReplacePage }: DocumentC
     };
 
     const handleInitialGeneration = async () => {
-        if (!activePage.imageUrl) {
+        // Capture the current page data at the start of generation
+        const currentPage = activePage;
+        
+        if (!currentPage.imageUrl) {
             setErrorMessage('Add an image before asking the AI to convert the page.');
             return;
         }
 
         try {
-            setGeneratingPage(activePage.id, true);
+            setGeneratingPage(currentPage.id, true);
             setErrorMessage('');
 
             const result = await convertMathImageToMarkdown({
-                imageUrl: activePage.imageUrl,
+                imageUrl: currentPage.imageUrl,
                 guidance: 'Convert this handwritten math to LaTeX',
-                currentMarkdown: activePage.markdown,
+                currentMarkdown: currentPage.markdown,
                 followUpPrompt: undefined,
             });
 
             const nextPage = {
-                ...activePage,
+                ...currentPage,
                 markdown: result.markdown,
                 lastAiPrompt: 'Convert this handwritten math to LaTeX',
                 lastGeneratedAt: Date.now(),
             };
 
             onReplacePage(nextPage, 'Generated page markdown from image');
-            setMarkdownDraft(result.markdown);
+            
+            // Only update markdown draft if we're still on the same page
+            if (activePage.id === currentPage.id) {
+                setMarkdownDraft(result.markdown);
+            }
         } catch (error) {
             setErrorMessage(error instanceof Error ? error.message : 'AI conversion failed.');
         } finally {
-            setGeneratingPage(activePage.id, false);
+            setGeneratingPage(currentPage.id, false);
         }
     };
 

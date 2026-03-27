@@ -31,6 +31,7 @@
  * @props {string} className - Additional CSS classes for styling
  * @props {() => void} onPress - Function called when button is pressed
  * @props {boolean} dropShadow - Whether to show drop shadow (default: true)
+ * @props {boolean} disabled - Whether the button is disabled (default: false)
  * 
  * @variants
  * - outline-alt: Similar to outline but with lighter hover effect (default)
@@ -63,6 +64,7 @@ interface AppButtonProps {
     className?: string;
     onPress?: () => void;
     dropShadow?: boolean;
+    disabled?: boolean;
 }
 
 const AppButton = ({
@@ -70,7 +72,8 @@ const AppButton = ({
     variant = 'outline-alt',
     className = '',
     onPress,
-    dropShadow = true
+    dropShadow = true,
+    disabled = false
 }: AppButtonProps) => {
     const [isPressed, setIsPressed] = useState(false);
 
@@ -107,11 +110,12 @@ const AppButton = ({
     return (
 
         <TouchableOpacity
-            className={`${baseStyles} ${extraStyles} ${className} ${isPressed ? pressedStyles : ''}`}
-            onPressIn={() => setIsPressed(true)}
-            onPressOut={() => setIsPressed(false)}
-            onPress={onPress}
-            activeOpacity={0.8}
+            className={`${baseStyles} ${extraStyles} ${className} ${isPressed ? pressedStyles : ''} ${disabled ? 'opacity-50' : ''}`}
+            onPressIn={() => !disabled && setIsPressed(true)}
+            onPressOut={() => !disabled && setIsPressed(false)}
+            onPress={disabled ? undefined : onPress}
+            activeOpacity={disabled ? 1 : 0.8}
+            disabled={disabled}
         >
             <Row className="items-center justify-center w-full h-full" pointerEvents='none'>
                 {children}

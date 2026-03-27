@@ -1,14 +1,16 @@
 import React, { useState } from 'react';
 import { LayoutChangeEvent, View } from 'react-native';
 import { BlurView } from 'expo-blur';
+import { Spinner } from 'heroui-native';
 import Column from '../layout/Column';
+import Row from '../layout/Row';
 import PoppinsText from '../ui/text/PoppinsText';
 import { useAction } from 'convex/react';
 import { api } from '../../../convex/_generated/api';
 import { MathDocumentPage } from 'types/mathDocuments';
 import { generateId } from 'utils/generateId';
 import AiPromptInput from './AiPromptInput';
-import FollowUpHistory from './FollowUpHistory';
+import ChatOptionsDialog from './ChatOptionsDialog';
 
 interface AiConversionPanelProps {
     documentTitle: string;
@@ -86,7 +88,15 @@ const AiConversionPanel = ({ page, onUpdatePage, onUpdateMarkdown, onLayout }: A
             />
             <View className='relative bg-background/50 border-t border-subtle-border'>
                 <Column className='py-4' gap={3}>
-                    <PoppinsText weight='bold' varient='cardHeader' className='ml-2'>Chat with the AI</PoppinsText>
+                    <Row className='justify-between items-center px-2'>
+                        <PoppinsText weight='bold' varient='cardHeader'>Chat with the AI</PoppinsText>
+                        <ChatOptionsDialog 
+                            followUps={page.followUps} 
+                            page={page}
+                            onUpdatePage={onUpdatePage}
+                            onUpdateMarkdown={onUpdateMarkdown}
+                        />
+                    </Row>
                     
                     <AiPromptInput
                         page={page}
@@ -97,8 +107,6 @@ const AiConversionPanel = ({ page, onUpdatePage, onUpdateMarkdown, onLayout }: A
                     />
 
                     {errorMessage ? <PoppinsText className='text-red-500'>{errorMessage}</PoppinsText> : null}
-
-                    <FollowUpHistory followUps={page.followUps} />
                 </Column>
             </View>
         </View>

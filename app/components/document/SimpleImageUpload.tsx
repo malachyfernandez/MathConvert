@@ -2,7 +2,9 @@ import React, { useState } from 'react';
 import * as ImagePicker from 'expo-image-picker';
 import { useAction } from 'convex/react';
 import { api } from 'convex/_generated/api';
+import { Spinner } from 'heroui-native';
 import Column from '../layout/Column';
+import Row from '../layout/Row';
 import AppButton from '../ui/buttons/AppButton';
 import PoppinsText from '../ui/text/PoppinsText';
 import { prepareImageForUpload, UploadThingReactNativeFile } from '../../../utils/imageCompression';
@@ -62,19 +64,20 @@ const uploadFileToPresignedUrl = async (
 
 const SimpleImageUpload = ({ url, setUrl, buttonLabel = 'Upload Image', emptyLabel = 'Upload image', className = 'h-12 px-5' }: SimpleImageUploadProps) => {
     const [isUploading, setIsUploading] = useState(false);
+    const [isButtonClicked, setIsButtonClicked] = useState(false);
     const [error, setError] = useState('');
     const generatePublicImageUploadUrl = useAction(api.uploadthing.generatePublicImageUploadUrl);
 
     const handleFileUpload = async () => {
         try {
-            setIsUploading(true);
+            setIsButtonClicked(true);
             setError('');
             
             // Request media library permissions and launch image picker
             const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
             if (status !== 'granted') {
                 setError('Permission to access media library is required');
-                setIsUploading(false);
+                setIsButtonClicked(false);
                 return;
             }
 
@@ -87,6 +90,9 @@ const SimpleImageUpload = ({ url, setUrl, buttonLabel = 'Upload Image', emptyLab
             });
 
             if (!result.canceled && result.assets[0]) {
+                // Start uploading only after file is selected
+                setIsUploading(true);
+                
                 // Prepare image for upload
                 const preparedFile = await prepareImageForUpload(result.assets[0]);
                 
@@ -105,24 +111,32 @@ const SimpleImageUpload = ({ url, setUrl, buttonLabel = 'Upload Image', emptyLab
                 // Update URL state
                 setUrl(publicUrl);
                 setError('');
+            } else {
+                // User cancelled the file picker
+                setIsButtonClicked(false);
             }
         } catch (uploadError) {
             setError('Failed to upload image');
         } finally {
             setIsUploading(false);
+            setIsButtonClicked(false);
         }
     };
 
     return (
         <Column gap={2} className={className}>
             <AppButton 
-                variant='green' 
+                variant={isUploading || isButtonClicked ? 'grey' : 'green'} 
                 className={`h-12 px-5 ${className}`}
                 onPress={handleFileUpload}
+                disabled={isUploading || isButtonClicked}
             >
-                <PoppinsText weight='medium' color='white'>
-                    {isUploading ? 'Uploading...' : buttonLabel}
-                </PoppinsText>
+                <Row className='items-center gap-2'>
+                    {isUploading && <Spinner size="sm" color="white" />}
+                    <PoppinsText weight='medium' color='white'>
+                        {buttonLabel}
+                    </PoppinsText>
+                </Row>
             </AppButton>
             
             {error && (

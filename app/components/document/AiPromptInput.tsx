@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, TouchableOpacity, Image } from 'react-native';
+import { Spinner } from 'heroui-native';
 import Column from '../layout/Column';
 import Row from '../layout/Row';
 import PoppinsText from '../ui/text/PoppinsText';
@@ -33,13 +34,19 @@ const AiPromptInput = ({ page, prompt, onPromptChange, onSubmit, isGenerating }:
                 <TouchableOpacity 
                     onPress={onSubmit}
                     disabled={isGenerating}
-                    className='w-12 h-12 bg-primary-accent rounded-lg items-center justify-center'
+                    className={`w-12 h-12 rounded-lg items-center justify-center ${
+                        isGenerating ? 'bg-gray-400' : 'bg-primary-accent'
+                    }`}
                 >
-                    <Image 
-                        source={require('../../../assets/svgs/sendSVG-white.svg')}
-                        className='w-5 h-5'
-                        resizeMode='contain'
-                    />
+                    {isGenerating ? (
+                        <Spinner size="sm" color="white" />
+                    ) : (
+                        <Image 
+                            source={require('../../../assets/svgs/sendSVG-white.svg')}
+                            className='w-5 h-5'
+                            resizeMode='contain'
+                        />
+                    )}
                 </TouchableOpacity>
             </Row>
         </Column>

@@ -30,10 +30,18 @@ const DocumentHeader = ({ activeTab, onTabChange, hasChanges, onSave }: Document
                             <Tabs.List>
                                 <Tabs.Indicator />
                                 <Tabs.Trigger value="editor">
-                                    <Tabs.Label>Editor</Tabs.Label>
+                                    {({ isSelected }) => (
+                                        <Tabs.Label className={isSelected ? 'text-black font-medium' : 'text-gray-500'}>
+                                            Editor
+                                        </Tabs.Label>
+                                    )}
                                 </Tabs.Trigger>
                                 <Tabs.Trigger value="preview">
-                                    <Tabs.Label>Preview</Tabs.Label>
+                                    {({ isSelected }) => (
+                                        <Tabs.Label className={isSelected ? 'text-black font-medium' : 'text-gray-500'}>
+                                            Preview
+                                        </Tabs.Label>
+                                    )}
                                 </Tabs.Trigger>
                             </Tabs.List>
                         </Tabs>

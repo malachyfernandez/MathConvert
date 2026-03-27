@@ -166,7 +166,7 @@ const DocumentContent = ({ documentTitle, activePage, onReplacePage }: DocumentC
                             {isGenerating ? `Converting${'.'.repeat(dotCount)}` : 'Convert to LaTeX'}
                         </PoppinsText>
                         <PoppinsText varient='subtext' className='text-center'>
-                            {isGenerating ? 'Generating LaTeX from your handwritten math image.' : 'Click to generate LaTeX from handwritten math image.'}
+                            {isGenerating ? 'This will continue to happen in the background' : 'Click to generate LaTeX from handwritten math image.'}
                         </PoppinsText>
                         <AppButton
                             variant={isGenerating ? 'grey' : 'green'}

@@ -29,6 +29,8 @@ const AiPromptInput = ({ page, prompt, onPromptChange, onSubmit, isGenerating }:
                     className='flex-1 border border-subtle-border bg-background p-3 min-h-32'
                     multiline={true}
                     autoGrow={true}
+                    submitBehavior="submit"
+                    onSubmitEditing={onSubmit}
                 />
                 
                 <TouchableOpacity 

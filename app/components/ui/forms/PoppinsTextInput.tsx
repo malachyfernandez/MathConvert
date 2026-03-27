@@ -9,6 +9,9 @@ interface PoppinsTextInputProps extends TextInputProps {
     weight?: FontWeight;
     style?: TextStyle;
     autoGrow?: boolean;
+    onKeyDown?: React.KeyboardEventHandler<HTMLTextAreaElement>;
+    onSubmitEditing?: (event: any) => void;
+    submitBehavior?: 'submit' | 'newline';
 }
 
 const PoppinsTextInput = ({
@@ -19,6 +22,9 @@ const PoppinsTextInput = ({
     onChangeText,
     value,
     placeholder,
+    onKeyDown,
+    onSubmitEditing,
+    submitBehavior,
     ...props
 }: PoppinsTextInputProps) => {
     const [fontsLoaded] = useFonts({
@@ -71,6 +77,22 @@ const PoppinsTextInput = ({
                 onChange={(event) => {
                     resizeTextarea(event.currentTarget);
                     onChangeText?.(event.target.value);
+                }}
+                onKeyDown={(event) => {
+                    onKeyDown?.(event);
+
+                    if (event.defaultPrevented) {
+                        return;
+                    }
+
+                    if (submitBehavior === 'submit' && event.key === 'Enter' && !event.shiftKey) {
+                        event.preventDefault();
+                        onSubmitEditing?.({
+                            nativeEvent: {
+                                text: typeof value === 'string' ? value : '',
+                            },
+                        } as any);
+                    }
                 }}
                 rows={1}
                 className={`${className} focus:outline-none rounded resize-none overflow-hidden`}

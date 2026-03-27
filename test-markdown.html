@@ -1,12 +1,4 @@
-import React from 'react';
-
-interface MarkdownMathPreviewProps {
-    markdown: string;
-    className?: string;
-}
-
-const createSourceDocument = (markdown: string) => {
-    return `<!DOCTYPE html>
+<!DOCTYPE html>
 <html>
 <head>
   <meta charset="utf-8" />
@@ -111,7 +103,31 @@ const createSourceDocument = (markdown: string) => {
   <div id="content"></div>
   <script>
     try {
-      const markdown = ${JSON.stringify(markdown)};
+      const markdown = `# Math Test
+
+This is a test of inline math: $x^2 + y^2 = z^2$
+
+And display math:
+
+$$\\frac{d}{dx}(x^2) = 2x$$
+
+## More Examples
+
+- The quadratic formula: $x = \\frac{-b \\pm \\sqrt{b^2 - 4ac}}{2a}$
+- Euler's identity: $e^{i\\pi} + 1 = 0$
+
+### Code Example
+
+\`console.log("Hello World")\`
+
+\`\`\`javascript
+function add(a, b) {
+    return a + b;
+}
+\`\`\`
+
+> This is a blockquote with math: $\\sum_{i=1}^{n} i = \\frac{n(n+1)}{2}$`;
+      
       const html = window.marked.parse(markdown);
       const content = document.getElementById('content');
       content.innerHTML = html;
@@ -128,24 +144,4 @@ const createSourceDocument = (markdown: string) => {
     }
   </script>
 </body>
-</html>`;
-};
-
-const MarkdownMathPreview = ({ markdown, className = '' }: MarkdownMathPreviewProps) => {
-    return (
-        <iframe
-            title='Math markdown preview'
-            srcDoc={createSourceDocument(markdown)}
-            className={`w-full rounded-xl border border-gray-300 bg-gray-50 ${className}`}
-            style={{ 
-                minHeight: '400px',
-                width: '100%',
-                border: '1px solid #d1d5db',
-                borderRadius: '12px',
-                backgroundColor: '#f9fafb'
-            }}
-        />
-    );
-};
-
-export default MarkdownMathPreview;
+</html>

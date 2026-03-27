@@ -54,17 +54,15 @@ const DocumentHomePage = ({ userId, setActiveDocumentId }: DocumentHomePageProps
 
     return (
         <Column className='flex-1' gap={4}>
-            <Column className='rounded-3xl border-2 border-border bg-inner-background p-6' gap={3}>
+            <Column className='max-w-[800px] w-full mx-auto' gap={3}>
                 <PoppinsText weight='bold' className='text-3xl'>MathConvert</PoppinsText>
-                <PoppinsText>
-                    Convert handwritten math to LaTeX, organize pages in shareable documents.
-                </PoppinsText>
+                
                 <NewDocumentDialog onCreate={setActiveDocumentId} />
             </Column>
 
             <ScrollShadow LinearGradientComponent={LinearGradient} className='flex-1'>
                 <ScrollView className='flex-1'>
-                    <Column gap={3} className='pb-8'>
+                    <Column gap={3} className='pb-8 max-w-[800px] w-full mx-auto'>
                         {documents && documents.length > 0 ? (
                             documents.map((document) => (
                                 <DocumentCard

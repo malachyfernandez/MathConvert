@@ -39,17 +39,19 @@ const MainPage: React.FC<MainPageProps> = () => {
 
     return (
         <View className='w-screen h-screen p-safe'>
-            <TopSiteBar isInDocument={isInDocument} onHomePress={() => setActiveDocumentId("")} />
+            <TopSiteBar isInDocument={isInDocument} onHomePress={() => setActiveDocumentId("")} documentId={activeDocumentId.value} />
             {isActiveDocumentLoading ? (
                 <PoppinsText>Loading</PoppinsText>
             ) : (
                 <StateAnimatedView.Container stateVar={currentScreen} className='flex-1'>
                     <StateAnimatedView.Option page={1} stateValue='documents'>
-                        <View className='px-6 h-full'>
-                            <DocumentHomePage
-                                userId={userId}
-                                setActiveDocumentId={setActiveDocumentId}
-                            />
+                        <View className='h-full w-full items-center justify-center'>
+                            <View className='w-full h-full'>
+                                <DocumentHomePage
+                                    userId={userId}
+                                    setActiveDocumentId={setActiveDocumentId}
+                                />
+                            </View>
                         </View>
                     </StateAnimatedView.Option>
 

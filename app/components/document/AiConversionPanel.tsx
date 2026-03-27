@@ -8,6 +8,7 @@ import PoppinsText from '../ui/text/PoppinsText';
 import { useAction } from 'convex/react';
 import { api } from '../../../convex/_generated/api';
 import { MathDocumentPage } from 'types/mathDocuments';
+import { useGeneration } from '../../../contexts/GenerationContext';
 import { generateId } from 'utils/generateId';
 import AiPromptInput from './AiPromptInput';
 import ChatOptionsDialog from './ChatOptionsDialog';
@@ -22,9 +23,11 @@ interface AiConversionPanelProps {
 
 const AiConversionPanel = ({ page, onUpdatePage, onUpdateMarkdown, onLayout }: AiConversionPanelProps) => {
     const convertMathImageToMarkdown = useAction(api.mathAi.convertMathImageToMarkdown);
+    const { setGeneratingPage, isPageGenerating } = useGeneration();
     const [prompt, setPrompt] = useState('');
-    const [isGenerating, setIsGenerating] = useState(false);
     const [errorMessage, setErrorMessage] = useState('');
+    
+    const isGenerating = isPageGenerating(page.id);
 
     const getContextualPrompt = () => {
         if (page.markdown) {
@@ -41,7 +44,7 @@ const AiConversionPanel = ({ page, onUpdatePage, onUpdateMarkdown, onLayout }: A
         }
 
         try {
-            setIsGenerating(true);
+            setGeneratingPage(page.id, true);
             setErrorMessage('');
 
             const result = await convertMathImageToMarkdown({
@@ -75,7 +78,7 @@ const AiConversionPanel = ({ page, onUpdatePage, onUpdateMarkdown, onLayout }: A
         } catch (error) {
             setErrorMessage(error instanceof Error ? error.message : 'AI conversion failed.');
         } finally {
-            setIsGenerating(false);
+            setGeneratingPage(page.id, false);
         }
     };
 

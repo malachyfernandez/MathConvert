@@ -9,6 +9,7 @@ import { Tabs } from 'heroui-native';
 import { useAction } from 'convex/react';
 import { api } from '../../../convex/_generated/api';
 import { MathDocumentPage } from 'types/mathDocuments';
+import { useGeneration } from '../../../contexts/GenerationContext';
 import DocumentHeader from './DocumentHeader';
 import ContentEditor from './ContentEditor';
 import ContentPreview from './ContentPreview';
@@ -23,13 +24,15 @@ interface DocumentContentProps {
 
 const DocumentContent = ({ documentTitle, activePage, onReplacePage }: DocumentContentProps) => {
     const convertMathImageToMarkdown = useAction(api.mathAi.convertMathImageToMarkdown);
+    const { setGeneratingPage, isPageGenerating } = useGeneration();
     const [markdownDraft, setMarkdownDraft] = useState(activePage.markdown);
     const [activeTab, setActiveTab] = useState('preview');
-    const [isGenerating, setIsGenerating] = useState(false);
     const [errorMessage, setErrorMessage] = useState('');
     const [headerHeight, setHeaderHeight] = useState(0);
     const [footerHeight, setFooterHeight] = useState(0);
     const [dotCount, setDotCount] = useState(1);
+    
+    const isGenerating = isPageGenerating(activePage.id);
 
     const hasChanges = markdownDraft !== activePage.markdown;
 
@@ -65,7 +68,7 @@ const DocumentContent = ({ documentTitle, activePage, onReplacePage }: DocumentC
         }
 
         try {
-            setIsGenerating(true);
+            setGeneratingPage(activePage.id, true);
             setErrorMessage('');
 
             const result = await convertMathImageToMarkdown({
@@ -87,7 +90,7 @@ const DocumentContent = ({ documentTitle, activePage, onReplacePage }: DocumentC
         } catch (error) {
             setErrorMessage(error instanceof Error ? error.message : 'AI conversion failed.');
         } finally {
-            setIsGenerating(false);
+            setGeneratingPage(activePage.id, false);
         }
     };
 

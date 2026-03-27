@@ -1,10 +1,12 @@
 import React from 'react';
 import { TouchableOpacity } from 'react-native';
+import { Spinner } from 'heroui-native';
 import Column from '../layout/Column';
 import Row from '../layout/Row';
 import PoppinsText from '../ui/text/PoppinsText';
 import { MonoIconsOptionsHorizontal } from '../icons/MonoIconsOptionsHorizontal';
 import { MathDocumentPage } from 'types/mathDocuments';
+import { useGeneration } from '../../../contexts/GenerationContext';
 
 interface PageListItemProps {
     page: MathDocumentPage;
@@ -14,6 +16,8 @@ interface PageListItemProps {
 }
 
 const PageListItem = ({ page, isActive, onPress, onConfigure }: PageListItemProps) => {
+    const { isPageGenerating } = useGeneration();
+    const isGenerating = isPageGenerating(page.id);
     const handlePress = () => {
         if (isActive && onConfigure) {
             onConfigure();
@@ -34,8 +38,12 @@ const PageListItem = ({ page, isActive, onPress, onConfigure }: PageListItemProp
                         {page.title || `Page ${page.pageNumber}`}
                     </PoppinsText>
                 </Column>
-                {isActive && onConfigure && (
-                    <MonoIconsOptionsHorizontal className='text-text opacity-50' width={20} height={20} />
+                {isGenerating ? (
+                    <Spinner size="sm" color="primary" />
+                ) : (
+                    isActive && onConfigure && (
+                        <MonoIconsOptionsHorizontal className='text-text opacity-50' width={20} height={20} />
+                    )
                 )}
             </Row>
         </TouchableOpacity>

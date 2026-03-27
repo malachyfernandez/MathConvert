@@ -15,6 +15,9 @@ interface ViewOnlyDocumentHeaderProps {
     documentDescription: string;
     pageCount: number;
     onDownloadPdf: () => void;
+    onZoomIn: () => void;
+    onZoomOut: () => void;
+    zoomLevel: number;
     onLayout?: (event: LayoutChangeEvent) => void;
     onTabChange: (tab: ViewOnlyTab) => void;
 }
@@ -25,6 +28,9 @@ const ViewOnlyDocumentHeader = ({
     documentDescription,
     pageCount,
     onDownloadPdf,
+    onZoomIn,
+    onZoomOut,
+    zoomLevel,
     onLayout,
     onTabChange,
 }: ViewOnlyDocumentHeaderProps) => {
@@ -65,9 +71,36 @@ const ViewOnlyDocumentHeader = ({
                                 </Tabs.Trigger>
                             </Tabs.List>
                         </Tabs>
-                        <AppButton variant='green' className='ml-4 h-10 px-4' onPress={onDownloadPdf}>
-                            <PoppinsText weight='medium' color='white'>Download PDF</PoppinsText>
-                        </AppButton>
+                        
+                        <Row gap={2} className='items-center'>
+                            <Row gap={1} className='items-center bg-inner-background rounded-lg px-1 py-1'>
+                                <AppButton 
+                                    variant='outline' 
+                                    className='h-8 w-8 p-0' 
+                                    onPress={onZoomOut}
+                                    disabled={zoomLevel <= 0.5}
+                                >
+                                    <PoppinsText weight='medium' className='text-sm'>−</PoppinsText>
+                                </AppButton>
+                                
+                                <PoppinsText className='text-xs px-2 min-w-12 text-center'>
+                                    {Math.round(zoomLevel * 100)}%
+                                </PoppinsText>
+                                
+                                <AppButton 
+                                    variant='outline' 
+                                    className='h-8 w-8 p-0' 
+                                    onPress={onZoomIn}
+                                    disabled={zoomLevel >= 2}
+                                >
+                                    <PoppinsText weight='medium' className='text-sm'>+</PoppinsText>
+                                </AppButton>
+                            </Row>
+                            
+                            <AppButton variant='green' className='h-10 px-4' onPress={onDownloadPdf}>
+                                <PoppinsText weight='medium' color='white'>Download PDF</PoppinsText>
+                            </AppButton>
+                        </Row>
                     </Row>
                 </Column>
             </View>

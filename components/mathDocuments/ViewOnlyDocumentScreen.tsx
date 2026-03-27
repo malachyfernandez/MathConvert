@@ -19,6 +19,7 @@ const ViewOnlyDocumentScreen = ({ documentId }: ViewOnlyDocumentScreenProps) => 
     const [activeTab, setActiveTab] = useState<ViewOnlyTab>('screenReadable');
     const [headerHeight, setHeaderHeight] = useState(0);
     const [pageAspectRatios, setPageAspectRatios] = useState<Record<string, number>>({});
+    const [zoomLevel, setZoomLevel] = useState(1);
 
     // TODO: This route currently relies on globally accessible PUBLIC records.
     // A true per-document share token would require backend/schema support.
@@ -56,6 +57,14 @@ const ViewOnlyDocumentScreen = ({ documentId }: ViewOnlyDocumentScreenProps) => 
                 [pageId]: aspectRatio,
             };
         });
+    };
+
+    const handleZoomIn = () => {
+        setZoomLevel((current) => Math.min(current + 0.25, 2));
+    };
+
+    const handleZoomOut = () => {
+        setZoomLevel((current) => Math.max(current - 0.25, 0.5));
     };
 
     const handleDownloadPdf = () => {
@@ -141,6 +150,9 @@ const ViewOnlyDocumentScreen = ({ documentId }: ViewOnlyDocumentScreenProps) => 
                 documentDescription={documentValue.description}
                 pageCount={pages.length}
                 onDownloadPdf={handleDownloadPdf}
+                onZoomIn={handleZoomIn}
+                onZoomOut={handleZoomOut}
+                zoomLevel={zoomLevel}
                 onLayout={(event: any) => {
                     setHeaderHeight(event.nativeEvent.layout.height);
                 }}
@@ -162,6 +174,7 @@ const ViewOnlyDocumentScreen = ({ documentId }: ViewOnlyDocumentScreenProps) => 
                                 key={page.id}
                                 activeTab={activeTab}
                                 page={page}
+                                zoomLevel={zoomLevel}
                                 onAspectRatioChange={handleAspectRatioChange}
                             />
                         ))

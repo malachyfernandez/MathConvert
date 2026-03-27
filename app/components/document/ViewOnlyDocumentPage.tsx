@@ -9,12 +9,13 @@ import { ViewOnlyTab } from './ViewOnlyDocumentHeader';
 interface ViewOnlyDocumentPageProps {
     activeTab: ViewOnlyTab;
     page: MathDocumentPage;
+    zoomLevel?: number;
     onAspectRatioChange?: (pageId: string, aspectRatio: number) => void;
 }
 
 const DEFAULT_PAGE_ASPECT_RATIO = 8.5 / 11;
 
-const ViewOnlyDocumentPage = ({ activeTab, page, onAspectRatioChange }: ViewOnlyDocumentPageProps) => {
+const ViewOnlyDocumentPage = ({ activeTab, page, zoomLevel = 1, onAspectRatioChange }: ViewOnlyDocumentPageProps) => {
     const [imageAspectRatio, setImageAspectRatio] = useState(DEFAULT_PAGE_ASPECT_RATIO);
 
     useEffect(() => {
@@ -54,6 +55,8 @@ const ViewOnlyDocumentPage = ({ activeTab, page, onAspectRatioChange }: ViewOnly
                     aspectRatio: imageAspectRatio,
                     alignSelf: 'center',
                     maxWidth: 920,
+                    transform: [{ scale: zoomLevel }],
+                    marginBlock: -800 * (1 - zoomLevel),
                 }}
             >
                 <iframe

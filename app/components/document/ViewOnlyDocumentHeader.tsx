@@ -55,17 +55,17 @@ const ViewOnlyDocumentHeader = ({
                         <Tabs value={activeTab} onValueChange={(value) => onTabChange(value as ViewOnlyTab)} variant='secondary' className='flex-1'>
                             <Tabs.List>
                                 <Tabs.Indicator />
-                                <Tabs.Trigger value='screenReadable'>
-                                    {({ isSelected }) => (
-                                        <Tabs.Label className={isSelected ? 'font-medium text-black' : 'text-gray-500'}>
-                                            Screen Readable
-                                        </Tabs.Label>
-                                    )}
-                                </Tabs.Trigger>
                                 <Tabs.Trigger value='imageOverlay'>
                                     {({ isSelected }) => (
                                         <Tabs.Label className={isSelected ? 'font-medium text-black' : 'text-gray-500'}>
-                                            Image View
+                                            (Screen Readable) Images
+                                        </Tabs.Label>
+                                    )}
+                                </Tabs.Trigger>
+                                <Tabs.Trigger value='screenReadable'>
+                                    {({ isSelected }) => (
+                                        <Tabs.Label className={isSelected ? 'font-medium text-black' : 'text-gray-500'}>
+                                            Text Only
                                         </Tabs.Label>
                                     )}
                                 </Tabs.Trigger>
@@ -98,7 +98,14 @@ const ViewOnlyDocumentHeader = ({
                             </Row>
                             
                             <AppButton variant='green' className='h-10 px-4' onPress={onDownloadPdf}>
-                                <PoppinsText weight='medium' color='white'>Download PDF</PoppinsText>
+                                <Column className='items-center' gap={0}>
+                                    <PoppinsText weight='medium' color='white'>
+                                        {'Download PDF'}
+                                    </PoppinsText>
+                                    <PoppinsText varient='subtext' className='text-xs text-white/80'>
+                                        {activeTab === 'imageOverlay' ? 'PDF with images' : 'PDF with text only'}
+                                    </PoppinsText>
+                                </Column>
                             </AppButton>
                         </Row>
                     </Row>

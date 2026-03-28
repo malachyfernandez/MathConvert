@@ -16,7 +16,7 @@ interface ViewOnlyDocumentScreenProps {
 const DEFAULT_PAGE_ASPECT_RATIO = 8.5 / 11;
 
 const ViewOnlyDocumentScreen = ({ documentId }: ViewOnlyDocumentScreenProps) => {
-    const [activeTab, setActiveTab] = useState<ViewOnlyTab>('screenReadable');
+    const [activeTab, setActiveTab] = useState<ViewOnlyTab>('imageOverlay');
     const [headerHeight, setHeaderHeight] = useState(0);
     const [pageAspectRatios, setPageAspectRatios] = useState<Record<string, number>>({});
     const [zoomLevel, setZoomLevel] = useState(1);

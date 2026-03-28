@@ -27,10 +27,11 @@ export const openViewOnlyPrintWindow = ({
         return;
     }
 
-    const printWindow = window.open('', '_blank', 'noopener,noreferrer');
+    const printWindow = window.open('', '_blank', 'width=1000,height=800,scrollbars=yes,resizable=yes');
 
     if (!printWindow) {
-        console.error('Failed to open print window.');
+        console.error('Failed to open print window. Please allow popups for this site.');
+        alert('Failed to open print window. Please allow popups for this site and try again.');
         return;
     }
 
@@ -38,8 +39,9 @@ export const openViewOnlyPrintWindow = ({
     const serializedTitle = escapeClosingScriptTag(JSON.stringify(documentTitle));
     const serializedTab = escapeClosingScriptTag(JSON.stringify(activeTab));
 
-    printWindow.document.open();
-    printWindow.document.write(`<!DOCTYPE html>
+    try {
+        printWindow.document.open();
+        printWindow.document.write(`<!DOCTYPE html>
 <html>
 <head>
   <meta charset="utf-8" />
@@ -177,5 +179,10 @@ export const openViewOnlyPrintWindow = ({
   </script>
 </body>
 </html>`);
-    printWindow.document.close();
+        printWindow.document.close();
+    } catch (error) {
+        console.error('Error writing to print window:', error);
+        alert('Failed to generate PDF content. Please try again.');
+        printWindow.close();
+    }
 };

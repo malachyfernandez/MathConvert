@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Fixed Speech Extraction Test</title>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script>
+    window.MathJax = {
+      loader: {
+        load: ['a11y/semantic-enrich', 'a11y/explorer']
+      },
+      tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']],
+        displayMath: [['$$', '$$'], ['\\[', '\\]']],
+        processEscapes: true,
+        processEnvironments: true
+      },
+      options: {
+        enableAssistiveMml: true,
+        menuOptions: {
+          settings: {
+            assistiveMml: true,
+            explorer: true
+          }
+        }
+      },
+      sre: {
+        locale: 'en',
+        domain: 'clearspeak',
+        style: 'default'
+      },
+      startup: {
+        typeset: false
+      }
+    };
+  </script>
+  <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+</head>
+<body>
+  <div id="content"></div>
+  
+  <script>
+    const markdown = String.raw`# Math Test
+
+The quadratic formula: $$x = \frac{-b \pm \sqrt{b^2 - 4ac}}{2a}$$
+
+Some inline math: $x^2 + y^2 = z^2$`;
+
+    function protectMath(source) {
+      var math = [];
+      function store(match) {
+        var token = 'MATHBLOCK' + math.length + 'TOKEN';
+        math.push(match);
+        return token;
+      }
+      var protectedSource = source
+        .replace(/\\\[[\s\S]*?\\\]/g, store)
+        .replace(/\$\$[\s\S]*?\$\$/g, store)
+        .replace(/\\\([\s\S]*?\\\)/g, store)
+        .replace(/\$(?!\$)(?:\\.|[^$\n])+\$/g, store)
+        .replace(/\\begin\{([a-zA-Z*]+)\}[\s\S]*?\\end\{\1\}/g, store);
+      return { protectedSource: protectedSource, math: math };
+    }
+
+    function restoreMath(html, math) {
+      var restoredHtml = html;
+      var hasTokens = true;
+      while (hasTokens) {
+        hasTokens = false;
+        restoredHtml = restoredHtml.replace(/MATHBLOCK(\d+)TOKEN/g, function (_, index) {
+          hasTokens = true;
+          return math[Number(index)];
+        });
+      }
+      return restoredHtml;
+    }
+
+    function escapeHtml(text) {
+      return text
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
+    }
+
+    function normalizeSpeechText(text) {
+      return String(text || '')
+        .replace(/<mark[^>]*>/g, ' ')
+        .replace(/<\/mark>/g, ' ')
+        .replace(/<break[^>]*>/g, ' ')
+        .replace(/<\/?prosody[^>]*>/g, ' ')
+        .replace(/<\/?say-as[^>]*>/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+    }
+
+    function decodeHtmlEntities(text) {
+      var textarea = document.createElement('textarea');
+      textarea.innerHTML = text;
+      return textarea.value;
+    }
+
+    function getMathSpeechText(container) {
+      var mjxMath = container.querySelector('mjx-math');
+
+      var speechNone =
+        (mjxMath && mjxMath.getAttribute('data-semantic-speech-none')) ||
+        container.getAttribute('data-semantic-speech-none');
+
+      if (speechNone) {
+        return normalizeSpeechText(decodeHtmlEntities(speechNone));
+      }
+
+      var mjxSpeech = container.querySelector('mjx-speech[aria-label]');
+      if (mjxSpeech) {
+        return normalizeSpeechText(
+          String(mjxSpeech.getAttribute('aria-label') || '').replace(
+            /,\s*math\s*$/i,
+            ''
+          )
+        );
+      }
+
+      var speech =
+        (mjxMath && mjxMath.getAttribute('data-semantic-speech')) ||
+        container.getAttribute('data-semantic-speech');
+
+      if (speech) {
+        return normalizeSpeechText(decodeHtmlEntities(speech));
+      }
+
+      var existingAria = container.getAttribute('aria-label');
+      if (existingAria) {
+        return normalizeSpeechText(existingAria);
+      }
+
+      return '';
+    }
+
+    function applyMathAccessibility(root) {
+      var containers = root.querySelectorAll('mjx-container');
+      containers.forEach(function (container) {
+        var speechText = getMathSpeechText(container);
+        if (speechText) {
+          container.setAttribute('aria-label', speechText);
+          container.setAttribute('tabindex', '0');
+          container.setAttribute('role', 'img');
+        }
+      });
+    }
+
+    function waitForMathJax(timeoutMs) {
+      return new Promise(function (resolve, reject) {
+        var start = Date.now();
+        function check() {
+          if (window.MathJax && typeof window.MathJax.typesetPromise === 'function') {
+            if (window.MathJax.startup && window.MathJax.startup.promise) {
+              window.MathJax.startup.promise.then(resolve).catch(reject);
+              return;
+            }
+            resolve();
+            return;
+          }
+          if (Date.now() - start > timeoutMs) {
+            reject(new Error('Timed out waiting for MathJax'));
+            return;
+          }
+          setTimeout(check, 50);
+        }
+        check();
+      });
+    }
+
+    (function render() {
+      try {
+        var protectedMath = protectMath(markdown);
+        var html = window.marked.parse(protectedMath.protectedSource);
+        html = restoreMath(html, protectedMath.math);
+        
+        var content = document.getElementById('content');
+        content.innerHTML = html;
+        
+        waitForMathJax(10000)
+          .then(function () {
+            return window.MathJax.typesetPromise([content]);
+          })
+          .then(function () {
+            console.log('=== BEFORE EXTRACTION FIX ===');
+            const c = document.querySelector('mjx-container');
+            const m = document.querySelector('mjx-math');
+            console.log('Raw DOM attributes:', {
+              containerAria: c?.getAttribute('aria-label'),
+              mathSpeechNone: m?.getAttribute('data-semantic-speech-none'),
+              mathSpeech: m?.getAttribute('data-semantic-speech'),
+              speechAria: c?.querySelector('mjx-speech')?.getAttribute('aria-label')
+            });
+            
+            applyMathAccessibility(content);
+            
+            console.log('=== AFTER EXTRACTION FIX ===');
+            console.log('Final mjx-container aria-label:', document.querySelector('mjx-container')?.getAttribute('aria-label'));
+            console.log('Success criterion met?', 
+              document.querySelector('mjx-container')?.getAttribute('aria-label')?.includes('x equals the fraction with numerator')
+            );
+          })
+          .catch(function (error) {
+            console.error('Error:', error);
+          });
+      } catch (error) {
+        console.error('Render error:', error);
+      }
+    })();
+  </script>
+</body>
+</html>

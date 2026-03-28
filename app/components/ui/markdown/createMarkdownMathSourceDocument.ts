@@ -137,7 +137,7 @@ export const createMarkdownMathSourceDocument = (markdown: string, headerHeight:
   <script
     id="MathJax-script"
     async
-    src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"
+    src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"
   ></script>
 </head>
 <body>
@@ -193,29 +193,37 @@ export const createMarkdownMathSourceDocument = (markdown: string, headerHeight:
     }
 
     function getMathSpeechText(container) {
-      var existingAria = container.getAttribute('aria-label');
-      if (existingAria) {
-        return normalizeSpeechText(existingAria);
+      var mjxMath = container.querySelector('mjx-math');
+
+      var speechNone =
+        (mjxMath && mjxMath.getAttribute('data-semantic-speech-none')) ||
+        container.getAttribute('data-semantic-speech-none');
+
+      if (speechNone) {
+        return normalizeSpeechText(decodeHtmlEntities(speechNone));
       }
 
-      var mjxMath = container.querySelector('mjx-math[data-semantic-speech]');
-      if (mjxMath) {
+      var mjxSpeech = container.querySelector('mjx-speech[aria-label]');
+      if (mjxSpeech) {
         return normalizeSpeechText(
-          decodeHtmlEntities(mjxMath.getAttribute('data-semantic-speech') || '')
+          String(mjxSpeech.getAttribute('aria-label') || '').replace(
+            /,\s*math\s*$/i,
+            ''
+          )
         );
       }
 
-      var semanticNode = container.querySelector(
-        '[data-semantic-speech], [data-semantic-speech-none]'
-      );
+      var speech =
+        (mjxMath && mjxMath.getAttribute('data-semantic-speech')) ||
+        container.getAttribute('data-semantic-speech');
 
-      if (semanticNode) {
-        var text =
-          semanticNode.getAttribute('data-semantic-speech') ||
-          semanticNode.getAttribute('data-semantic-speech-none') ||
-          '';
+      if (speech) {
+        return normalizeSpeechText(decodeHtmlEntities(speech));
+      }
 
-        return normalizeSpeechText(decodeHtmlEntities(text));
+      var existingAria = container.getAttribute('aria-label');
+      if (existingAria) {
+        return normalizeSpeechText(existingAria);
       }
 
       return '';

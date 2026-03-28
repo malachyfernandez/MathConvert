@@ -63,23 +63,12 @@ const ViewOnlyDocumentScreen = ({ documentId }: ViewOnlyDocumentScreenProps) => 
 
     const handleZoomIn = () => {
         if (Platform.OS === 'web' && scrollViewRef.current) {
-            // Log current state
-            console.log('=== ZOOM IN DEBUG ===');
-            console.log('Current zoom level:', zoomLevel);
-            console.log('Current scroll Y:', currentScrollY);
-            
             // Calculate new zoom level
             const newZoomLevel = Math.min(zoomLevel + 0.25, 2);
-            console.log('New zoom level:', newZoomLevel);
             
             // Calculate the scroll position adjustment to maintain the same visual position
             // Standardize current scroll to zoom level 1, then apply new zoom
-            const zoomRatio = newZoomLevel / zoomLevel;
-            console.log('Zoom ratio (new/old):', zoomRatio);
-            
-            const adjustedScrollY = currentScrollY * zoomRatio;
-            console.log('Adjusted scroll Y:', adjustedScrollY);
-            console.log('====================');
+            const adjustedScrollY = currentScrollY * (newZoomLevel / zoomLevel);
             
             // Apply zoom level
             setZoomLevel(newZoomLevel);
@@ -88,7 +77,6 @@ const ViewOnlyDocumentScreen = ({ documentId }: ViewOnlyDocumentScreenProps) => 
             setTimeout(() => {
                 if (scrollViewRef.current) {
                     scrollViewRef.current.scrollTo({ y: adjustedScrollY, animated: true });
-                    console.log('Applied scroll to:', adjustedScrollY);
                 }
             }, 50);
         } else {
@@ -98,23 +86,12 @@ const ViewOnlyDocumentScreen = ({ documentId }: ViewOnlyDocumentScreenProps) => 
 
     const handleZoomOut = () => {
         if (Platform.OS === 'web' && scrollViewRef.current) {
-            // Log current state
-            console.log('=== ZOOM OUT DEBUG ===');
-            console.log('Current zoom level:', zoomLevel);
-            console.log('Current scroll Y:', currentScrollY);
-            
             // Calculate new zoom level
             const newZoomLevel = Math.max(zoomLevel - 0.25, 0.5);
-            console.log('New zoom level:', newZoomLevel);
             
             // Calculate the scroll position adjustment to maintain the same visual position
             // Standardize current scroll to zoom level 1, then apply new zoom
-            const zoomRatio = newZoomLevel / zoomLevel;
-            console.log('Zoom ratio (new/old):', zoomRatio);
-            
-            const adjustedScrollY = currentScrollY * zoomRatio;
-            console.log('Adjusted scroll Y:', adjustedScrollY);
-            console.log('====================');
+            const adjustedScrollY = currentScrollY * (newZoomLevel / zoomLevel);
             
             // Apply zoom level
             setZoomLevel(newZoomLevel);
@@ -123,7 +100,6 @@ const ViewOnlyDocumentScreen = ({ documentId }: ViewOnlyDocumentScreenProps) => 
             setTimeout(() => {
                 if (scrollViewRef.current) {
                     scrollViewRef.current.scrollTo({ y: adjustedScrollY, animated: true });
-                    console.log('Applied scroll to:', adjustedScrollY);
                 }
             }, 50);
         } else {
@@ -232,9 +208,7 @@ const ViewOnlyDocumentScreen = ({ documentId }: ViewOnlyDocumentScreenProps) => 
                     paddingHorizontal: 16,
                 }}
                 onScroll={(event) => {
-                    const scrollY = event.nativeEvent.contentOffset.y;
-                    setCurrentScrollY(scrollY);
-                    console.log('Scroll position updated:', scrollY);
+                    setCurrentScrollY(event.nativeEvent.contentOffset.y);
                 }}
                 scrollEventThrottle={16}
             >

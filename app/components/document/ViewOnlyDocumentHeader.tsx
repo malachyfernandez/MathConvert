@@ -97,7 +97,7 @@ const ViewOnlyDocumentHeader = ({
                                 </AppButton>
                             </Row>
                             
-                            <AppButton variant='green' className='h-10 px-4' onPress={onDownloadPdf}>
+                            {/* <AppButton variant='green' className='h-10 px-4' onPress={onDownloadPdf}>
                                 <Column className='items-center' gap={0}>
                                     <PoppinsText weight='medium' color='white'>
                                         {'Download PDF'}
@@ -106,7 +106,7 @@ const ViewOnlyDocumentHeader = ({
                                         {activeTab === 'imageOverlay' ? 'PDF with images' : 'PDF with text only'}
                                     </PoppinsText>
                                 </Column>
-                            </AppButton>
+                            </AppButton> */}
                         </Row>
                     </Row>
                 </Column>

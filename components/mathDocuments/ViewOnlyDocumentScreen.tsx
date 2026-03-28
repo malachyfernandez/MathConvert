@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useRef } from 'react';
 import { ActivityIndicator, Platform, ScrollView, View } from 'react-native';
 import Column from '../../app/components/layout/Column';
 import PoppinsText from '../../app/components/ui/text/PoppinsText';
@@ -20,6 +20,8 @@ const ViewOnlyDocumentScreen = ({ documentId }: ViewOnlyDocumentScreenProps) => 
     const [headerHeight, setHeaderHeight] = useState(0);
     const [pageAspectRatios, setPageAspectRatios] = useState<Record<string, number>>({});
     const [zoomLevel, setZoomLevel] = useState(1);
+    const [currentScrollY, setCurrentScrollY] = useState(0);
+    const scrollViewRef = useRef<ScrollView>(null);
 
     // TODO: This route currently relies on globally accessible PUBLIC records.
     // A true per-document share token would require backend/schema support.
@@ -60,11 +62,73 @@ const ViewOnlyDocumentScreen = ({ documentId }: ViewOnlyDocumentScreenProps) => 
     };
 
     const handleZoomIn = () => {
-        setZoomLevel((current) => Math.min(current + 0.25, 2));
+        if (Platform.OS === 'web' && scrollViewRef.current) {
+            // Log current state
+            console.log('=== ZOOM IN DEBUG ===');
+            console.log('Current zoom level:', zoomLevel);
+            console.log('Current scroll Y:', currentScrollY);
+            
+            // Calculate new zoom level
+            const newZoomLevel = Math.min(zoomLevel + 0.25, 2);
+            console.log('New zoom level:', newZoomLevel);
+            
+            // Calculate the scroll position adjustment to maintain the same visual position
+            // Standardize current scroll to zoom level 1, then apply new zoom
+            const zoomRatio = newZoomLevel / zoomLevel;
+            console.log('Zoom ratio (new/old):', zoomRatio);
+            
+            const adjustedScrollY = currentScrollY * zoomRatio;
+            console.log('Adjusted scroll Y:', adjustedScrollY);
+            console.log('====================');
+            
+            // Apply zoom level
+            setZoomLevel(newZoomLevel);
+            
+            // Apply adjusted scroll position after a brief delay to allow the zoom to render
+            setTimeout(() => {
+                if (scrollViewRef.current) {
+                    scrollViewRef.current.scrollTo({ y: adjustedScrollY, animated: true });
+                    console.log('Applied scroll to:', adjustedScrollY);
+                }
+            }, 50);
+        } else {
+            setZoomLevel((current) => Math.min(current + 0.25, 2));
+        }
     };
 
     const handleZoomOut = () => {
-        setZoomLevel((current) => Math.max(current - 0.25, 0.5));
+        if (Platform.OS === 'web' && scrollViewRef.current) {
+            // Log current state
+            console.log('=== ZOOM OUT DEBUG ===');
+            console.log('Current zoom level:', zoomLevel);
+            console.log('Current scroll Y:', currentScrollY);
+            
+            // Calculate new zoom level
+            const newZoomLevel = Math.max(zoomLevel - 0.25, 0.5);
+            console.log('New zoom level:', newZoomLevel);
+            
+            // Calculate the scroll position adjustment to maintain the same visual position
+            // Standardize current scroll to zoom level 1, then apply new zoom
+            const zoomRatio = newZoomLevel / zoomLevel;
+            console.log('Zoom ratio (new/old):', zoomRatio);
+            
+            const adjustedScrollY = currentScrollY * zoomRatio;
+            console.log('Adjusted scroll Y:', adjustedScrollY);
+            console.log('====================');
+            
+            // Apply zoom level
+            setZoomLevel(newZoomLevel);
+            
+            // Apply adjusted scroll position after a brief delay to allow the zoom to render
+            setTimeout(() => {
+                if (scrollViewRef.current) {
+                    scrollViewRef.current.scrollTo({ y: adjustedScrollY, animated: true });
+                    console.log('Applied scroll to:', adjustedScrollY);
+                }
+            }, 50);
+        } else {
+            setZoomLevel((current) => Math.max(current - 0.25, 0.5));
+        }
     };
 
     const handleDownloadPdf = () => {
@@ -160,12 +224,19 @@ const ViewOnlyDocumentScreen = ({ documentId }: ViewOnlyDocumentScreenProps) => 
             />
 
             <ScrollView
+                ref={scrollViewRef}
                 className='flex-1'
                 contentContainerStyle={{
                     paddingTop: headerHeight + 16,
                     paddingBottom: 24,
                     paddingHorizontal: 16,
                 }}
+                onScroll={(event) => {
+                    const scrollY = event.nativeEvent.contentOffset.y;
+                    setCurrentScrollY(scrollY);
+                    console.log('Scroll position updated:', scrollY);
+                }}
+                scrollEventThrottle={16}
             >
                 <Column className='mx-auto w-full' gap={6}>
                     {pages.length ? (

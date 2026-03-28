@@ -68,7 +68,6 @@ const ViewOnlyDocumentPage = ({ activeTab, page, zoomLevel = 1, onAspectRatioCha
                     transform: [{ scale: zoomLevel }],
                     marginBlock: -800 * (1 - zoomLevel),
                 }}
-                accessibilityLabel={`DOES THIS WORK`}
             >
                 <View
                     className='h-full w-full'

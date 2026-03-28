@@ -62,19 +62,26 @@ const ViewOnlyDocumentScreen = ({ documentId }: ViewOnlyDocumentScreenProps) => 
         }
 
         if (Platform.OS === 'web' && scrollViewRef.current) {
-            // Calculate the scroll position adjustment to maintain the same visual position
-            // Standardize current scroll to zoom level 1, then apply new zoom
-            const adjustedScrollY = currentScrollY * (newZoomLevel / zoomLevel);
-            
-            // Apply zoom level
-            setZoomLevel(newZoomLevel);
-            
-            // Apply adjusted scroll position after a brief delay to allow the zoom to render
-            setTimeout(() => {
-                if (scrollViewRef.current) {
-                    scrollViewRef.current.scrollTo({ y: adjustedScrollY, animated: true });
-                }
-            }, 50);
+            // Only maintain scroll position for user-initiated zoom changes
+            // Auto-fit zoom changes should not interfere with user scrolling
+            if (source === 'user') {
+                // Calculate the scroll position adjustment to maintain the same visual position
+                // Standardize current scroll to zoom level 1, then apply new zoom
+                const adjustedScrollY = currentScrollY * (newZoomLevel / zoomLevel);
+                
+                // Apply zoom level
+                setZoomLevel(newZoomLevel);
+                
+                // Apply adjusted scroll position after a brief delay to allow the zoom to render
+                setTimeout(() => {
+                    if (scrollViewRef.current) {
+                        scrollViewRef.current.scrollTo({ y: adjustedScrollY, animated: true });
+                    }
+                }, 50);
+            } else {
+                // For auto-fit zoom, just change the zoom without adjusting scroll
+                setZoomLevel(newZoomLevel);
+            }
         } else {
             setZoomLevel(newZoomLevel);
         }

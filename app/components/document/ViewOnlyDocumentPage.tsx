@@ -68,6 +68,7 @@ const ViewOnlyDocumentPage = ({ activeTab, page, zoomLevel = 1, onAspectRatioCha
                     transform: [{ scale: zoomLevel }],
                     marginBlock: -800 * (1 - zoomLevel),
                 }}
+                // accessibilityLabel={`Page 1 frame`}
             >
                 <View
                     className='h-full w-full'
@@ -83,12 +84,15 @@ const ViewOnlyDocumentPage = ({ activeTab, page, zoomLevel = 1, onAspectRatioCha
                             border: 'none',
                             backgroundColor: 'rgb(246, 238, 219)',
                         }}
+                        aria-label={`${page.title || `Page ${page.pageNumber}`}`}
+                        
                     />
                 </View>
                 <View
                     pointerEvents='none'
                     className='absolute inset-0'
                     style={{ opacity: imageOpacity }}
+                    aria-hidden={true}
                 >
                     <Image
                         source={{ uri: page.imageUrl }}

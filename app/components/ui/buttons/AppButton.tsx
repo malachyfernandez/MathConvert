@@ -60,7 +60,7 @@ import Row from '../../layout/Row';
 
 interface AppButtonProps {
     children: React.ReactNode;
-    variant?: 'outline' | 'outline-alt' | 'black' | 'grey' | 'green' | 'red';
+    variant?: 'outline' | 'outline-alt' | 'black' | 'grey' | 'green' | 'red' | 'none';
     className?: string;
     onPress?: () => void;
     dropShadow?: boolean;
@@ -94,6 +94,10 @@ const AppButton = ({
         const bg = 'bg-[#374559ae]';
         extraStyles = bg;
         pressedStyles = 'brightness-80';
+    } else if (variant === 'none') {
+        const bg = 'bg-none';
+        extraStyles = bg;
+        pressedStyles = 'brightness-100';
     } else if (variant === 'green') {
         const bg = 'bg-primary-accent';
         extraStyles = `${bg} group hover:brightness-125 active:brightness-50`;

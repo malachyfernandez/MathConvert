@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { Platform, ScrollView, TouchableOpacity } from 'react-native';
+import { Platform, ScrollView, TouchableOpacity, View } from 'react-native';
 import { ScrollShadow } from 'heroui-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import Column from '../layout/Column';
 import PoppinsText from '../ui/text/PoppinsText';
+import AppButton from '../ui/buttons/AppButton';
 import { useUserList } from 'hooks/useUserList';
 import { useUserListGet } from 'hooks/useUserListGet';
 import { useUserListRemove } from 'hooks/useUserListRemove';
@@ -14,6 +15,7 @@ import PageListItem from './PageListItem';
 import NewPageDialog from './NewPageDialog';
 import PageConfigDialog from './PageConfigDialog';
 import DocumentDetails from './DocumentDetails';
+import ReorderPagesDialog from './ReorderPagesDialog';
 
 interface DocumentSidebarProps {
     documentId: string;
@@ -36,6 +38,7 @@ const DocumentSidebar = ({ documentId, userId, activePageId, onSetActivePageId }
 
     const [pageConfigDialogOpen, setPageConfigDialogOpen] = useState(false);
     const [configuringPage, setConfiguringPage] = useState<MathDocumentPage | null>(null);
+    const [reorderDialogOpen, setReorderDialogOpen] = useState(false);
 
     const pages = useUserListGet<MathDocumentPage>({
         key: 'mathDocumentPages',
@@ -97,6 +100,20 @@ const DocumentSidebar = ({ documentId, userId, activePageId, onSetActivePageId }
         }
     };
 
+    const handleReorderPages = (updatedPages: MathDocumentPage[]) => {
+        updatedPages.forEach((page) => {
+            void setPage({
+                key: 'mathDocumentPages',
+                itemId: page.id,
+                value: page,
+                privacy: 'PUBLIC',
+                filterKey: 'documentId',
+                searchKeys: ['title', 'markdown', 'initialGuidance'],
+                sortKey: 'pageNumber',
+            });
+        });
+    };
+
     if (!documentRecord.value) {
         return null;
     }
@@ -119,9 +136,17 @@ const DocumentSidebar = ({ documentId, userId, activePageId, onSetActivePageId }
                                         onConfigure={() => handlePageConfig(page.value)}
                                     />
                                 ))}
+                                <View className='w-full items-center justify-center'>
+                                    {sortedPages.length > 1 && (
+                                        <AppButton variant='black' className='h-8! w-32! rounded-full' onPress={() => setReorderDialogOpen(true)}>
+                                            <PoppinsText weight='regular' color='white'>Reorder Pages</PoppinsText>
+                                        </AppButton>
+                                    )}
+                                </View>
                             </Column>
                         </ScrollView>
                     </ScrollShadow>
+
                 </Column>
 
                 {/* <DocumentDetails document={documentRecord.value} /> */}
@@ -136,6 +161,12 @@ const DocumentSidebar = ({ documentId, userId, activePageId, onSetActivePageId }
                     onDelete={handlePageDelete}
                 />
             )}
+            <ReorderPagesDialog
+                pages={sortedPages.map(p => p.value)}
+                isOpen={reorderDialogOpen}
+                onOpenChange={setReorderDialogOpen}
+                onReorderPages={handleReorderPages}
+            />
         </Column>
     );
 };

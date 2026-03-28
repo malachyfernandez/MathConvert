@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import Column from '../layout/Column';
+import Row from '../layout/Row';
 import AppButton from '../ui/buttons/AppButton';
 import PoppinsText from '../ui/text/PoppinsText';
 import PoppinsTextInput from '../ui/forms/PoppinsTextInput';
@@ -32,7 +33,7 @@ const PageConfigDialog = ({ page, isOpen, onOpenChange, onUpdate, onDelete }: Pa
             ...page,
             title: title.trim() || page.title,
         };
-        
+
         onUpdate(updatedPage);
         onOpenChange(false);
     };
@@ -57,14 +58,15 @@ const PageConfigDialog = ({ page, isOpen, onOpenChange, onUpdate, onDelete }: Pa
                                 <PoppinsText weight='medium'>Page title</PoppinsText>
                                 <PoppinsTextInput value={title} onChangeText={setTitle} className='w-full border border-subtle-border bg-inner-background p-3' placeholder='Page title' />
                             </Column>
+
                             <Column gap={2}>
                                 {isValidTitle ? (
                                     <AppButton variant='green' className='h-12' onPress={handleSave}>
                                         <PoppinsText weight='medium' color='white'>Save changes</PoppinsText>
                                     </AppButton>
                                 ) : (
-                                    <StatusButton 
-                                        buttonText="Save changes" 
+                                    <StatusButton
+                                        buttonText="Save changes"
                                         buttonAltText="Add a title"
                                         className="h-12 w-full"
                                     />

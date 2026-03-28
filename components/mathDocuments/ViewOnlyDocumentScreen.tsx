@@ -334,14 +334,13 @@ const ViewOnlyDocumentScreen = ({ documentId }: ViewOnlyDocumentScreenProps) => 
                 }}
                 scrollEventThrottle={16}
             >
-                <Column className='mx-auto w-full' gap={6}>
+                <Column className='mx-auto w-full' gap={6} style={{ transform: [{ scale: zoomLevel }], transformOrigin: 'top center', marginBottom: 2004 }}>
                     {pages.length ? (
                         pages.map((page: MathDocumentPage) => (
                             <ViewOnlyDocumentPage
                                 key={page.id}
                                 activeTab={activeTab}
                                 page={page}
-                                zoomLevel={zoomLevel}
                                 onAspectRatioChange={handleAspectRatioChange}
                             />
                         ))

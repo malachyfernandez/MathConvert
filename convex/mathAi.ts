@@ -95,19 +95,8 @@ export const convertMathImageToMarkdown = action({
             throw new Error('OPENAI_API_KEY is missing from the Convex environment. Run `npx convex env set OPENAI_API_KEY <your_key>` or add it in the Convex dashboard for this deployment.');
         }
 
-        // Log the incoming request details
-        console.log('=== AI Conversion Request Started ===');
-        console.log('Request ID:', Math.random().toString(36).substr(2, 9));
-        console.log('Image URL:', args.imageUrl);
-        console.log('Guidance:', args.guidance);
-        console.log('Current Markdown length:', args.currentMarkdown?.length || 0);
-        console.log('Follow-up Prompt:', args.followUpPrompt);
-        console.log('Document Title:', args.documentTitle);
-        console.log('Page Title:', args.pageTitle);
 
         const prompt = buildPrompt(args);
-        console.log('Built prompt length:', prompt.length);
-        console.log('Built prompt preview:', prompt.substring(0, 200) + '...');
 
         const requestBody = {
             model: 'gpt-5.4-nano',
@@ -132,10 +121,8 @@ export const convertMathImageToMarkdown = action({
             reasoning_effort: 'low',
         };
 
-        console.log('Request body:', JSON.stringify(requestBody, null, 2));
 
         try {
-            console.log('Sending request to OpenAI...');
             const response = await fetch('https://api.openai.com/v1/chat/completions', {
                 method: 'POST',
                 headers: {
@@ -145,13 +132,6 @@ export const convertMathImageToMarkdown = action({
                 body: JSON.stringify(requestBody),
             });
 
-            console.log('OpenAI Response Status:', response.status);
-            console.log('OpenAI Response Headers:', {
-                'content-type': response.headers.get('content-type'),
-                'openai-organization': response.headers.get('openai-organization'),
-                'openai-processing-ms': response.headers.get('openai-processing-ms'),
-                'x-request-id': response.headers.get('x-request-id'),
-            });
 
             if (!response.ok) {
                 const errorText = await response.text();
@@ -160,29 +140,20 @@ export const convertMathImageToMarkdown = action({
             }
 
             const json = await response.json();
-            console.log('OpenAI Response JSON:', JSON.stringify(json, null, 2));
 
             // Extract markdown from chat completions response
             const markdown = json.choices?.[0]?.message?.content?.trim() || '';
 
-            console.log('Extracted markdown length:', markdown.length);
-            console.log('Extracted markdown preview:', markdown.substring(0, 200) + '...');
 
             if (!markdown) {
-                console.error('OpenAI returned empty response');
-                throw new Error('OpenAI returned an empty response.');
+                    throw new Error('OpenAI returned an empty response.');
             }
 
-            console.log('=== AI Conversion Request Completed Successfully ===');
 
             return {
                 markdown,
             };
         } catch (error) {
-            console.error('=== AI Conversion Request Failed ===');
-            console.error('Error:', error);
-            console.error('Error message:', error instanceof Error ? error.message : 'Unknown error');
-            console.error('Error stack:', error instanceof Error ? error.stack : 'No stack trace');
             throw error;
         }
     },

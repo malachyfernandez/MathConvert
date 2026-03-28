@@ -10,13 +10,12 @@ import Row from '../layout/Row';
 interface ViewOnlyDocumentPageProps {
     activeTab: ViewOnlyTab;
     page: MathDocumentPage;
-    zoomLevel?: number;
     onAspectRatioChange?: (pageId: string, aspectRatio: number) => void;
 }
 
 const DEFAULT_PAGE_ASPECT_RATIO = 8.5 / 11;
 
-const ViewOnlyDocumentPage = ({ activeTab, page, zoomLevel = 1, onAspectRatioChange }: ViewOnlyDocumentPageProps) => {
+const ViewOnlyDocumentPage = ({ activeTab, page, onAspectRatioChange }: ViewOnlyDocumentPageProps) => {
     const [imageAspectRatio, setImageAspectRatio] = useState(DEFAULT_PAGE_ASPECT_RATIO);
 
     useEffect(() => {
@@ -50,7 +49,7 @@ const ViewOnlyDocumentPage = ({ activeTab, page, zoomLevel = 1, onAspectRatioCha
 
     return (
         <Column gap={3} className='w-full'>
-            <Row gap={0} className={`px-1 mx-auto`} style={{ width: 920 * zoomLevel }}>
+            <Row gap={0} className={`px-1 mx-auto`} style={{ width: 920 }}>
                 <PoppinsText weight='medium'>
                     {page.title || `Page ${page.pageNumber}`}
                 </PoppinsText>
@@ -65,8 +64,6 @@ const ViewOnlyDocumentPage = ({ activeTab, page, zoomLevel = 1, onAspectRatioCha
                     alignSelf: 'center',
                     maxWidth: 920,
                     width: 920,
-                    transform: [{ scale: zoomLevel }],
-                    marginBlock: -800 * (1 - zoomLevel),
                 }}
                 // accessibilityLabel={`Page 1 frame`}
             >

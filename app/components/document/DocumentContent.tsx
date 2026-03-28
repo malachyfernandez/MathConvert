@@ -12,7 +12,6 @@ import { MathDocumentPage } from 'types/mathDocuments';
 import { useGeneration } from '../../../contexts/GenerationContext';
 import { useToast } from '../../../contexts/ToastContext';
 import { useUserListSet } from 'hooks/useUserListSet';
-import { buildViewOnlyDocumentUrl } from '../../../utils/buildViewOnlyDocumentUrl';
 import DocumentHeader from './DocumentHeader';
 import ContentEditor from './ContentEditor';
 import ContentPreview from './ContentPreview';
@@ -38,7 +37,6 @@ const DocumentContent = ({ documentTitle, documentId, activePage, onReplacePage 
     const [headerHeight, setHeaderHeight] = useState(0);
     const [footerHeight, setFooterHeight] = useState(0);
     const [dotCount, setDotCount] = useState(1);
-    const [isSharing, setIsSharing] = useState(false);
     
     const isGenerating = isPageGenerating(activePage.id);
 
@@ -119,63 +117,6 @@ const DocumentContent = ({ documentTitle, documentId, activePage, onReplacePage 
         // This will be updated when the parent component re-renders with the new activePage
     };
 
-    const handleShareLink = async () => {
-        if (Platform.OS !== 'web' || typeof window === 'undefined') {
-            return;
-        }
-
-        // TODO: This "share link" currently relies on PUBLIC userVariables records.
-        // A true private share-link/token system would require backend support.
-        
-        setIsSharing(true);
-        
-        try {
-            // Ensure the document is PUBLIC
-            await setDocument({
-                key: 'mathDocuments',
-                itemId: documentId,
-                value: {
-                    id: documentId,
-                    title: documentTitle,
-                    description: '', // We don't have description here, but it's okay
-                    createdAt: Date.now(), // This should be preserved but we don't have it
-                    lastOpenedAt: Date.now(),
-                },
-                privacy: 'PUBLIC',
-                searchKeys: ['title', 'description'],
-                sortKey: 'lastOpenedAt',
-            });
-
-            // Ensure the current page is PUBLIC
-            await setPage({
-                key: 'mathDocumentPages',
-                itemId: activePage.id,
-                value: activePage,
-                privacy: 'PUBLIC',
-                filterKey: 'documentId',
-                searchKeys: ['title', 'markdown', 'initialGuidance'],
-                sortKey: 'pageNumber',
-            });
-
-            // Build and copy the URL
-            const shareUrl = buildViewOnlyDocumentUrl(documentId);
-            
-            try {
-                await navigator.clipboard.writeText(shareUrl);
-                showToast('View-only link copied. Document is now publicly viewable.');
-            } catch (clipboardError) {
-                // Fallback for browsers that don't support clipboard API
-                window.prompt('Copy this view-only link:', shareUrl);
-                showToast('View-only link copied. Document is now publicly viewable.');
-            }
-        } catch (error) {
-            console.error('Failed to share document:', error);
-            showToast('Failed to create share link. Please try again.');
-        } finally {
-            setIsSharing(false);
-        }
-    };
-
     return (
         <View className='flex-1'>
             {activePage.markdown ? (
@@ -186,8 +127,6 @@ const DocumentContent = ({ documentTitle, documentId, activePage, onReplacePage 
                         onTabChange={setActiveTab}
                         hasChanges={hasChanges}
                         onSave={() => handleSaveMarkdown(markdownDraft)}
-                        onShareLink={handleShareLink}
-                        isSharing={isSharing}
                         onLayout={handleHeaderLayout}
                     />
 

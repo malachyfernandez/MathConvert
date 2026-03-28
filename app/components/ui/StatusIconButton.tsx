@@ -1,21 +1,23 @@
 import { useEffect, useState } from 'react';
 import { View } from 'react-native';
 import AppButton from './buttons/AppButton';
-import PoppinsText from './text/PoppinsText';
 
-interface StatusButtonProps {
-  buttonText: string;
-  buttonAltText: string;
+interface StatusIconButtonProps {
+  icon: React.ReactNode;
   className?: string;
+  variant?: 'grey' | 'none';
+  onPress?: () => void;
 }
 
-export default function StatusButton({ buttonText, buttonAltText, className }: StatusButtonProps) {
+export default function StatusIconButton({ icon, className, variant = 'grey', onPress }: StatusIconButtonProps) {
 
-  const [trueButtonText, setTrueButtonText] = useState(buttonText);
   const [shakeOffset, setShakeOffset] = useState(0);
 
   const buttonPress = () => {
-    setTrueButtonText(buttonAltText);
+    // Call the custom onPress if provided
+    if (onPress) {
+      onPress();
+    }
     
     // Shake animation with setInterval
     let shakeCount = 0;
@@ -31,23 +33,10 @@ export default function StatusButton({ buttonText, buttonAltText, className }: S
     }, 100);
   };
 
-  useEffect(() => {
-
-    let timer: NodeJS.Timeout;
-
-    if (trueButtonText === buttonAltText) {
-      timer = setTimeout(() => {
-        setTrueButtonText(buttonText);
-      }, 1000);
-    }
-
-    return () => clearTimeout(timer);
-  }, [trueButtonText, buttonAltText]);
-
   return (
     <View className={`transition-all ${className || ''}`} style={{ transform: [{ translateX: shakeOffset }] }}>
-      <AppButton variant="grey" className={`h-10 w-28 ${className || ''}`} onPress={buttonPress}>
-        <PoppinsText weight='medium' color='white'>{trueButtonText}</PoppinsText>
+      <AppButton variant={variant} className={`h-10 w-10 ${className || ''}`} onPress={buttonPress}>
+        {icon}
       </AppButton>
     </View>
   );

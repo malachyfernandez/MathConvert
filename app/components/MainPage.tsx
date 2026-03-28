@@ -39,7 +39,7 @@ const MainPage: React.FC<MainPageProps> = () => {
 
     return (
         <View className='w-screen h-screen p-safe'>
-            <TopSiteBar isInDocument={isInDocument} onHomePress={() => setActiveDocumentId("")} documentId={activeDocumentId.value} />
+            <TopSiteBar isInDocument={isInDocument} onHomePress={() => setActiveDocumentId("")} documentId={activeDocumentId.value} userId={userId} />
             {isActiveDocumentLoading ? (
                 <PoppinsText>Loading</PoppinsText>
             ) : (

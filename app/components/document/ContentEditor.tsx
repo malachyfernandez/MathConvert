@@ -346,7 +346,7 @@ const createLineParser = () => {
             className='flex-1'
         >
             <View
-                className='flex-1 border border-subtle-border bg-background rounded-lg overflow-hidden'
+                className='flex-1 bg-background rounded-lg overflow-hidden'
                 onLayout={(event) => handleContainerLayout(event.nativeEvent.layout.height)}
             >
                 <ScrollView

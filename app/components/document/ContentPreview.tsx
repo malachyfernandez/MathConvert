@@ -9,7 +9,7 @@ interface ContentPreviewProps {
 
 const ContentPreview = ({ markdown, headerHeight = 0, footerHeight = 0 }: ContentPreviewProps) => {
     return (
-        <MarkdownMathPreview markdown={markdown} headerHeight={headerHeight} footerHeight={footerHeight} />
+        <MarkdownMathPreview markdown={markdown} headerHeight={headerHeight} footerHeight={footerHeight} noBorder={true}/>
     );
 };
 

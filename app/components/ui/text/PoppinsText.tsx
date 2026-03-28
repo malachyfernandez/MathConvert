@@ -1,5 +1,5 @@
 import React, { PropsWithChildren } from 'react';
-import { Text, TextStyle } from 'react-native';
+import { Text, TextStyle, LayoutChangeEvent } from 'react-native';
 import { useFonts } from 'expo-font';
 
 type FontWeight = 'regular' | 'medium' | 'bold';
@@ -12,6 +12,7 @@ interface PoppinsTextProps extends PropsWithChildren {
     varient?: PoppinsTextVarient;
     color?: TextColor;
     style?: TextStyle;
+    onLayout?: (event: LayoutChangeEvent) => void;
 }
 
 const PoppinsText = ({
@@ -20,7 +21,8 @@ const PoppinsText = ({
     weight = 'regular',
     varient = 'default',
     color = 'black',
-    style
+    style,
+    onLayout
 }: PoppinsTextProps) => {
     const [fontsLoaded] = useFonts({
         'Poppins-Regular': require('../../../../assets/fonts/Poppins/Poppins-Regular.ttf'),
@@ -59,6 +61,7 @@ const PoppinsText = ({
         <Text
             className={`${tailwindColor} ${className}`}
             style={{ fontFamily: getFontFamily(), ...style }}
+            onLayout={onLayout}
         >
             {children}
         </Text>

@@ -61,11 +61,8 @@ const ViewOnlyDocumentScreen = ({ documentId }: ViewOnlyDocumentScreenProps) => 
         });
     };
 
-    const handleZoomIn = () => {
+    const handleZoomChange = (newZoomLevel: number) => {
         if (Platform.OS === 'web' && scrollViewRef.current) {
-            // Calculate new zoom level
-            const newZoomLevel = Math.min(zoomLevel + 0.25, 2);
-            
             // Calculate the scroll position adjustment to maintain the same visual position
             // Standardize current scroll to zoom level 1, then apply new zoom
             const adjustedScrollY = currentScrollY * (newZoomLevel / zoomLevel);
@@ -80,31 +77,16 @@ const ViewOnlyDocumentScreen = ({ documentId }: ViewOnlyDocumentScreenProps) => 
                 }
             }, 50);
         } else {
-            setZoomLevel((current) => Math.min(current + 0.25, 2));
+            setZoomLevel(newZoomLevel);
         }
     };
 
+    const handleZoomIn = () => {
+        handleZoomChange(Math.min(zoomLevel + 0.25, 5));
+    };
+
     const handleZoomOut = () => {
-        if (Platform.OS === 'web' && scrollViewRef.current) {
-            // Calculate new zoom level
-            const newZoomLevel = Math.max(zoomLevel - 0.25, 0.5);
-            
-            // Calculate the scroll position adjustment to maintain the same visual position
-            // Standardize current scroll to zoom level 1, then apply new zoom
-            const adjustedScrollY = currentScrollY * (newZoomLevel / zoomLevel);
-            
-            // Apply zoom level
-            setZoomLevel(newZoomLevel);
-            
-            // Apply adjusted scroll position after a brief delay to allow the zoom to render
-            setTimeout(() => {
-                if (scrollViewRef.current) {
-                    scrollViewRef.current.scrollTo({ y: adjustedScrollY, animated: true });
-                }
-            }, 50);
-        } else {
-            setZoomLevel((current) => Math.max(current - 0.25, 0.5));
-        }
+        handleZoomChange(Math.max(zoomLevel - 0.25, 0.1));
     };
 
     const handleDownloadPdf = () => {
@@ -193,6 +175,7 @@ const ViewOnlyDocumentScreen = ({ documentId }: ViewOnlyDocumentScreenProps) => 
                 onZoomIn={handleZoomIn}
                 onZoomOut={handleZoomOut}
                 zoomLevel={zoomLevel}
+                onZoomChange={handleZoomChange}
                 onLayout={(event: any) => {
                     setHeaderHeight(event.nativeEvent.layout.height);
                 }}

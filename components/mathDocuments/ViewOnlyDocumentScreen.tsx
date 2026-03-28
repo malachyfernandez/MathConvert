@@ -1,5 +1,5 @@
-import React, { useMemo, useState, useRef } from 'react';
-import { ActivityIndicator, Platform, ScrollView, View } from 'react-native';
+import React, { useMemo, useState, useRef, useEffect } from 'react';
+import { ActivityIndicator, Platform, ScrollView, View, Dimensions } from 'react-native';
 import Column from '../../app/components/layout/Column';
 import PoppinsText from '../../app/components/ui/text/PoppinsText';
 import { useUserListGet } from '../../hooks/useUserListGet';
@@ -21,6 +21,8 @@ const ViewOnlyDocumentScreen = ({ documentId }: ViewOnlyDocumentScreenProps) => 
     const [pageAspectRatios, setPageAspectRatios] = useState<Record<string, number>>({});
     const [zoomLevel, setZoomLevel] = useState(1);
     const [currentScrollY, setCurrentScrollY] = useState(0);
+    const [screenWidth, setScreenWidth] = useState(0);
+    const [pageWidth, setPageWidth] = useState(0);
     const scrollViewRef = useRef<ScrollView>(null);
 
     // TODO: This route currently relies on globally accessible PUBLIC records.
@@ -47,6 +49,22 @@ const ViewOnlyDocumentScreen = ({ documentId }: ViewOnlyDocumentScreenProps) => 
             .map((record: any) => record.value)
             .sort((a: MathDocumentPage, b: MathDocumentPage) => a.pageNumber - b.pageNumber);
     }, [pageRecords]);
+
+    // Measure screen width and calculate page width on mount
+    useEffect(() => {
+        if (Platform.OS === 'web') {
+            // Get screen width (accounting for padding)
+            const width = Dimensions.get('window').width - 32; // 16px padding on each side
+            setScreenWidth(width);
+            
+            // Calculate page width based on standard letter size (8.5 x 11 inches)
+            // Assuming 11 inches = 792px at 72dpi (standard web DPI)
+            const standardPageHeight = 792;
+            // const standardPageWidth = standardPageHeight * DEFAULT_PAGE_ASPECT_RATIO;
+            const standardPageWidth = 1000;
+            setPageWidth(standardPageWidth);
+        }
+    }, []);
 
     const handleAspectRatioChange = (pageId: string, aspectRatio: number) => {
         setPageAspectRatios((current) => {
@@ -180,6 +198,9 @@ const ViewOnlyDocumentScreen = ({ documentId }: ViewOnlyDocumentScreenProps) => 
                     setHeaderHeight(event.nativeEvent.layout.height);
                 }}
                 onTabChange={setActiveTab}
+                pageWidth={pageWidth}
+                screenWidth={screenWidth}
+                margin={40}
             />
 
             <ScrollView

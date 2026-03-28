@@ -158,8 +158,7 @@ export const createMarkdownMathSourceDocument = (markdown: string, headerHeight:
     };
 
     function log() {
-      var args = Array.prototype.slice.call(arguments);
-      console.log.apply(console, ['[markdown-math-preview]'].concat(args));
+      // Removed debug logging
     }
 
     function fail(error) {

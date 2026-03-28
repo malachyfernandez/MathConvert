@@ -22,6 +22,9 @@ interface ViewOnlyDocumentHeaderProps {
     onZoomChange?: (zoomLevel: number) => void;
     onLayout?: (event: LayoutChangeEvent) => void;
     onTabChange: (tab: ViewOnlyTab) => void;
+    pageWidth?: number;
+    screenWidth?: number;
+    margin?: number;
 }
 
 const ViewOnlyDocumentHeader = ({
@@ -36,6 +39,9 @@ const ViewOnlyDocumentHeader = ({
     onZoomChange,
     onLayout,
     onTabChange,
+    pageWidth,
+    screenWidth,
+    margin = 40,
 }: ViewOnlyDocumentHeaderProps) => {
     const [zoomInputValue, setZoomInputValue] = useState(Math.round(zoomLevel * 100).toString());
     const [inputWidth, setInputWidth] = useState(25);
@@ -97,6 +103,19 @@ const ViewOnlyDocumentHeader = ({
             setZoomInputValue(Math.round(zoomLevel * 100).toString());
         }
     };
+
+    // Calculate auto-fit zoom on initial load
+    useEffect(() => {
+        if (pageWidth && screenWidth && onZoomChange) {
+            const availableWidth = screenWidth - margin;
+            const requiredZoom = availableWidth / pageWidth;
+            
+            // Only apply auto-fit if the page doesn't fit (zoom < 1.0)
+            if (requiredZoom < 1.0) {
+                onZoomChange(requiredZoom);
+            }
+        }
+    }, []); // Empty dependency array means this only runs once on mount
 
     // Update input when zoomLevel changes from external sources
     useEffect(() => {

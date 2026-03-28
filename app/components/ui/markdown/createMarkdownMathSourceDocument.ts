@@ -105,6 +105,9 @@ export const createMarkdownMathSourceDocument = (markdown: string, headerHeight:
 
   <script>
     window.MathJax = {
+      loader: {
+        load: ['a11y/semantic-enrich', 'a11y/explorer']
+      },
       tex: {
         inlineMath: [['$', '$'], ['\\(', '\\)']],
         displayMath: [['$$', '$$'], ['\\[', '\\]']],
@@ -112,8 +115,18 @@ export const createMarkdownMathSourceDocument = (markdown: string, headerHeight:
         processEnvironments: true
       },
       options: {
-        ignoreHtmlClass: 'tex2jax_ignore',
-        processHtmlClass: 'tex2jax_process'
+        enableAssistiveMml: true,
+        menuOptions: {
+          settings: {
+            assistiveMml: true,
+            explorer: true
+          }
+        }
+      },
+      sre: {
+        locale: 'en',
+        domain: 'clearspeak',
+        style: 'default'
       },
       startup: {
         typeset: false
@@ -121,12 +134,131 @@ export const createMarkdownMathSourceDocument = (markdown: string, headerHeight:
     };
   </script>
 
-  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+  <script
+    id="MathJax-script"
+    async
+    src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"
+  ></script>
 </head>
 <body>
   <div id="content"></div>
 
   <script>
+    window.__MATH_A11Y_STATUS__ = {
+      markedLoaded: false,
+      mathJaxPresent: false,
+      startupReady: false,
+      typesetResolved: false,
+      mjxContainerCount: 0,
+      semanticSpeechCount: 0,
+      ariaLabelCount: 0,
+      firstAriaLabel: '',
+      firstSemanticSpeech: '',
+      error: null
+    };
+
+    function log() {
+      var args = Array.prototype.slice.call(arguments);
+      console.log.apply(console, ['[markdown-math-preview]'].concat(args));
+    }
+
+    function fail(error) {
+      window.__MATH_A11Y_STATUS__.error = String(
+        error && error.message ? error.message : error
+      );
+      console.error('[markdown-math-preview] FAILED:', error);
+
+      var content = document.getElementById('content');
+      if (content) {
+        content.innerHTML =
+          '<p style="color: red;">Error rendering markdown/math preview</p>';
+      }
+    }
+
+    function decodeHtmlEntities(text) {
+      var textarea = document.createElement('textarea');
+      textarea.innerHTML = text;
+      return textarea.value;
+    }
+
+    function normalizeSpeechText(text) {
+      return String(text || '')
+        .replace(/<mark[^>]*>/g, ' ')
+        .replace(/<\/mark>/g, ' ')
+        .replace(/<break[^>]*>/g, ' ')
+        .replace(/<\/?prosody[^>]*>/g, ' ')
+        .replace(/<\/?say-as[^>]*>/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+    }
+
+    function getMathSpeechText(container) {
+      var existingAria = container.getAttribute('aria-label');
+      if (existingAria) {
+        return normalizeSpeechText(existingAria);
+      }
+
+      var mjxMath = container.querySelector('mjx-math[data-semantic-speech]');
+      if (mjxMath) {
+        return normalizeSpeechText(
+          decodeHtmlEntities(mjxMath.getAttribute('data-semantic-speech') || '')
+        );
+      }
+
+      var semanticNode = container.querySelector(
+        '[data-semantic-speech], [data-semantic-speech-none]'
+      );
+
+      if (semanticNode) {
+        var text =
+          semanticNode.getAttribute('data-semantic-speech') ||
+          semanticNode.getAttribute('data-semantic-speech-none') ||
+          '';
+
+        return normalizeSpeechText(decodeHtmlEntities(text));
+      }
+
+      return '';
+    }
+
+    function applyMathAccessibility(root) {
+      var containers = root.querySelectorAll('mjx-container');
+      var ariaLabelCount = 0;
+      var firstAriaLabel = '';
+      var firstSemanticSpeech = '';
+
+      containers.forEach(function (container) {
+        var speechText = getMathSpeechText(container);
+
+        var semanticNode =
+          container.querySelector('mjx-math[data-semantic-speech]') ||
+          container.querySelector('[data-semantic-speech]');
+
+        if (!firstSemanticSpeech && semanticNode) {
+          firstSemanticSpeech =
+            semanticNode.getAttribute('data-semantic-speech') || '';
+        }
+
+        if (speechText) {
+          container.setAttribute('aria-label', speechText);
+          container.setAttribute('tabindex', '0');
+
+          // Override role=application if explorer inserted it.
+          // We want a simpler, screen-reader-friendly fallback.
+          container.setAttribute('role', 'img');
+
+          ariaLabelCount += 1;
+          if (!firstAriaLabel) {
+            firstAriaLabel = speechText;
+          }
+        }
+      });
+
+      window.__MATH_A11Y_STATUS__.ariaLabelCount = ariaLabelCount;
+      window.__MATH_A11Y_STATUS__.firstAriaLabel = firstAriaLabel;
+      window.__MATH_A11Y_STATUS__.firstSemanticSpeech = firstSemanticSpeech;
+    }
+
     function escapeHtml(text) {
       return text
         .replace(/&/g, '&amp;')
@@ -159,7 +291,7 @@ export const createMarkdownMathSourceDocument = (markdown: string, headerHeight:
     function restoreMath(html, math) {
       var restoredHtml = html;
       var hasTokens = true;
-      
+
       while (hasTokens) {
         hasTokens = false;
         restoredHtml = restoredHtml.replace(/MATHBLOCK(\d+)TOKEN/g, function (_, index) {
@@ -167,36 +299,112 @@ export const createMarkdownMathSourceDocument = (markdown: string, headerHeight:
           return escapeHtml(math[Number(index)]);
         });
       }
-      
+
       return restoredHtml;
     }
 
-    try {
-      var markdown = ${JSON.stringify(markdown)};
-      var protectedMath = protectMath(markdown);
-      var html = window.marked.parse(protectedMath.protectedSource);
-      html = restoreMath(html, protectedMath.math);
+    function waitForMathJax(timeoutMs) {
+      return new Promise(function (resolve, reject) {
+        var start = Date.now();
 
-      if (/MATHBLOCK\d+TOKEN/.test(html)) {
-        console.error('ERROR: Math tokens still present after restore:', html);
-        throw new Error('Math protection system failed - tokens still present');
-      }
+        function check() {
+          window.__MATH_A11Y_STATUS__.mathJaxPresent = !!window.MathJax;
+          window.__MATH_A11Y_STATUS__.typesetPromisePresent =
+            !!window.MathJax &&
+            typeof window.MathJax.typesetPromise === 'function';
+          window.__MATH_A11Y_STATUS__.startupReady =
+            !!window.MathJax &&
+            !!window.MathJax.startup &&
+            !!window.MathJax.startup.promise;
 
-      console.log('Final HTML before innerHTML:', html);
+          if (window.__MATH_A11Y_STATUS__.typesetPromisePresent) {
+            if (
+              window.MathJax.startup &&
+              window.MathJax.startup.promise &&
+              typeof window.MathJax.startup.promise.then === 'function'
+            ) {
+              window.MathJax.startup.promise.then(resolve).catch(reject);
+              return;
+            }
 
-      var content = document.getElementById('content');
-      content.innerHTML = html;
+            resolve();
+            return;
+          }
 
-      if (window.MathJax && window.MathJax.typesetPromise) {
-        window.MathJax.typesetPromise([content]).catch(function (error) {
-          console.error('MathJax typeset failed:', error);
-        });
-      }
-    } catch (error) {
-      console.error('Markdown parsing failed:', error);
-      document.getElementById('content').innerHTML =
-        '<p>Error rendering markdown</p>';
+          if (Date.now() - start > timeoutMs) {
+            reject(new Error('Timed out waiting for MathJax'));
+            return;
+          }
+
+          setTimeout(check, 50);
+        }
+
+        check();
+      });
     }
+
+    (function render() {
+      try {
+        log('STEP 1: starting markdown render');
+
+        if (!window.marked || typeof window.marked.parse !== 'function') {
+          throw new Error('marked failed to load');
+        }
+
+        window.__MATH_A11Y_STATUS__.markedLoaded = true;
+        log('STEP 2: marked loaded');
+
+        var markdown = ${JSON.stringify(markdown)};
+        log('STEP 3: markdown length', markdown.length);
+
+        var protectedMath = protectMath(markdown);
+        log('STEP 4: protected source created');
+
+        var html = window.marked.parse(protectedMath.protectedSource);
+        log('STEP 5: parsed html created');
+
+        html = restoreMath(html, protectedMath.math);
+        log('STEP 6: restored html created');
+
+        var content = document.getElementById('content');
+        content.innerHTML = html;
+        log('STEP 7: content assigned');
+
+        log('STEP 8: waiting for MathJax');
+        waitForMathJax(10000)
+          .then(function () {
+            log('STEP 9: MathJax ready');
+            return window.MathJax.typesetPromise([content]);
+          })
+          .then(function () {
+            window.__MATH_A11Y_STATUS__.typesetResolved = true;
+            log('STEP 10: typeset resolved');
+
+            applyMathAccessibility(content);
+
+            window.__MATH_A11Y_STATUS__.mjxContainerCount =
+              document.querySelectorAll('mjx-container').length;
+
+            window.__MATH_A11Y_STATUS__.semanticSpeechCount =
+              document.querySelectorAll('[data-semantic-speech]').length;
+
+            log(
+              'STEP 11: accessibility applied',
+              'mjx-container count =', window.__MATH_A11Y_STATUS__.mjxContainerCount,
+              'semantic-speech count =', window.__MATH_A11Y_STATUS__.semanticSpeechCount,
+              'aria-label count =', window.__MATH_A11Y_STATUS__.ariaLabelCount
+            );
+
+            log('First aria-label:', window.__MATH_A11Y_STATUS__.firstAriaLabel);
+            log('First semantic speech:', window.__MATH_A11Y_STATUS__.firstSemanticSpeech);
+          })
+          .catch(function (error) {
+            fail(error);
+          });
+      } catch (error) {
+        fail(error);
+      }
+    })();
   </script>
 </body>
 </html>`;

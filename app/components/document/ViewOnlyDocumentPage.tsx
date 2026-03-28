@@ -5,6 +5,7 @@ import PoppinsText from '../ui/text/PoppinsText';
 import { MathDocumentPage } from 'types/mathDocuments';
 import { createMarkdownMathSourceDocument } from '../ui/markdown/createMarkdownMathSourceDocument';
 import { ViewOnlyTab } from './ViewOnlyDocumentHeader';
+import Row from '../layout/Row';
 
 interface ViewOnlyDocumentPageProps {
     activeTab: ViewOnlyTab;
@@ -49,28 +50,42 @@ const ViewOnlyDocumentPage = ({ activeTab, page, zoomLevel = 1, onAspectRatioCha
 
     return (
         <Column gap={3} className='w-full'>
+            <Row gap={0} className={`px-1 mx-auto`} style={{ width: 920 * zoomLevel }}>
+                <PoppinsText weight='medium'>
+                    {page.title || `Page ${page.pageNumber}`}
+                </PoppinsText>
+                    {/* <PoppinsText varient='subtext'>
+                        {activeTab === 'imageOverlay' ? 'Image overlay with readable MathJax underneath.' : 'Screen-readable MathJax page.'}
+                    </PoppinsText> */}
+            </Row>
             <View
-                className='relative w-full overflow-hidden rounded-2xl border border-subtle-border bg-inner-background'
+                className='relative w-full h-min rounded-2xl border overflow-hidden border-subtle-border bg-inner-background transition-all'
                 style={{
                     aspectRatio: imageAspectRatio,
                     alignSelf: 'center',
                     maxWidth: 920,
+                    width: 920,
                     transform: [{ scale: zoomLevel }],
                     marginBlock: -800 * (1 - zoomLevel),
                 }}
+                accessibilityLabel={`DOES THIS WORK`}
             >
-                <iframe
-                    title={`View only math page ${page.pageNumber}`}
-                    srcDoc={iframeSource}
-                    style={{
-                        position: 'absolute',
-                        inset: 0,
-                        width: '100%',
-                        height: '100%',
-                        border: 'none',
-                        backgroundColor: '#f6eedb',
-                    }}
-                />
+                <View
+                    className='h-full w-full'
+                >
+                    <iframe
+                        title={`View only math page ${page.pageNumber}`}
+                        srcDoc={iframeSource}
+                        style={{
+                            position: 'absolute',
+                            inset: 0,
+                            width: 920,
+                            height: '100%',
+                            border: 'none',
+                            backgroundColor: 'rgb(246, 238, 219)',
+                        }}
+                    />
+                </View>
                 <View
                     pointerEvents='none'
                     className='absolute inset-0'
@@ -80,18 +95,11 @@ const ViewOnlyDocumentPage = ({ activeTab, page, zoomLevel = 1, onAspectRatioCha
                         source={{ uri: page.imageUrl }}
                         accessibilityLabel={`Original page image ${page.pageNumber}`}
                         resizeMode='cover'
-                        className='h-full w-full'
+                        className='h-full w-[920px]'
                     />
                 </View>
             </View>
-            <Column gap={0} className='px-1'>
-                <PoppinsText weight='medium'>
-                    {page.title || `Page ${page.pageNumber}`}
-                </PoppinsText>
-                <PoppinsText varient='subtext'>
-                    {activeTab === 'imageOverlay' ? 'Image overlay with readable MathJax underneath.' : 'Screen-readable MathJax page.'}
-                </PoppinsText>
-            </Column>
+            
         </Column>
     );
 };

@@ -19,6 +19,7 @@ import { useGeneration } from '../../../contexts/GenerationContext';
 import { useToast } from '../../../contexts/ToastContext';
 import { useUserListSet } from 'hooks/useUserListSet';
 import { useUserVariable } from 'hooks/useUserVariable';
+import { generateId } from 'utils/generateId';
 import DocumentHeader from './DocumentHeader';
 import ContentEditor from './ContentEditor';
 import ContentPreview from './ContentPreview';
@@ -72,6 +73,37 @@ const DocumentContent = ({ documentTitle, documentId, activePage, onReplacePage 
             setDotCount(1);
         }
     }, [isGenerating]);
+
+    // Monitor for generation completion and add follow-up
+    useEffect(() => {
+        // Check if generation just completed (was generating, now not generating)
+        // and if we have a recent generation with markdown but no corresponding follow-up
+        if (!isGenerating && activePage.lastGeneratedAt && activePage.markdown && activePage.lastAiPrompt) {
+            // Look for a follow-up with the same generation timestamp
+            const hasMatchingFollowUp = activePage.followUps.some(followUp => 
+                followUp.prompt === activePage.lastAiPrompt &&
+                followUp.resultingMarkdown === activePage.markdown &&
+                Math.abs(followUp.createdAt - (activePage.lastGeneratedAt || 0)) < 5000 // Within 5 seconds
+            );
+
+            // If no matching follow-up exists, add one
+            if (!hasMatchingFollowUp) {
+                const updatedPage = {
+                    ...activePage,
+                    followUps: [
+                        ...activePage.followUps,
+                        {
+                            id: generateId(),
+                            prompt: activePage.lastAiPrompt,
+                            createdAt: activePage.lastGeneratedAt || Date.now(),
+                            resultingMarkdown: activePage.markdown,
+                        }
+                    ]
+                };
+                onReplacePage(updatedPage, 'Added initial generation follow-up');
+            }
+        }
+    }, [isGenerating, activePage.markdown, activePage.lastGeneratedAt, activePage.lastAiPrompt, activePage.followUps]);
 
     const handleHeaderLayout = (event: LayoutChangeEvent) => {
         setHeaderHeight(event.nativeEvent.layout.height);

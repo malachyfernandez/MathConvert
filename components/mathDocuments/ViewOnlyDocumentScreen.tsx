@@ -113,7 +113,7 @@ const ViewOnlyDocumentScreen = ({ documentId }: ViewOnlyDocumentScreenProps) => 
         const requiredZoom = availableWidth / pageWidth;
 
         // Only apply auto-fit if the page doesn't fit and it's less than the user's last set zoom
-        if (requiredZoom < 1.0 && requiredZoom < userSetZoom) {
+        if (requiredZoom < userSetZoom) {
             return requiredZoom;
         }
         return null;

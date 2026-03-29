@@ -161,7 +161,7 @@ const ViewOnlyDocumentHeader = ({
                         <Row gap={2} className='items-center'>
                             <Row gap={1} className='items-center bg-inner-background rounded-lg px-1 py-1'>
                                 <AppButton
-                                    variant='outline'
+                                    variant='outline-alt'
                                     className='h-8 w-8 p-0'
                                     onPress={onZoomOut}
                                     disabled={zoomLevel <= 0.1}
@@ -196,7 +196,7 @@ const ViewOnlyDocumentHeader = ({
                                 </Row>
 
                                 <AppButton
-                                    variant='outline'
+                                    variant='outline-alt'
                                     className='h-8 w-8 p-0'
                                     onPress={onZoomIn}
                                     disabled={zoomLevel >= 5}

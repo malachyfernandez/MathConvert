@@ -8,7 +8,7 @@ interface UseMathGenerationProps {
     page: MathDocumentPage;
     onUpdatePage: (nextPage: MathDocumentPage, description: string) => void;
     onUpdateMarkdown: (markdown: string) => void;
-    onFollowUpUpdate?: (followUpId: string, resultingMarkdown: string) => void;
+    onFollowUpUpdate?: (resultingMarkdown: string) => void; // Simplified: just pass the result
 }
 
 export const useMathGeneration = ({ page, onUpdatePage, onUpdateMarkdown, onFollowUpUpdate }: UseMathGenerationProps) => {
@@ -52,11 +52,9 @@ export const useMathGeneration = ({ page, onUpdatePage, onUpdateMarkdown, onFoll
 
             // Call follow-up update callback if provided
             if (onFollowUpUpdate) {
-                // Find the most recent follow-up (the one we just added)
-                const mostRecentFollowUp = page.followUps[page.followUps.length - 1];
-                if (mostRecentFollowUp) {
-                    onFollowUpUpdate(mostRecentFollowUp.id, result.markdown);
-                }
+                // Simple approach: just call the callback with the result
+                // The calling component will handle adding the follow-up
+                onFollowUpUpdate(result.markdown);
             }
         } catch (error) {
             setErrorMessage(error instanceof Error ? error.message : 'AI conversion failed.');

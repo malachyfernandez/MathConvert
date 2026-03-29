@@ -20,7 +20,6 @@ interface ChatOptionsDialogProps {
 
 const ChatOptionsDialog = ({ followUps, page, onUpdatePage, onUpdateMarkdown }: ChatOptionsDialogProps) => {
     const [isOpen, setIsOpen] = useState(false);
-    const [regenerationFollowUpId, setRegenerationFollowUpId] = useState<string | null>(null);
     const [currentFollowUps, setCurrentFollowUps] = useState(followUps);
     const { setGeneratingPage } = useGeneration();
     
@@ -33,42 +32,25 @@ const ChatOptionsDialog = ({ followUps, page, onUpdatePage, onUpdateMarkdown }: 
         page,
         onUpdatePage,
         onUpdateMarkdown,
-        onFollowUpUpdate: (followUpId: string, resultingMarkdown: string) => {
-            if (followUpId === regenerationFollowUpId) {
-                // Update the follow-up with the resulting markdown
-                const updatedFollowUps = currentFollowUps.map(followUp => 
-                    followUp.id === followUpId 
-                        ? { ...followUp, resultingMarkdown }
-                        : followUp
-                );
-                setCurrentFollowUps(updatedFollowUps);
-                const updatedPage = { ...page, followUps: updatedFollowUps };
-                onUpdatePage(updatedPage, 'Updated regeneration follow-up with result');
-            }
+        onFollowUpUpdate: (resultingMarkdown: string) => {
+            // Simple approach: add the follow-up only after generation completes
+            const regenerationFollowUp = {
+                id: generateId(),
+                prompt: 'Regenerated from scratch',
+                createdAt: Date.now(),
+                resultingMarkdown, // Add the result immediately
+            };
+            
+            const updatedFollowUps = [...currentFollowUps, regenerationFollowUp];
+            setCurrentFollowUps(updatedFollowUps);
+            const updatedPage = { ...page, followUps: updatedFollowUps };
+            onUpdatePage(updatedPage, 'Added regeneration follow-up with result');
         },
     });
 
     const handleRegenerate = async () => {
         // Clear the editor first
         onUpdateMarkdown('');
-        
-        // Add regeneration to follow-up history
-        const regenerationFollowUp = {
-            id: generateId(),
-            prompt: 'Regenerated from scratch',
-            createdAt: Date.now(),
-            resultingMarkdown: '', // Will be updated after generation
-        };
-        setRegenerationFollowUpId(regenerationFollowUp.id);
-
-        // Update page with new follow-up and cleared markdown
-        const pageWithFollowUp = {
-            ...page,
-            markdown: '',
-            followUps: [...currentFollowUps, regenerationFollowUp],
-        };
-        setCurrentFollowUps([...currentFollowUps, regenerationFollowUp]);
-        onUpdatePage(pageWithFollowUp, 'Added regeneration to follow-up history');
 
         // Set the global generation state BEFORE starting generation
         setGeneratingPage(page.id, true);

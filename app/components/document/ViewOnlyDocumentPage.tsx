@@ -80,6 +80,7 @@ const ViewOnlyDocumentPage = ({ activeTab, page, onAspectRatioChange }: ViewOnly
                             height: '100%',
                             border: 'none',
                             backgroundColor: 'rgb(246, 238, 219)',
+                            pointerEvents: activeTab === 'imageOverlay' ? 'none' : 'auto',
                         }}
                         aria-label={`${page.title || `Page ${page.pageNumber}`}`}
                         

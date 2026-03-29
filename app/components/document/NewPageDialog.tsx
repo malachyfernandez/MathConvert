@@ -11,6 +11,9 @@ import StatusButton from '../ui/StatusButton';
 import SimpleImageUpload from './SimpleImageUpload';
 import ImageUrlModal from './ImageUrlModal';
 import { useUserListSet } from 'hooks/useUserListSet';
+import { useAction } from 'convex/react';
+import { api } from '../../../convex/_generated/api';
+import { useGeneration } from '../../../contexts/GenerationContext';
 import { MathDocumentPage } from 'types/mathDocuments';
 import { generateId } from 'utils/generateId';
 
@@ -24,12 +27,17 @@ interface NewPageDialogProps {
 
 const NewPageDialog = ({ documentId, existingPageCount, onCreate, triggerButtonVariant = 'green', createButtonVariant = 'green' }: NewPageDialogProps) => {
     const setPage = useUserListSet<MathDocumentPage>();
+    const convertMathImageToMarkdown = useAction(api.mathAi.convertMathImageToMarkdown);
+    const { setGeneratingPage, isPageGenerating } = useGeneration();
     const [isOpen, setIsOpen] = useState(false);
     const nextPageNumber = existingPageCount + 1;
     const [title, setTitle] = useState(`Page ${nextPageNumber}`);
     const [imageUrl, setImageUrl] = useState('');
     const [isImageUrlModalOpen, setIsImageUrlModalOpen] = useState(false);
     const [isUploading, setIsUploading] = useState(false);
+    const [isGenerating, setIsGenerating] = useState(false);
+    const [createdPage, setCreatedPage] = useState<MathDocumentPage | null>(null);
+    const [errorMessage, setErrorMessage] = useState('');
 
     const handleImageUrlAccept = (url: string) => {
         setImageUrl(url);
@@ -42,6 +50,9 @@ const NewPageDialog = ({ documentId, existingPageCount, onCreate, triggerButtonV
             setImageUrl('');
             setIsImageUrlModalOpen(false);
             setIsUploading(false);
+            setIsGenerating(false);
+            setCreatedPage(null);
+            setErrorMessage('');
         }
     }, [isOpen, nextPageNumber]);
 
@@ -53,31 +64,76 @@ const NewPageDialog = ({ documentId, existingPageCount, onCreate, triggerButtonV
         }
     }, [isOpen]);
 
-    const handleCreate = async () => {
+    const handleCreate = async (startGeneration: boolean = false) => {
         const pageId = generateId();
+        const newPage: MathDocumentPage = {
+            id: pageId,
+            documentId,
+            pageNumber: nextPageNumber,
+            title: title.trim() || `Page ${nextPageNumber}`,
+            imageUrl,
+            markdown: '',
+            initialGuidance: '',
+            lastAiPrompt: '',
+            followUps: [],
+        };
 
         await setPage({
             key: 'mathDocumentPages',
             itemId: pageId,
-            value: {
-                id: pageId,
-                documentId,
-                pageNumber: nextPageNumber,
-                title: title.trim() || `Page ${nextPageNumber}`,
-                imageUrl,
-                markdown: '',
-                initialGuidance: '',
-                lastAiPrompt: '',
-                followUps: [],
-            },
+            value: newPage,
             privacy: 'PUBLIC',
             filterKey: 'documentId',
             searchKeys: ['title', 'markdown', 'initialGuidance'],
             sortKey: 'pageNumber',
         });
 
+        // Close dialog immediately and navigate to the new page
         setIsOpen(false);
         onCreate(pageId);
+
+        if (startGeneration && imageUrl) {
+            // Start generation in the background after dialog is closed
+            setCreatedPage(newPage);
+            setIsGenerating(true);
+            setErrorMessage('');
+            
+            try {
+                setGeneratingPage(pageId, true);
+
+                const result = await convertMathImageToMarkdown({
+                    imageUrl: newPage.imageUrl,
+                    guidance: 'Convert this handwritten math to LaTeX',
+                    currentMarkdown: '',
+                });
+
+                const updatedPage: MathDocumentPage = {
+                    ...newPage,
+                    markdown: result.markdown,
+                    lastAiPrompt: 'Convert this handwritten math to LaTeX',
+                    lastGeneratedAt: Date.now(),
+                };
+
+                await setPage({
+                    key: 'mathDocumentPages',
+                    itemId: pageId,
+                    value: updatedPage,
+                    privacy: 'PUBLIC',
+                    filterKey: 'documentId',
+                    searchKeys: ['title', 'markdown', 'initialGuidance'],
+                    sortKey: 'pageNumber',
+                });
+            } catch (error) {
+                setErrorMessage(error instanceof Error ? error.message : 'AI conversion failed.');
+            } finally {
+                setGeneratingPage(pageId, false);
+                setIsGenerating(false);
+            }
+        }
+    };
+
+    const getContextualPrompt = () => {
+        return 'Convert this handwritten math to LaTeX';
     };
 
     const isValidTitle = title.trim().length > 0;
@@ -164,19 +220,40 @@ const NewPageDialog = ({ documentId, existingPageCount, onCreate, triggerButtonV
                                 </View>
                             </Column>
                             
-                            {canCreate ? (
-                                <AppButton variant={createButtonVariant} className='h-12' onPress={() => void handleCreate()}>
-                                    <PoppinsText weight='medium' color='white'>
-                                        {isUploading ? <ActivityIndicator color='white' /> : 'Create page'}
-                                    </PoppinsText>
-                                </AppButton>
-                            ) : (
-                                <StatusButton 
-                                    buttonText="Create page" 
-                                    buttonAltText={!hasImage ? "Upload an image first" : "Add a title"}
-                                    className="h-12 w-full"
-                                />
-                            )}
+                            {/* Blank page option */}
+                            <Column className='pt-2 pb-4'>
+                                <PoppinsText weight='medium' className='text-center text-text'>
+                                    {imageUrl ? 'Blank page (with image)' : 'Blank page'}
+                                </PoppinsText>
+                            </Column>
+                            
+                            {/* Buttons */}
+                            <Column gap={3}>
+                                {isValidTitle && hasImage ? (
+                                    <>
+                                        <AppButton variant={createButtonVariant} className='h-12' onPress={() => void handleCreate(true)}>
+                                            <PoppinsText weight='medium' color='white'>
+                                                Create page and start AI conversion
+                                            </PoppinsText>
+                                        </AppButton>
+                                        <AppButton variant='outline-alt' className='h-12' onPress={() => void handleCreate(false)}>
+                                            <PoppinsText weight='medium'>
+                                                Create blank page
+                                            </PoppinsText>
+                                        </AppButton>
+                                    </>
+                                ) : (
+                                    <StatusButton 
+                                        buttonText="Create page" 
+                                        buttonAltText={!hasImage ? "Upload an image first" : "Add a title"}
+                                        className="h-12 w-full"
+                                    />
+                                )}
+                            </Column>
+                            
+                            {errorMessage ? (
+                                <PoppinsText className='text-red-500 text-sm text-center'>{errorMessage}</PoppinsText>
+                            ) : null}
                         </Column>
                     </Column>
                 </ConvexDialog.Content>

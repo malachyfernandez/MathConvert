@@ -89,14 +89,19 @@ export const convertMathImageToMarkdown = action({
         pageTitle: v.optional(v.string()),
     },
     handler: async (_ctx, args) => {
+        console.log('=== CONVERT MATH IMAGE TO MARKDOWN START ===');
+        console.log('INPUT ARGS:', JSON.stringify(args, null, 2));
+
         const apiKey = process.env.OPENAI_API_KEY;
 
         if (!apiKey) {
+            console.error('OPENAI_API_KEY is missing');
             throw new Error('OPENAI_API_KEY is missing from the Convex environment. Run `npx convex env set OPENAI_API_KEY <your_key>` or add it in the Convex dashboard for this deployment.');
         }
 
-
         const prompt = buildPrompt(args);
+        console.log('GENERATED PROMPT:', prompt);
+        console.log('IMAGE URL:', args.imageUrl);
 
         const requestBody = {
             model: 'gpt-5.4-nano',
@@ -121,8 +126,10 @@ export const convertMathImageToMarkdown = action({
             reasoning_effort: 'low',
         };
 
+        console.log('OPENAI REQUEST BODY:', JSON.stringify(requestBody, null, 2));
 
         try {
+            console.log('SENDING REQUEST TO OPENAI...');
             const response = await fetch('https://api.openai.com/v1/chat/completions', {
                 method: 'POST',
                 headers: {
@@ -132,28 +139,50 @@ export const convertMathImageToMarkdown = action({
                 body: JSON.stringify(requestBody),
             });
 
+            console.log('OPENAI RESPONSE STATUS:', response.status);
+            console.log('OPENAI RESPONSE HEADERS:', {
+                'content-type': response.headers.get('content-type'),
+                'openai-version': response.headers.get('openai-version'),
+                'openai-organization': response.headers.get('openai-organization'),
+                'openai-processing-ms': response.headers.get('openai-processing-ms'),
+                'openai-request-id': response.headers.get('openai-request-id'),
+                'x-ratelimit-limit-requests': response.headers.get('x-ratelimit-limit-requests'),
+                'x-ratelimit-limit-tokens': response.headers.get('x-ratelimit-limit-tokens'),
+                'x-ratelimit-remaining-requests': response.headers.get('x-ratelimit-remaining-requests'),
+                'x-ratelimit-remaining-tokens': response.headers.get('x-ratelimit-remaining-tokens'),
+                'x-ratelimit-reset-requests': response.headers.get('x-ratelimit-reset-requests'),
+                'x-ratelimit-reset-tokens': response.headers.get('x-ratelimit-reset-tokens'),
+            });
 
             if (!response.ok) {
                 const errorText = await response.text();
-                console.error('OpenAI Error Response:', errorText);
+                console.error('OPENAI ERROR RESPONSE:', errorText);
                 throw new Error(`OpenAI request failed: ${errorText}`);
             }
 
             const json = await response.json();
+            console.log('OPENAI RESPONSE JSON:', JSON.stringify(json, null, 2));
 
             // Extract markdown from chat completions response
             const markdown = json.choices?.[0]?.message?.content?.trim() || '';
-
+            console.log('EXTRACTED MARKDOWN:', markdown);
+            console.log('MARKDOWN LENGTH:', markdown.length);
 
             if (!markdown) {
-                    throw new Error('OpenAI returned an empty response.');
+                console.error('EMPTY MARKDOWN EXTRACTED FROM RESPONSE');
+                console.log('FULL RESPONSE STRUCTURE:', JSON.stringify(json, null, 2));
+                throw new Error('OpenAI returned an empty response.');
             }
 
-
+            console.log('=== CONVERT MATH IMAGE TO MARKDOWN SUCCESS ===');
             return {
                 markdown,
             };
         } catch (error) {
+            console.error('=== CONVERT MATH IMAGE TO MARKDOWN ERROR ===');
+            console.error('ERROR TYPE:', typeof error);
+            console.error('ERROR MESSAGE:', error instanceof Error ? error.message : String(error));
+            console.error('ERROR STACK:', error instanceof Error ? error.stack : 'No stack trace');
             throw error;
         }
     },

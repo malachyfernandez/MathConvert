@@ -20,7 +20,7 @@ interface DocumentEditorProps {
 
 const DocumentEditor = ({ documentId, userId, activePageId, onSetActivePageId }: DocumentEditorProps) => {
     const scopedUserIds = userId ? [userId] : ['__loading__'];
-    
+
     const [documentRecord] = useUserList<MathDocument>({
         key: 'mathDocuments',
         itemId: documentId,
@@ -90,18 +90,22 @@ const DocumentEditor = ({ documentId, userId, activePageId, onSetActivePageId }:
     }
 
     return (
-        <Row className='flex-1'>
-            <ImageColumn
-                page={activePage}
-                onImageChange={(url) => {
-                    if (activePage) {
-                        replacePage({ ...activePage, imageUrl: url }, 'Updated page image');
-                    }
-                }}
-            />
+        <View className='flex-1 flex-col sm:flex-row gap-4'>
+            <View className='sm:flex-1'>
+                <View className='h-48 sm:h-full border-b border-subtle-border sm:border-0 -mb-4'>
+                    <ImageColumn
+                        page={activePage}
+                        onImageChange={(url) => {
+                            if (activePage) {
+                                replacePage({ ...activePage, imageUrl: url }, 'Updated page image');
+                            }
+                        }}
+                    />
+                </View>
+            </View>
 
             {activePage?.imageUrl && (
-                <View className='flex-1 pr-4'>
+                <View className='flex-1 min-w-[400px] shrink-0 sm:pr-4'>
                     <DocumentContent
                         documentTitle={documentRecord.value?.title ?? 'Untitled math document'}
                         documentId={documentId}
@@ -111,7 +115,7 @@ const DocumentEditor = ({ documentId, userId, activePageId, onSetActivePageId }:
                     />
                 </View>
             )}
-        </Row>
+        </View>
     );
 };
 

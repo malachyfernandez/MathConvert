@@ -23,14 +23,43 @@ const ImageDisplay = ({ page, onImageUrlModalOpen, onImageChange }: ImageDisplay
             />
             <View className='absolute bottom-0 left-0 right-0 p-4 pt-12 bg-linear-to-t from-background to-transparent'>
                 <Row gap={2}>
-                    <View className='flex-1'>
-                        <AppButton
-                            variant='outline-alt'
-                            className='h-12 w-full'
-                            onPress={onImageUrlModalOpen}
-                        >
-                            <PoppinsText weight='medium'>Use Image URL</PoppinsText>
-                        </AppButton>
+                    <View className='w-min hidden sm:block md:flex-1'>
+
+
+                        <View className='w-16 md:hidden'>
+                            <AppButton
+                                variant='outline-alt'
+                                className='h-12 w-full'
+                                onPress={onImageUrlModalOpen}
+                            >
+
+                                <PoppinsText weight='medium' className=''>URL</PoppinsText>
+                            </AppButton>
+                        </View>
+                        <View className='w-full hidden md:block'>
+                            <AppButton
+                                variant='outline-alt'
+                                className='h-12 w-full'
+                                onPress={onImageUrlModalOpen}
+                            >
+                                <PoppinsText weight='medium' className=''>Use Image URL</PoppinsText>
+
+                            </AppButton>
+                        </View>
+                    </View>
+                    <View className='flex-1 block sm:hidden'>
+
+
+                        <View className='w-full '>
+                            <AppButton
+                                variant='outline-alt'
+                                className='h-12 w-full'
+                                onPress={onImageUrlModalOpen}
+                            >
+                                <PoppinsText weight='medium' className=''>Use Image URL</PoppinsText>
+
+                            </AppButton>
+                        </View>
                     </View>
                     <View className='flex-1'>
                         <SimpleImageUpload

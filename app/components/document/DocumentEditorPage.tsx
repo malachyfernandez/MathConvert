@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Platform, TouchableOpacity, View } from 'react-native';
+import { Platform, Pressable, TouchableOpacity, View } from 'react-native';
 import Animated, {
     useSharedValue,
     useAnimatedStyle,
@@ -8,7 +8,11 @@ import Animated, {
     FadeInDown,
     FadeInLeft,
     FadeInRight,
+    FadeOutLeft,
     Easing,
+    FadeOutRight,
+    FadeIn,
+    FadeOut,
 } from 'react-native-reanimated';
 import Column from '../layout/Column';
 import PoppinsText from '../ui/text/PoppinsText';
@@ -20,6 +24,7 @@ import NewPageDialog from './NewPageDialog';
 import { useUserListGet } from 'hooks/useUserListGet';
 import AppButton from '../ui/buttons/AppButton';
 import { PagesButton } from '../ui/buttons/PagesButton';
+import Row from '../layout/Row';
 
 interface DocumentEditorPageProps {
     documentId: string;
@@ -91,33 +96,70 @@ const DocumentEditorPage = ({ documentId, userId }: DocumentEditorPageProps) => 
     return (
         <View className='flex-1'>
             {/* This will be handled by DocumentEditor component */}
-            <View className={'flex-1 flex-row'}>
-                <View className='absolute left-0 top-0 h-full w-full z-10'>
-                    {/* <DocumentSidebar
+
+            <View className={'flex-1 flex-row '}>
+                {/* Desktop layout - always visible sidebar */}
+                <View className={'w-min hidden lg:flex'}>
+                    <DocumentSidebar
                         documentId={documentId}
                         userId={userId}
                         activePageId={activePageId.value}
                         onSetActivePageId={setActivePageId}
-                    /> */}
+                    />
+
+                </View>
+
+                {/* Mobile layout - sidebar overlay with hamburger button */}
+                <View className='absolute left-0 top-0 h-full w-full z-10 lg:hidden'>
+
+                    {showSidebar && (
+                        <Animated.View
+                            key="sidebar-overlay"
+                            className="h-full w-full absolute top-0 left-0"
+                            entering={FadeIn.duration(100)}
+                            exiting={FadeOut.duration(100)}
+                        >
+                            <Pressable onPress={handleHideSidebar} className='h-full w-full absolute top-0 left-0  bg-black/25' />
+
+                        </Animated.View>
+                    )}
+
 
 
                     {showSidebar ? (
-                        <Animated.View entering={FadeInLeft.duration(300)}>
-                            <DocumentSidebar
-                                documentId={documentId}
-                                userId={userId}
-                                activePageId={activePageId.value}
-                                onSetActivePageId={setActivePageId}
-                                onHideSidebar={handleHideSidebar}
-                            />
+                        <Animated.View
+                            key="sidebar"
+                            className={"h-full w-min"}
+                            entering={FadeInLeft.duration(100)}
+                            exiting={FadeOutLeft.duration(100)}
+                        >
+                            <View className="h-full w-min">
+                                <DocumentSidebar
+                                    documentId={documentId}
+                                    userId={userId}
+                                    activePageId={activePageId.value}
+                                    onSetActivePageId={setActivePageId}
+                                    onHideSidebar={handleHideSidebar}
+                                />
+                            </View>
                         </Animated.View>
                     ) : (
-                        <Animated.View className={"h-full"} entering={FadeInRight.duration(300)}>
-                            <PagesButton onPress={handleToggleSidebar} />
+                        <Animated.View
+                            key="button"
+                            entering={FadeInLeft.duration(100)}
+                            exiting={FadeOutLeft.duration(100)}
+                        >
+                            <Row className='items-center' gap={0}>
+                                <PagesButton onPress={handleToggleSidebar} />
+                                <TouchableOpacity onPress={handleToggleSidebar} className='rounded-full bg-inner-background border-2 border-border py-1 px-2 -ml-2'>
+                                    <PoppinsText color='black'>Page {pages.find(page => page.value.id === activePageId.value)?.value.pageNumber || 1}</PoppinsText>
+                                </TouchableOpacity>
+                            </Row>
                         </Animated.View>
                     )}
 
                 </View>
+
                 <DocumentEditor
                     documentId={documentId}
                     userId={userId}
@@ -125,20 +167,8 @@ const DocumentEditorPage = ({ documentId, userId }: DocumentEditorPageProps) => 
                     onSetActivePageId={setActivePageId}
                 />
             </View>
-            {/* <View className={'flex-1 flex-row'}>
-                <DocumentSidebar
-                    documentId={documentId}
-                    userId={userId}
-                    activePageId={activePageId.value}
-                    onSetActivePageId={setActivePageId}
-                />
-                <DocumentEditor
-                    documentId={documentId}
-                    userId={userId}
-                    activePageId={activePageId.value}
-                    onSetActivePageId={setActivePageId}
-                /> 
-            </View> */}
+
+
         </View >
     );
 };

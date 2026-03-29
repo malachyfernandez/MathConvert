@@ -8,9 +8,10 @@ interface UseMathGenerationProps {
     page: MathDocumentPage;
     onUpdatePage: (nextPage: MathDocumentPage, description: string) => void;
     onUpdateMarkdown: (markdown: string) => void;
+    onFollowUpUpdate?: (followUpId: string, resultingMarkdown: string) => void;
 }
 
-export const useMathGeneration = ({ page, onUpdatePage, onUpdateMarkdown }: UseMathGenerationProps) => {
+export const useMathGeneration = ({ page, onUpdatePage, onUpdateMarkdown, onFollowUpUpdate }: UseMathGenerationProps) => {
     const convertMathImageToMarkdown = useAction(api.mathAi.convertMathImageToMarkdown);
     const [isGenerating, setIsGenerating] = useState(false);
     const [errorMessage, setErrorMessage] = useState('');
@@ -48,6 +49,15 @@ export const useMathGeneration = ({ page, onUpdatePage, onUpdateMarkdown }: UseM
 
             onUpdatePage(nextPage, 'Generated page markdown from image');
             onUpdateMarkdown(result.markdown);
+
+            // Call follow-up update callback if provided
+            if (onFollowUpUpdate) {
+                // Find the most recent follow-up (the one we just added)
+                const mostRecentFollowUp = page.followUps[page.followUps.length - 1];
+                if (mostRecentFollowUp) {
+                    onFollowUpUpdate(mostRecentFollowUp.id, result.markdown);
+                }
+            }
         } catch (error) {
             setErrorMessage(error instanceof Error ? error.message : 'AI conversion failed.');
         } finally {

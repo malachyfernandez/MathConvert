@@ -8,6 +8,7 @@ import DialogHeader from '../ui/dialog/DialogHeader';
 import { MonoIconsOptionsHorizontal } from '../icons/MonoIconsOptionsHorizontal';
 import { MathDocumentPage } from 'types/mathDocuments';
 import { useMathGeneration } from 'hooks/useMathGeneration';
+import { generateId } from 'utils/generateId';
 
 interface ChatOptionsDialogProps {
     followUps: MathDocumentPage['followUps'];
@@ -18,13 +19,56 @@ interface ChatOptionsDialogProps {
 
 const ChatOptionsDialog = ({ followUps, page, onUpdatePage, onUpdateMarkdown }: ChatOptionsDialogProps) => {
     const [isOpen, setIsOpen] = useState(false);
+    const [regenerationFollowUpId, setRegenerationFollowUpId] = useState<string | null>(null);
+    const [currentFollowUps, setCurrentFollowUps] = useState(followUps);
+    
+    // Update current follow-ups when props change
+    React.useEffect(() => {
+        setCurrentFollowUps(followUps);
+    }, [followUps]);
+    
     const { isGenerating, errorMessage, handleInitialGeneration, setErrorMessage } = useMathGeneration({
         page,
         onUpdatePage,
         onUpdateMarkdown,
+        onFollowUpUpdate: (followUpId: string, resultingMarkdown: string) => {
+            if (followUpId === regenerationFollowUpId) {
+                // Update the follow-up with the resulting markdown
+                const updatedFollowUps = currentFollowUps.map(followUp => 
+                    followUp.id === followUpId 
+                        ? { ...followUp, resultingMarkdown }
+                        : followUp
+                );
+                setCurrentFollowUps(updatedFollowUps);
+                const updatedPage = { ...page, followUps: updatedFollowUps };
+                onUpdatePage(updatedPage, 'Updated regeneration follow-up with result');
+            }
+        },
     });
 
     const handleRegenerate = async () => {
+        // Clear the editor first
+        onUpdateMarkdown('');
+        
+        // Add regeneration to follow-up history
+        const regenerationFollowUp = {
+            id: generateId(),
+            prompt: 'Regenerated from scratch',
+            createdAt: Date.now(),
+            resultingMarkdown: '', // Will be updated after generation
+        };
+        setRegenerationFollowUpId(regenerationFollowUp.id);
+
+        // Update page with new follow-up and cleared markdown
+        const pageWithFollowUp = {
+            ...page,
+            markdown: '',
+            followUps: [...currentFollowUps, regenerationFollowUp],
+        };
+        setCurrentFollowUps([...currentFollowUps, regenerationFollowUp]);
+        onUpdatePage(pageWithFollowUp, 'Added regeneration to follow-up history');
+
+        // Perform regeneration with cleared markdown
         await handleInitialGeneration();
         setIsOpen(false);
     };
@@ -55,11 +99,11 @@ const ChatOptionsDialog = ({ followUps, page, onUpdatePage, onUpdateMarkdown }: 
 
                             {errorMessage ? <PoppinsText className='text-red-500 text-center'>{errorMessage}</PoppinsText> : null}
                             <Column gap={2}>
-                                {followUps.length > 0 && (
+                                {currentFollowUps.length > 0 && (
                                     <PoppinsText weight='medium' varient='cardHeader' className='ml-2'>Chat History</PoppinsText>
                                 )}
 
-                                {followUps.length === 0 ? (
+                                {currentFollowUps.length === 0 ? (
                                     <Column className='items-center justify-center py-8'>
                                         <PoppinsText varient='subtext' className='text-center'>
                                             No previous follow-ups yet
@@ -67,7 +111,7 @@ const ChatOptionsDialog = ({ followUps, page, onUpdatePage, onUpdateMarkdown }: 
                                     </Column>
                                 ) : (
                                     <Column gap={3}>
-                                        {followUps.slice().reverse().map((followUp) => (
+                                        {currentFollowUps.slice().reverse().map((followUp) => (
                                             <Column key={followUp.id} className='rounded-xl border border-subtle-border bg-background p-4' gap={2}>
                                                 <PoppinsText weight='medium'>{followUp.prompt}</PoppinsText>
                                                 <PoppinsText varient='subtext' className='text-xs'>

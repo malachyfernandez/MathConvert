@@ -136,8 +136,6 @@ const ViewOnlyDocumentScreen = ({ documentId }: ViewOnlyDocumentScreenProps) => 
             const autoFitZoom = calculateAutoFitZoom();
             if (autoFitZoom !== null) {
                 handleZoomChange(autoFitZoom, 'auto');
-                // On initial load, set user zoom to 100% so it can restore later
-                setUserSetZoom(1.0);
             }
         }
     }, [screenWidth, pageWidth, calculateAutoFitZoom, handleZoomChange]);

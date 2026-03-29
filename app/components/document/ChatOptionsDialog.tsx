@@ -8,6 +8,7 @@ import DialogHeader from '../ui/dialog/DialogHeader';
 import { MonoIconsOptionsHorizontal } from '../icons/MonoIconsOptionsHorizontal';
 import { MathDocumentPage } from 'types/mathDocuments';
 import { useMathGeneration } from 'hooks/useMathGeneration';
+import { useGeneration } from '../../../contexts/GenerationContext';
 import { generateId } from 'utils/generateId';
 
 interface ChatOptionsDialogProps {
@@ -21,6 +22,7 @@ const ChatOptionsDialog = ({ followUps, page, onUpdatePage, onUpdateMarkdown }: 
     const [isOpen, setIsOpen] = useState(false);
     const [regenerationFollowUpId, setRegenerationFollowUpId] = useState<string | null>(null);
     const [currentFollowUps, setCurrentFollowUps] = useState(followUps);
+    const { setGeneratingPage } = useGeneration();
     
     // Update current follow-ups when props change
     React.useEffect(() => {
@@ -68,8 +70,17 @@ const ChatOptionsDialog = ({ followUps, page, onUpdatePage, onUpdateMarkdown }: 
         setCurrentFollowUps([...currentFollowUps, regenerationFollowUp]);
         onUpdatePage(pageWithFollowUp, 'Added regeneration to follow-up history');
 
+        // Set the global generation state BEFORE starting generation
+        setGeneratingPage(page.id, true);
+
         // Perform regeneration with cleared markdown
-        await handleInitialGeneration();
+        try {
+            await handleInitialGeneration();
+        } finally {
+            // Clear the global generation state after completion
+            setGeneratingPage(page.id, false);
+        }
+        
         setIsOpen(false);
     };
 

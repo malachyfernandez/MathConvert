@@ -362,6 +362,10 @@ export const createMarkdownMathSourceDocument = (markdown: string, headerHeight:
         log('STEP 2: marked loaded');
 
         var markdown = ${JSON.stringify(markdown)};
+        
+        // Pre-process: Add double spaces at end of lines for single line breaks
+        markdown = markdown.replace(/([^\n])\n([^\n])/g, '$1  \n$2');
+        
         log('STEP 3: markdown length', markdown.length);
 
         var protectedMath = protectMath(markdown);

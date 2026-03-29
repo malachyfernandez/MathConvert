@@ -46,11 +46,14 @@ const buildPrompt = ({
 }) => {
     const promptParts = [
         'You are converting a handwritten math page into accessible markdown with LaTeX.',
-        'Return only the final markdown document.',
+        'PRIMARY GOAL: Transcribe EXACTLY what is in the image. DO NOT PARAPHRASE. DO NOT TRUNCATE. Include every single element.',
+        'For visual elements (diagrams, charts, arrows, symbols, drawings): Describe them thoroughly in text so the reader can understand the full page without seeing the image.',
+        'Think carefully about how to convey arrows, visual relationships, spatial arrangements, and other non-text elements using descriptive text.',
         'Use standard markdown for prose and lists.',
         'Use LaTeX for all mathematical notation.',
         'Do not wrap the final answer in code fences.',
-        'If handwriting is ambiguous, make the best reasonable interpretation and preserve any uncertainty in natural language inside the markdown.',
+        'If handwriting is ambiguous, make the best reasonable interpretation but preserve uncertainty in natural language within the markdown.',
+        'The reader should be able to understand the complete page by reading only your text.',
     ];
 
     if (documentTitle) {
@@ -92,11 +95,11 @@ export const convertMathImageToMarkdown = action({
         console.log('=== CONVERT MATH IMAGE TO MARKDOWN START ===');
         console.log('INPUT ARGS:', JSON.stringify(args, null, 2));
 
-        const apiKey = process.env.OPENAI_API_KEY;
+        const apiKey = process.env.OPENROUTER_API_KEY;
 
         if (!apiKey) {
-            console.error('OPENAI_API_KEY is missing');
-            throw new Error('OPENAI_API_KEY is missing from the Convex environment. Run `npx convex env set OPENAI_API_KEY <your_key>` or add it in the Convex dashboard for this deployment.');
+            console.error('OPENROUTER_API_KEY is missing');
+            throw new Error('OPENROUTER_API_KEY is missing from the Convex environment. Run `npx convex env set OPENROUTER_API_KEY <your_key>` or add it in the Convex dashboard for this deployment.');
         }
 
         const prompt = buildPrompt(args);
@@ -104,7 +107,7 @@ export const convertMathImageToMarkdown = action({
         console.log('IMAGE URL:', args.imageUrl);
 
         const requestBody = {
-            model: 'gpt-5.4-nano',
+            model: 'google/gemini-3.1-flash-lite-preview',
             messages: [
                 {
                     role: 'user',
@@ -122,56 +125,48 @@ export const convertMathImageToMarkdown = action({
                     ],
                 },
             ],
-            max_completion_tokens: 4000,
-            reasoning_effort: 'low',
+            max_tokens: 4000,
+            reasoning: {
+                level: 'minimal'
+            }
         };
 
-        console.log('OPENAI REQUEST BODY:', JSON.stringify(requestBody, null, 2));
+        console.log('OPENROUTER REQUEST BODY:', JSON.stringify(requestBody, null, 2));
 
         try {
-            console.log('SENDING REQUEST TO OPENAI...');
-            const response = await fetch('https://api.openai.com/v1/chat/completions', {
+            console.log('SENDING REQUEST TO OPENROUTER...');
+            const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
                 method: 'POST',
                 headers: {
                     Authorization: `Bearer ${apiKey}`,
                     'Content-Type': 'application/json',
+                    'HTTP-Referer': 'https://mathconvert.app',
+                    'X-OpenRouter-Title': 'MathConvert',
+                    'X-OpenRouter-Speed': 'nitro',
                 },
                 body: JSON.stringify(requestBody),
             });
 
-            console.log('OPENAI RESPONSE STATUS:', response.status);
-            console.log('OPENAI RESPONSE HEADERS:', {
-                'content-type': response.headers.get('content-type'),
-                'openai-version': response.headers.get('openai-version'),
-                'openai-organization': response.headers.get('openai-organization'),
-                'openai-processing-ms': response.headers.get('openai-processing-ms'),
-                'openai-request-id': response.headers.get('openai-request-id'),
-                'x-ratelimit-limit-requests': response.headers.get('x-ratelimit-limit-requests'),
-                'x-ratelimit-limit-tokens': response.headers.get('x-ratelimit-limit-tokens'),
-                'x-ratelimit-remaining-requests': response.headers.get('x-ratelimit-remaining-requests'),
-                'x-ratelimit-remaining-tokens': response.headers.get('x-ratelimit-remaining-tokens'),
-                'x-ratelimit-reset-requests': response.headers.get('x-ratelimit-reset-requests'),
-                'x-ratelimit-reset-tokens': response.headers.get('x-ratelimit-reset-tokens'),
-            });
+            console.log('OPENROUTER RESPONSE STATUS:', response.status);
 
             if (!response.ok) {
                 const errorText = await response.text();
-                console.error('OPENAI ERROR RESPONSE:', errorText);
-                throw new Error(`OpenAI request failed: ${errorText}`);
+                console.error('OPENROUTER ERROR RESPONSE:', errorText);
+                throw new Error(`OpenRouter request failed: ${errorText}`);
             }
 
-            const json = await response.json();
-            console.log('OPENAI RESPONSE JSON:', JSON.stringify(json, null, 2));
+            const completion = await response.json();
+            console.log('OPENROUTER RESPONSE JSON:', JSON.stringify(completion, null, 2));
 
             // Extract markdown from chat completions response
-            const markdown = json.choices?.[0]?.message?.content?.trim() || '';
+            const markdown = completion.choices?.[0]?.message?.content?.trim() || '';
             console.log('EXTRACTED MARKDOWN:', markdown);
             console.log('MARKDOWN LENGTH:', markdown.length);
 
             if (!markdown) {
                 console.error('EMPTY MARKDOWN EXTRACTED FROM RESPONSE');
-                console.log('FULL RESPONSE STRUCTURE:', JSON.stringify(json, null, 2));
-                throw new Error('OpenAI returned an empty response.');
+                console.log('FULL RESPONSE STRUCTURE:', JSON.stringify(completion, null, 2));
+                throw new Error('OpenRouter returned an empty response.');
             }
 
             console.log('=== CONVERT MATH IMAGE TO MARKDOWN SUCCESS ===');

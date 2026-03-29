@@ -9,9 +9,10 @@ interface UseMathGenerationProps {
     onUpdatePage: (nextPage: MathDocumentPage, description: string) => void;
     onUpdateMarkdown: (markdown: string) => void;
     onFollowUpUpdate?: (resultingMarkdown: string) => void; // Simplified: just pass the result
+    shouldUpdatePage?: () => boolean; // Callback to check if we should update the page
 }
 
-export const useMathGeneration = ({ page, onUpdatePage, onUpdateMarkdown, onFollowUpUpdate }: UseMathGenerationProps) => {
+export const useMathGeneration = ({ page, onUpdatePage, onUpdateMarkdown, onFollowUpUpdate, shouldUpdatePage }: UseMathGenerationProps) => {
     const convertMathImageToMarkdown = useAction(api.mathAi.convertMathImageToMarkdown);
     const [isGenerating, setIsGenerating] = useState(false);
     const [errorMessage, setErrorMessage] = useState('');
@@ -47,14 +48,15 @@ export const useMathGeneration = ({ page, onUpdatePage, onUpdateMarkdown, onFoll
                 lastGeneratedAt: Date.now(),
             };
 
-            onUpdatePage(nextPage, 'Generated page markdown from image');
-            onUpdateMarkdown(result.markdown);
+            // Only update if we should still update this page
+            if (!shouldUpdatePage || shouldUpdatePage()) {
+                onUpdatePage(nextPage, 'Generated page markdown from image');
+                onUpdateMarkdown(result.markdown);
 
-            // Call follow-up update callback if provided
-            if (onFollowUpUpdate) {
-                // Simple approach: just call the callback with the result
-                // The calling component will handle adding the follow-up
-                onFollowUpUpdate(result.markdown);
+                // Call follow-up update callback if provided
+                if (onFollowUpUpdate) {
+                    onFollowUpUpdate(result.markdown);
+                }
             }
         } catch (error) {
             setErrorMessage(error instanceof Error ? error.message : 'AI conversion failed.');

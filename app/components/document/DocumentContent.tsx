@@ -169,7 +169,7 @@ const DocumentContent = ({ documentTitle, documentId, activePage, onReplacePage 
 
     return (
         <View className='flex-1'>
-            {activePage.markdown ? (
+            {activePage.markdown && !isGenerating ? (
                 <>
                     {/* Sticky Header with Tabs */}
                     <DocumentHeader

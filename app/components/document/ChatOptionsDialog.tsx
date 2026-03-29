@@ -21,6 +21,7 @@ interface ChatOptionsDialogProps {
 const ChatOptionsDialog = ({ followUps, page, onUpdatePage, onUpdateMarkdown }: ChatOptionsDialogProps) => {
     const [isOpen, setIsOpen] = useState(false);
     const [currentFollowUps, setCurrentFollowUps] = useState(followUps);
+    const [originalPageId, setOriginalPageId] = useState<string | null>(null);
     const { setGeneratingPage } = useGeneration();
     
     // Update current follow-ups when props change
@@ -32,6 +33,11 @@ const ChatOptionsDialog = ({ followUps, page, onUpdatePage, onUpdateMarkdown }: 
         page,
         onUpdatePage,
         onUpdateMarkdown,
+        shouldUpdatePage: () => {
+            // Check if the current page ID matches the original page ID we captured
+            // This ensures we only update if the user is still on the same page
+            return page.id === originalPageId;
+        },
         onFollowUpUpdate: (resultingMarkdown: string) => {
             // Simple approach: add the follow-up only after generation completes
             const regenerationFollowUp = {
@@ -49,6 +55,12 @@ const ChatOptionsDialog = ({ followUps, page, onUpdatePage, onUpdateMarkdown }: 
     });
 
     const handleRegenerate = async () => {
+        // Close the modal immediately
+        setIsOpen(false);
+        
+        // Capture the original page ID before starting generation
+        setOriginalPageId(page.id);
+        
         // Clear the editor first
         onUpdateMarkdown('');
 
@@ -61,9 +73,9 @@ const ChatOptionsDialog = ({ followUps, page, onUpdatePage, onUpdateMarkdown }: 
         } finally {
             // Clear the global generation state after completion
             setGeneratingPage(page.id, false);
+            // Clear the original page ID after generation completes
+            setOriginalPageId(null);
         }
-        
-        setIsOpen(false);
     };
 
     return (

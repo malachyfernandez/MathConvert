@@ -64,14 +64,34 @@ const DocumentSidebar = ({ documentId, userId, activePageId, onSetActivePageId, 
     };
 
     const handlePageUpdate = (updatedPage: MathDocumentPage) => {
-        void setPage({
-            key: 'mathDocumentPages',
-            itemId: updatedPage.id,
-            value: updatedPage,
-            privacy: 'PUBLIC',
-            filterKey: 'documentId',
-            searchKeys: ['title', 'markdown'],
-            sortKey: 'pageNumber',
+        if (!configuringPage) return;
+        
+        const previousPage = createUndoSnapshot(configuringPage);
+        
+        executeCommand({
+            action: () => {
+                void setPage({
+                    key: 'mathDocumentPages',
+                    itemId: updatedPage.id,
+                    value: updatedPage,
+                    privacy: 'PUBLIC',
+                    filterKey: 'documentId',
+                    searchKeys: ['title', 'markdown'],
+                    sortKey: 'pageNumber',
+                });
+            },
+            undoAction: () => {
+                void setPage({
+                    key: 'mathDocumentPages',
+                    itemId: previousPage.id,
+                    value: previousPage,
+                    privacy: 'PUBLIC',
+                    filterKey: 'documentId',
+                    searchKeys: ['title', 'markdown'],
+                    sortKey: 'pageNumber',
+                });
+            },
+            description: `Updated page configuration - ${updatedPage.title}`
         });
     };
 
@@ -96,22 +116,42 @@ const DocumentSidebar = ({ documentId, userId, activePageId, onSetActivePageId, 
                     });
                     onSetActivePageId(deletedPage.id);
                 },
-                description: 'Deleted page',
+                description: `Deleted page - ${configuringPage.title}`,
             });
         }
     };
 
     const handleReorderPages = (updatedPages: MathDocumentPage[]) => {
-        updatedPages.forEach((page) => {
-            void setPage({
-                key: 'mathDocumentPages',
-                itemId: page.id,
-                value: page,
-                privacy: 'PUBLIC',
-                filterKey: 'documentId',
-                searchKeys: ['title', 'markdown'],
-                sortKey: 'pageNumber',
-            });
+        const previousPages = createUndoSnapshot(pages.map(p => p.value));
+        
+        executeCommand({
+            action: () => {
+                updatedPages.forEach((page) => {
+                    void setPage({
+                        key: 'mathDocumentPages',
+                        itemId: page.id,
+                        value: page,
+                        privacy: 'PUBLIC',
+                        filterKey: 'documentId',
+                        searchKeys: ['title', 'markdown'],
+                        sortKey: 'pageNumber',
+                    });
+                });
+            },
+            undoAction: () => {
+                previousPages.forEach((page) => {
+                    void setPage({
+                        key: 'mathDocumentPages',
+                        itemId: page.id,
+                        value: page,
+                        privacy: 'PUBLIC',
+                        filterKey: 'documentId',
+                        searchKeys: ['title', 'markdown'],
+                        sortKey: 'pageNumber',
+                    });
+                });
+            },
+            description: 'Reordered pages'
         });
     };
 

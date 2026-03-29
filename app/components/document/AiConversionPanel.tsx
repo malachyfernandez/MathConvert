@@ -10,6 +10,7 @@ import { api } from '../../../convex/_generated/api';
 import { MathDocumentPage } from 'types/mathDocuments';
 import { useGeneration } from '../../../contexts/GenerationContext';
 import { useUserVariable } from 'hooks/useUserVariable';
+import { useCreateUndoSnapshot, useUndoRedo } from 'hooks/useUndoRedo';
 import { generateId } from 'utils/generateId';
 import AiPromptInput from './AiPromptInput';
 import ChatOptionsDialog from './ChatOptionsDialog';
@@ -24,10 +25,23 @@ interface AiConversionPanelProps {
 }
 
 const AiConversionPanel = ({ page, onUpdatePage, onUpdateMarkdown, onLayout, setPreviewMarkdown }: AiConversionPanelProps) => {
+    const { executeCommand } = useUndoRedo();
+    const createUndoSnapshot = useCreateUndoSnapshot();
     const convertMathImageToMarkdown = useAction(api.mathAi.convertMathImageToMarkdown);
     const { setGeneratingPage, isPageGenerating } = useGeneration();
     const [prompt, setPrompt] = useState('');
     const [errorMessage, setErrorMessage] = useState('');
+    
+    const updatePageWithUndo = (nextPage: MathDocumentPage, description: string) => {
+        const previousPage = createUndoSnapshot(page);
+        const nextPageSnapshot = createUndoSnapshot(nextPage);
+
+        executeCommand({
+            action: () => onUpdatePage(nextPage, description),
+            undoAction: () => onUpdatePage(previousPage, description),
+            description: `${description} - ${page.title}`
+        });
+    };
     
     // Get user-wide AI guidance
     const [aiGuidance] = useUserVariable({
@@ -86,7 +100,7 @@ const AiConversionPanel = ({ page, onUpdatePage, onUpdateMarkdown, onLayout, set
                     : currentPage.followUps,
             };
 
-            onUpdatePage(nextPage, currentPage.markdown ? 'Applied AI follow-up to page' : 'Generated page markdown from image');
+            updatePageWithUndo(nextPage, currentPage.markdown ? 'Applied AI follow-up to page' : 'Generated page markdown from image');
             
             // Only update markdown if we're still on the same page
             if (page.id === currentPage.id) {

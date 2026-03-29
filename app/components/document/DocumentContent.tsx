@@ -18,6 +18,7 @@ import { MathDocumentPage } from 'types/mathDocuments';
 import { useGeneration } from '../../../contexts/GenerationContext';
 import { useToast } from '../../../contexts/ToastContext';
 import { useUserListSet } from 'hooks/useUserListSet';
+import { useCreateUndoSnapshot, useUndoRedo } from 'hooks/useUndoRedo';
 import { useUserVariable } from 'hooks/useUserVariable';
 import { generateId } from 'utils/generateId';
 import DocumentHeader from './DocumentHeader';
@@ -35,6 +36,8 @@ interface DocumentContentProps {
 }
 
 const DocumentContent = ({ documentTitle, documentId, activePage, onReplacePage, setPreviewMarkdown }: DocumentContentProps) => {
+    const { executeCommand } = useUndoRedo();
+    const createUndoSnapshot = useCreateUndoSnapshot();
     const convertMathImageToMarkdown = useAction(api.mathAi.convertMathImageToMarkdown);
     const { setGeneratingPage, isPageGenerating } = useGeneration();
     const { showToast } = useToast();
@@ -46,6 +49,17 @@ const DocumentContent = ({ documentTitle, documentId, activePage, onReplacePage,
     const [headerHeight, setHeaderHeight] = useState(0);
     const [footerHeight, setFooterHeight] = useState(0);
     const [dotCount, setDotCount] = useState(1);
+
+    const replacePageWithUndo = (nextPage: MathDocumentPage, description: string) => {
+        const previousPage = createUndoSnapshot(activePage);
+        const nextPageSnapshot = createUndoSnapshot(nextPage);
+
+        executeCommand({
+            action: () => onReplacePage(nextPage, description),
+            undoAction: () => onReplacePage(previousPage, description),
+            description: `${description} - ${activePage.title}`
+        });
+    };
 
     // Get user-wide AI guidance
     const [aiGuidance] = useUserVariable({
@@ -141,7 +155,7 @@ const DocumentContent = ({ documentTitle, documentId, activePage, onReplacePage,
                 lastGeneratedAt: Date.now(),
             };
 
-            onReplacePage(nextPage, 'Generated page markdown from image');
+            replacePageWithUndo(nextPage, 'Generated page markdown from image');
 
             // Only update markdown draft if we're still on the same page
             if (activePage.id === currentPage.id) {
@@ -159,9 +173,34 @@ const DocumentContent = ({ documentTitle, documentId, activePage, onReplacePage,
             ...activePage,
             markdown,
         };
-        onReplacePage(nextPage, 'Updated page markdown');
+        replacePageWithUndo(nextPage, 'Updated page markdown');
         // Update the activePage reference to reflect saved state
         // This will be updated when the parent component re-renders with the new activePage
+    };
+
+    const handleTabChange = (newTab: string) => {
+        // When switching from editor to preview, capture the current state for undo
+        if (activeTab === 'editor' && newTab === 'preview' && hasChanges) {
+            const currentPage = createUndoSnapshot(activePage);
+            const updatedPage = {
+                ...activePage,
+                markdown: markdownDraft,
+            };
+            
+            executeCommand({
+                action: () => {
+                    // Don't actually save to cloud, just track the state change
+                    setMarkdownDraft(markdownDraft);
+                },
+                undoAction: () => {
+                    // Restore the previous markdown draft
+                    setMarkdownDraft(activePage.markdown);
+                },
+                description: `Edited content in editor tab - ${activePage.title}`
+            });
+        }
+        
+        setActiveTab(newTab);
     };
 
     const handleSetBlankPage = () => {
@@ -175,7 +214,7 @@ const DocumentContent = ({ documentTitle, documentId, activePage, onReplacePage,
                     {/* Sticky Header with Tabs */}
                     <DocumentHeader
                         activeTab={activeTab}
-                        onTabChange={setActiveTab}
+                        onTabChange={handleTabChange}
                         hasChanges={hasChanges}
                         onSave={() => handleSaveMarkdown(markdownDraft)}
                         onLayout={handleHeaderLayout}
@@ -191,7 +230,7 @@ const DocumentContent = ({ documentTitle, documentId, activePage, onReplacePage,
                         </View> */}
                     <View className='flex-1'>
                         <Column gap={4} className='flex-1'>
-                            <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1">
+                            <Tabs value={activeTab} onValueChange={handleTabChange} className="flex-1">
                                 <Tabs.Content value="editor" className='flex-1' style={{ minHeight: 0 }}>
 
                                     <Animated.View

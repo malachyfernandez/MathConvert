@@ -11,7 +11,9 @@ import StatusButton from '../ui/StatusButton';
 import SimpleImageUpload from './SimpleImageUpload';
 import ImageUrlModal from './ImageUrlModal';
 import { useUserListSet } from 'hooks/useUserListSet';
+import { useUserListRemove } from 'hooks/useUserListRemove';
 import { useUserVariable } from 'hooks/useUserVariable';
+import { useCreateUndoSnapshot, useUndoRedo } from 'hooks/useUndoRedo';
 import { useAction } from 'convex/react';
 import { api } from '../../../convex/_generated/api';
 import { useGeneration } from '../../../contexts/GenerationContext';
@@ -27,7 +29,10 @@ interface NewPageDialogProps {
 }
 
 const NewPageDialog = ({ documentId, existingPageCount, onCreate, triggerButtonVariant = 'green', createButtonVariant = 'green' }: NewPageDialogProps) => {
+    const { executeCommand } = useUndoRedo();
+    const createUndoSnapshot = useCreateUndoSnapshot();
     const setPage = useUserListSet<MathDocumentPage>();
+    const removePage = useUserListRemove();
     const convertMathImageToMarkdown = useAction(api.mathAi.convertMathImageToMarkdown);
     const { setGeneratingPage, isPageGenerating } = useGeneration();
     const [isOpen, setIsOpen] = useState(false);
@@ -85,14 +90,22 @@ const NewPageDialog = ({ documentId, existingPageCount, onCreate, triggerButtonV
             followUps: [],
         };
 
-        await setPage({
-            key: 'mathDocumentPages',
-            itemId: pageId,
-            value: newPage,
-            privacy: 'PUBLIC',
-            filterKey: 'documentId',
-            searchKeys: ['title', 'markdown'],
-            sortKey: 'pageNumber',
+        executeCommand({
+            action: async () => {
+                await setPage({
+                    key: 'mathDocumentPages',
+                    itemId: pageId,
+                    value: newPage,
+                    privacy: 'PUBLIC',
+                    filterKey: 'documentId',
+                    searchKeys: ['title', 'markdown'],
+                    sortKey: 'pageNumber',
+                });
+            },
+            undoAction: async () => {
+                void removePage({ key: 'mathDocumentPages', itemId: pageId });
+            },
+            description: `Created page - ${newPage.title}`
         });
 
         // Close dialog immediately and navigate to the new page
@@ -121,14 +134,30 @@ const NewPageDialog = ({ documentId, existingPageCount, onCreate, triggerButtonV
                     lastGeneratedAt: Date.now(),
                 };
 
-                await setPage({
-                    key: 'mathDocumentPages',
-                    itemId: pageId,
-                    value: updatedPage,
-                    privacy: 'PUBLIC',
-                    filterKey: 'documentId',
-                    searchKeys: ['title', 'markdown'],
-                    sortKey: 'pageNumber',
+                executeCommand({
+                    action: async () => {
+                        await setPage({
+                            key: 'mathDocumentPages',
+                            itemId: pageId,
+                            value: updatedPage,
+                            privacy: 'PUBLIC',
+                            filterKey: 'documentId',
+                            searchKeys: ['title', 'markdown'],
+                            sortKey: 'pageNumber',
+                        });
+                    },
+                    undoAction: async () => {
+                        await setPage({
+                            key: 'mathDocumentPages',
+                            itemId: pageId,
+                            value: newPage,
+                            privacy: 'PUBLIC',
+                            filterKey: 'documentId',
+                            searchKeys: ['title', 'markdown'],
+                            sortKey: 'pageNumber',
+                        });
+                    },
+                    description: `Generated AI content for page - ${updatedPage.title}`
                 });
             } catch (error) {
                 setErrorMessage(error instanceof Error ? error.message : 'AI conversion failed.');

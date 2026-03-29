@@ -79,7 +79,7 @@ const DocumentEditor = ({ documentId, userId, activePageId, onSetActivePageId }:
         executeCommand({
             action: () => replacePage(nextPage, description),
             undoAction: () => replacePage(previousPage, description),
-            description
+            description: `${description} - ${activePage.title}`
         });
     };
 
@@ -132,7 +132,7 @@ const DocumentEditor = ({ documentId, userId, activePageId, onSetActivePageId }:
                         page={activePage}
                         onImageChange={(url) => {
                             if (activePage) {
-                                replacePage({ ...activePage, imageUrl: url }, 'Updated page image');
+                                replacePageWithUndo({ ...activePage, imageUrl: url }, 'Updated page image');
                             }
                         }}
                     />

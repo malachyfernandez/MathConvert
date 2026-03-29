@@ -1,6 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { LayoutChangeEvent, Platform, View } from 'react-native';
 import { Spinner } from 'heroui-native';
+import Animated, {
+    FadeInUp,
+    FadeOutDown,
+    FadeInDown,
+    FadeOutUp,
+} from 'react-native-reanimated';
 import Column from '../layout/Column';
 import Row from '../layout/Row';
 import PoppinsText from '../ui/text/PoppinsText';
@@ -37,7 +43,7 @@ const DocumentContent = ({ documentTitle, documentId, activePage, onReplacePage 
     const [headerHeight, setHeaderHeight] = useState(0);
     const [footerHeight, setFooterHeight] = useState(0);
     const [dotCount, setDotCount] = useState(1);
-    
+
     const isGenerating = isPageGenerating(activePage.id);
 
     const hasChanges = markdownDraft !== activePage.markdown;
@@ -70,7 +76,7 @@ const DocumentContent = ({ documentTitle, documentId, activePage, onReplacePage 
     const handleInitialGeneration = async () => {
         // Capture the current page data at the start of generation
         const currentPage = activePage;
-        
+
         if (!currentPage.imageUrl) {
             setErrorMessage('Add an image before asking the AI to convert the page.');
             return;
@@ -95,7 +101,7 @@ const DocumentContent = ({ documentTitle, documentId, activePage, onReplacePage 
             };
 
             onReplacePage(nextPage, 'Generated page markdown from image');
-            
+
             // Only update markdown draft if we're still on the same page
             if (activePage.id === currentPage.id) {
                 setMarkdownDraft(result.markdown);
@@ -142,21 +148,37 @@ const DocumentContent = ({ documentTitle, documentId, activePage, onReplacePage 
                         <Column gap={4} className='flex-1'>
                             <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1">
                                 <Tabs.Content value="editor" className='flex-1' style={{ minHeight: 0 }}>
-                                    <View className='flex-1' style={{ minHeight: 0 }}>
-                                        <ContentEditor
-                                            markdown={markdownDraft}
-                                            onChange={setMarkdownDraft}
-                                            headerHeight={headerHeight}
-                                            footerHeight={footerHeight}
-                                        />
-                                        {/* <PoppinsText>Editor content</PoppinsText> */}
-                                    </View>
+
+                                    <Animated.View
+                                        entering={FadeInDown.duration(300).springify()}
+                                        exiting={FadeOutDown.duration(300).springify()}
+                                        className='flex-1'
+                                    >
+                                        <View className='flex-1' style={{ minHeight: 0 }}>
+                                            <ContentEditor
+                                                markdown={markdownDraft}
+                                                onChange={setMarkdownDraft}
+                                                headerHeight={headerHeight}
+                                                footerHeight={footerHeight}
+                                            />
+                                        </View>
+                                    </Animated.View>
+
+
                                 </Tabs.Content>
 
                                 <Tabs.Content value="preview" className='flex-1' style={{ minHeight: 0 }}>
-                                    <View className='flex-1' style={{ minHeight: 0 }}>
-                                        <ContentPreview markdown={markdownDraft} headerHeight={headerHeight} footerHeight={footerHeight} />
-                                    </View>
+
+                                    <Animated.View
+                                        entering={FadeInDown.duration(300).springify()}
+                                        // exiting={FadeOutDown.duration(300).springify()}
+                                        className='flex-1'
+                                    >
+                                        <View className='flex-1' style={{ minHeight: 0 }}>
+                                            <ContentPreview markdown={markdownDraft} headerHeight={headerHeight} footerHeight={footerHeight} />
+                                        </View>
+                                    </Animated.View>
+
                                 </Tabs.Content>
                             </Tabs>
 
@@ -202,7 +224,7 @@ const DocumentContent = ({ documentTitle, documentId, activePage, onReplacePage 
                     </Column>
                 </View>
             )}
-        </View>
+        </View >
     );
 };
 

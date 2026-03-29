@@ -7,7 +7,7 @@ import { UserData } from 'types/mathDocuments';
 import TopSiteBar from './layout/TopSiteBar';
 import DocumentHomePage from './document/DocumentHomePage';
 import DocumentEditorPage from './document/DocumentEditorPage';
-import StateAnimatedView from './ui/StateAnimatedView';
+import LayoutStateAnimatedView from './ui/LayoutStateAnimatedView';
 
 type ScreenState = 'documents' | 'document';
 
@@ -41,10 +41,13 @@ const MainPage: React.FC<MainPageProps> = () => {
         <View className='w-screen h-screen p-safe'>
             <TopSiteBar isInDocument={isInDocument} onHomePress={() => setActiveDocumentId("")} documentId={activeDocumentId.value} userId={userId} />
             {isActiveDocumentLoading ? (
-                <PoppinsText>Loading</PoppinsText>
+                <View className='flex-1 items-center justify-center'>
+                    <PoppinsText>Loading...</PoppinsText>
+                </View>
             ) : (
-                <StateAnimatedView.Container stateVar={currentScreen} className='flex-1'>
-                    <StateAnimatedView.Option page={1} stateValue='documents'>
+                <LayoutStateAnimatedView.Container stateVar={currentScreen} className='flex-1'>
+                    <LayoutStateAnimatedView.Option page={1} stateValue='documents'>
+
                         <View className='h-full w-full items-center justify-center'>
                             <View className='w-full h-full'>
                                 <DocumentHomePage
@@ -53,10 +56,10 @@ const MainPage: React.FC<MainPageProps> = () => {
                                 />
                             </View>
                         </View>
-                    </StateAnimatedView.Option>
+                    </LayoutStateAnimatedView.Option>
 
-                    <StateAnimatedView.OptionContainer page={2}>
-                        <StateAnimatedView.Option stateValue='document'>
+                    <LayoutStateAnimatedView.OptionContainer page={2}>
+                        <LayoutStateAnimatedView.Option stateValue='document'>
                             {activeDocumentId.value ? (
                                 <View className='w-full h-full'>
                                     <DocumentEditorPage
@@ -65,9 +68,9 @@ const MainPage: React.FC<MainPageProps> = () => {
                                     />
                                 </View>
                             ) : null}
-                        </StateAnimatedView.Option>
-                    </StateAnimatedView.OptionContainer>
-                </StateAnimatedView.Container>
+                        </LayoutStateAnimatedView.Option>
+                    </LayoutStateAnimatedView.OptionContainer>
+                </LayoutStateAnimatedView.Container>
             )}
         </View>
     );

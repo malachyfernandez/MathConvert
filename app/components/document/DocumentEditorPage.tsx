@@ -110,19 +110,20 @@ const DocumentEditorPage = ({ documentId, userId }: DocumentEditorPageProps) => 
                 </View>
 
                 {/* Mobile layout - sidebar overlay with hamburger button */}
-                <View className='absolute left-0 top-0 h-full w-full z-10 lg:hidden'>
+                {showSidebar && (
+                    <Animated.View
+                        key="sidebar-overlay"
+                        className="h-full w-full absolute top-0 left-0 z-10"
+                        entering={FadeIn.duration(100)}
+                        exiting={FadeOut.duration(100)}
+                    >
+                        <Pressable onPress={handleHideSidebar} className='h-full w-full absolute top-0 left-0  bg-black/25' />
 
-                    {showSidebar && (
-                        <Animated.View
-                            key="sidebar-overlay"
-                            className="h-full w-full absolute top-0 left-0"
-                            entering={FadeIn.duration(100)}
-                            exiting={FadeOut.duration(100)}
-                        >
-                            <Pressable onPress={handleHideSidebar} className='h-full w-full absolute top-0 left-0  bg-black/25' />
+                    </Animated.View>
+                )}
+                <View className='absolute left-0 top-0 h-full w-min z-20 lg:hidden'>
 
-                        </Animated.View>
-                    )}
+
 
 
 

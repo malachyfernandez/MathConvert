@@ -12,6 +12,7 @@ import { MathDocument, MathDocumentPage } from 'types/mathDocuments';
 import DocumentCard from './DocumentCard';
 import NewDocumentDialog from './NewDocumentDialog';
 import { FileText } from 'lucide-react-native';
+import LoadingState from '../ui/loading/LoadingState';
 
 interface DocumentHomePageProps {
     userId: string;
@@ -22,7 +23,7 @@ const DocumentHomePage = ({ userId, setActiveDocumentId }: DocumentHomePageProps
     const [searchQuery, setSearchQuery] = useState('');
     const scopedUserIds = userId ? [userId] : ['__loading__'];
     const setDocument = useUserListSet<MathDocument>();
-    
+
     // Use the new generic search hook
     const { items: documents, additionalItems, isLoading, hasResults, resultCount } = useListSearch<MathDocument>({
         searchQuery,
@@ -32,7 +33,7 @@ const DocumentHomePage = ({ userId, setActiveDocumentId }: DocumentHomePageProps
     });
 
     // Extract pages from additional items
-    const pages = additionalItems?.[0] as MathDocumentPage[] | undefined;
+    // const pages = additionalItems?.[0] as MathDocumentPage[] | undefined;
 
     const openDocument = async (document: MathDocument) => {
         await setDocument({
@@ -53,11 +54,13 @@ const DocumentHomePage = ({ userId, setActiveDocumentId }: DocumentHomePageProps
     if (!userId) {
         return (
             <Column className='flex-1 items-center justify-center p-8'>
-                <Column className='rounded-3xl border-2 border-border bg-inner-background p-8 items-center' gap={3}>
-                    <FileText size={48} className="text-accent" />
-                    <PoppinsText weight='bold' className='text-2xl text-center'>Loading your workspace</PoppinsText>
-                    <PoppinsText className='text-center text-subtext'>Syncing your account…</PoppinsText>
-                </Column>
+                <LoadingState>
+                    <Column className='rounded-3xl border-2 border-border bg-inner-background p-8 items-center' gap={3}>
+                        <FileText size={48} className="text-accent" />
+                        <PoppinsText weight='bold' className='text-2xl text-center'>Loading your workspace</PoppinsText>
+                        <PoppinsText className='text-center text-subtext'>Syncing your account…</PoppinsText>
+                    </Column>
+                </LoadingState>
             </Column>
         );
     }
@@ -70,14 +73,14 @@ const DocumentHomePage = ({ userId, setActiveDocumentId }: DocumentHomePageProps
                 <SearchField value={searchQuery} onChange={setSearchQuery}>
                     <SearchField.Group>
                         <SearchField.SearchIcon />
-                        <SearchField.Input 
+                        <SearchField.Input
                             placeholder="Search documents..."
                             className="border border-subtle-border bg-inner-background rounded-xl focus:outline-none"
                         />
                         <SearchField.ClearButton />
                     </SearchField.Group>
                 </SearchField>
-                
+
                 {/* Create Document Button */}
                 <NewDocumentDialog onCreate={setActiveDocumentId} buttonVariant='green' />
             </Column>
@@ -97,11 +100,22 @@ const DocumentHomePage = ({ userId, setActiveDocumentId }: DocumentHomePageProps
                                     <DocumentCard
                                         key={document.id}
                                         document={document}
-                                        pageCount={pages?.filter((page) => page.documentId === document.id).length ?? 0}
                                         onPress={() => void openDocument(document)}
                                     />
                                 ))}
                             </>
+                        ) : isLoading ? (
+                            <LoadingState>
+                                <Column className='rounded-2xl border border-subtle-border bg-inner-background p-8 items-center' gap={3}>
+                                    <FileText size={48} className="text-subtext" />
+                                    <PoppinsText weight='bold' className='text-xl text-center'>
+                                        Loading documents...
+                                    </PoppinsText>
+                                    <PoppinsText className='text-center text-subtext'>
+                                        Please wait while we fetch your documents.
+                                    </PoppinsText>
+                                </Column>
+                            </LoadingState>
                         ) : (
                             <Column className='rounded-2xl border border-subtle-border bg-inner-background p-8 items-center' gap={3}>
                                 <FileText size={48} className="text-subtext" />
@@ -109,7 +123,7 @@ const DocumentHomePage = ({ userId, setActiveDocumentId }: DocumentHomePageProps
                                     {searchQuery ? 'No documents found' : 'No documents yet'}
                                 </PoppinsText>
                                 <PoppinsText className='text-center text-subtext'>
-                                    {searchQuery 
+                                    {searchQuery
                                         ? `Try adjusting your search for "${searchQuery}"`
                                         : 'Create your first document to start converting handwritten math to LaTeX.'
                                     }

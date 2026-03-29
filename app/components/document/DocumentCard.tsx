@@ -5,15 +5,23 @@ import Row from '../layout/Row';
 import PoppinsText from '../ui/text/PoppinsText';
 import { MathDocument } from 'types/mathDocuments';
 import { FileText, Calendar, ChevronRight } from 'lucide-react-native';
+import { useUserListLength } from 'hooks/useUserListLength';
+import { useAuth } from '@clerk/clerk-expo';
 
 interface DocumentCardProps {
     document: MathDocument;
-    pageCount: number;
     onPress: () => void;
 }
 
-const DocumentCard = ({ document, pageCount, onPress }: DocumentCardProps) => {
+const DocumentCard = ({ document, onPress }: DocumentCardProps) => {
+    const { userId } = useAuth();
     const lastOpenedLabel = new Date(document.lastOpenedAt).toLocaleDateString();
+    
+    // Get page count for this specific document
+    const pageCount = useUserListLength({
+        key: 'mathDocumentPages',
+        filterFor: document.id,
+    }) ?? 0;
 
     return (
         <TouchableOpacity 

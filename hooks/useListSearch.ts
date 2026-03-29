@@ -1,5 +1,5 @@
 import { useUserListGet } from './useUserListGet';
-import { useState, useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { MathDocument, MathDocumentPage } from 'types/mathDocuments';
 
 interface UseListSearchOptions<T = any> {
@@ -16,6 +16,47 @@ interface UseListSearchResult<T = any> {
     isLoading: boolean;
     hasResults: boolean;
     resultCount: number;
+}
+
+interface UsePreservedListResultsOptions<T = any> {
+    additionalItemValues?: any[][] | undefined;
+    isLoading: boolean;
+    itemValues: T[] | undefined;
+    preserveResultsDuringLoading?: boolean;
+}
+
+export function usePreservedListResults<T = any>({
+    additionalItemValues,
+    isLoading,
+    itemValues,
+    preserveResultsDuringLoading = true,
+}: UsePreservedListResultsOptions<T>) {
+    const cachedItemsRef = useRef<T[] | undefined>(undefined);
+    const cachedAdditionalItemsRef = useRef<any[][] | undefined>(undefined);
+
+    useEffect(() => {
+        if (!isLoading && itemValues !== undefined) {
+            cachedItemsRef.current = itemValues;
+            cachedAdditionalItemsRef.current = additionalItemValues;
+        }
+    }, [isLoading, itemValues, additionalItemValues]);
+
+    const displayItems = (preserveResultsDuringLoading && isLoading && cachedItemsRef.current !== undefined)
+        ? cachedItemsRef.current
+        : itemValues;
+    const displayAdditionalItems = (preserveResultsDuringLoading && isLoading && cachedAdditionalItemsRef.current !== undefined)
+        ? cachedAdditionalItemsRef.current
+        : additionalItemValues;
+
+    const displayHasResults = Boolean(displayItems && displayItems.length > 0);
+    const displayResultCount = displayItems?.length ?? 0;
+
+    return {
+        displayAdditionalItems,
+        displayHasResults,
+        displayItems,
+        displayResultCount,
+    };
 }
 
 /**
@@ -63,25 +104,17 @@ export function useListSearch<T = any>({
     const hasResults = Boolean(itemValues && itemValues.length > 0);
     const resultCount = itemValues?.length ?? 0;
 
-    // Cache logic for preserving results during loading
-    const [cachedItems, setCachedItems] = useState<T[] | undefined>();
-    const [cachedAdditionalItems, setCachedAdditionalItems] = useState<any[][] | undefined>();
-
-    useEffect(() => {
-        // Only update cache when we have real data (not loading and has results)
-        if (!isLoading && itemValues && itemValues.length > 0) {
-            setCachedItems(itemValues);
-            setCachedAdditionalItems(additionalItemValues);
-        }
-    }, [isLoading, itemValues, additionalItemValues]);
-
-    // Return cached results during loading if preservation is enabled
-    const displayItems = (preserveResultsDuringLoading && isLoading && cachedItems) ? cachedItems : itemValues;
-    const displayAdditionalItems = (preserveResultsDuringLoading && isLoading && cachedAdditionalItems) ? cachedAdditionalItems : additionalItemValues;
-
-    // Recalculate derived state based on display items
-    const displayHasResults = Boolean(displayItems && displayItems.length > 0);
-    const displayResultCount = displayItems?.length ?? 0;
+    const {
+        displayAdditionalItems,
+        displayHasResults,
+        displayItems,
+        displayResultCount,
+    } = usePreservedListResults<T>({
+        additionalItemValues,
+        isLoading: isLoading || false,
+        itemValues,
+        preserveResultsDuringLoading,
+    });
 
     return {
         items: displayItems,

@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
-import { Pressable, ActivityIndicator } from 'react-native';
+import { Pressable, ActivityIndicator, ScrollView, View } from 'react-native';
+import { ScrollShadow } from 'heroui-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import Column from '../layout/Column';
 import PoppinsText from '../ui/text/PoppinsText';
 import AppButton from '../ui/buttons/AppButton';
@@ -89,9 +91,9 @@ const ChatOptionsDialog = ({ followUps, page, onUpdatePage, onUpdateMarkdown }: 
                 <ConvexDialog.Overlay />
                 <ConvexDialog.Content>
                     <ConvexDialog.Close iconProps={{ color: 'rgb(246, 238, 219)' }} className='w-10 h-10 bg-accent-hover absolute right-4 top-4 z-10' />
-                    <Column>
+                    <Column className='h-full'>
                         <DialogHeader text='Chat Options' subtext='Manage your AI conversation and regenerate responses.' />
-                        <Column className='pt-5' gap={6}>
+                        <Column className='pt-5 flex-1'>
                             <AppButton
                                 variant='black'
                                 className={`h-12 ${isGenerating ? 'opacity-50' : ''}`}
@@ -103,29 +105,34 @@ const ChatOptionsDialog = ({ followUps, page, onUpdatePage, onUpdateMarkdown }: 
                             </AppButton>
 
                             {errorMessage ? <PoppinsText className='text-red-500 text-center'>{errorMessage}</PoppinsText> : null}
-                            <Column gap={2}>
+                            
+                            <Column gap={2} className='flex-1'>
                                 {currentFollowUps.length > 0 && (
                                     <PoppinsText weight='medium' varient='cardHeader' className='ml-2'>Chat History</PoppinsText>
                                 )}
 
-                                {currentFollowUps.length === 0 ? (
-                                    <Column className='items-center justify-center py-8'>
-                                        <PoppinsText varient='subtext' className='text-center'>
-                                            No previous follow-ups yet
-                                        </PoppinsText>
-                                    </Column>
-                                ) : (
-                                    <Column gap={3}>
-                                        {currentFollowUps.slice().reverse().map((followUp) => (
-                                            <Column key={followUp.id} className='rounded-xl border border-subtle-border bg-background p-4' gap={2}>
-                                                <PoppinsText weight='medium'>{followUp.prompt}</PoppinsText>
-                                                <PoppinsText varient='subtext' className='text-xs'>
-                                                    {new Date(followUp.createdAt).toLocaleString()}
-                                                </PoppinsText>
-                                            </Column>
-                                        ))}
-                                    </Column>
-                                )}
+                                <ScrollShadow LinearGradientComponent={LinearGradient} className='flex-1'>
+                                    <ScrollView className='flex-1 max-h-[40vh]'>
+                                        <Column gap={3} className='pb-4'>
+                                            {currentFollowUps.length === 0 ? (
+                                                <Column className='items-center justify-center py-8'>
+                                                    <PoppinsText varient='subtext' className='text-center'>
+                                                        No previous follow-ups yet
+                                                    </PoppinsText>
+                                                </Column>
+                                            ) : (
+                                                currentFollowUps.slice().reverse().map((followUp) => (
+                                                    <Column key={followUp.id} className='rounded-xl border border-subtle-border bg-background p-4' gap={2}>
+                                                        <PoppinsText weight='medium'>{followUp.prompt}</PoppinsText>
+                                                        <PoppinsText varient='subtext' className='text-xs'>
+                                                            {new Date(followUp.createdAt).toLocaleString()}
+                                                        </PoppinsText>
+                                                    </Column>
+                                                ))
+                                            )}
+                                        </Column>
+                                    </ScrollView>
+                                </ScrollShadow>
                             </Column>
                         </Column>
                     </Column>

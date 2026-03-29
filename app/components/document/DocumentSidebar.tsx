@@ -134,7 +134,7 @@ const DocumentSidebar = ({ documentId, userId, activePageId, onSetActivePageId, 
                             onHideSidebar?.();
                         }} 
                     />
-                    <ScrollShadow LinearGradientComponent={LinearGradient} className='flex-1'>
+                    <ScrollShadow LinearGradientComponent={LinearGradient} className='flex-1' color='rgb(253, 251, 246)'>
                         <ScrollView className='flex-1'>
                             <Column gap={2} className='pb-6'>
                                 {sortedPages.map((page) => (

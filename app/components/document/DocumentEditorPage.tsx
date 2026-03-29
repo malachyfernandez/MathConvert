@@ -16,6 +16,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import Column from '../layout/Column';
 import PoppinsText from '../ui/text/PoppinsText';
+import StateAnimatedView from '../ui/StateAnimatedView';
 import { useUserVariable } from 'hooks/useUserVariable';
 import { MathDocument, MathDocumentPage } from 'types/mathDocuments';
 import DocumentSidebar from './DocumentSidebar';
@@ -122,33 +123,24 @@ const DocumentEditorPage = ({ documentId, userId }: DocumentEditorPageProps) => 
                     </Animated.View>
                 )}
                 <View className='absolute left-0 top-0 h-full w-min z-20 lg:hidden'>
-
-
-
-
-
-                    {showSidebar ? (
-                        <Animated.View
-                            key="sidebar"
-                            className={"h-full w-min"}
-                            entering={FadeInLeft.duration(100)}
-                            exiting={FadeOutLeft.duration(100)}
+                    <StateAnimatedView.Container stateVar={showSidebar} className='absolute left-0 top-0 h-full w-min z-20 lg:hidden'>
+                        <StateAnimatedView.Option
+                            stateValue={true}
+                            onValue={{ x: [-24, 0], opacity: [0, 1], duration: 100 }}
+                            onNotValue={{ x: [0, -24], opacity: [1, 0], duration: 100 }}
                         >
-                            <View className="h-full w-min">
-                                <DocumentSidebar
-                                    documentId={documentId}
-                                    userId={userId}
-                                    activePageId={activePageId.value}
-                                    onSetActivePageId={setActivePageId}
-                                    onHideSidebar={handleHideSidebar}
-                                />
-                            </View>
-                        </Animated.View>
-                    ) : (
-                        <Animated.View
-                            key="button"
-                            entering={FadeInLeft.duration(100)}
-                            exiting={FadeOutLeft.duration(100)}
+                            <DocumentSidebar
+                                documentId={documentId}
+                                userId={userId}
+                                activePageId={activePageId.value}
+                                onSetActivePageId={setActivePageId}
+                                onHideSidebar={handleHideSidebar}
+                            />
+                        </StateAnimatedView.Option>
+                        <StateAnimatedView.Option
+                            stateValue={false}
+                            onValue={{ x: [-24, 0], opacity: [0, 1], duration: 100 }}
+                            onNotValue={{ x: [0, -24], opacity: [1, 0], duration: 100 }}
                         >
                             <Row className='items-center' gap={0}>
                                 <PagesButton onPress={handleToggleSidebar} />
@@ -156,9 +148,8 @@ const DocumentEditorPage = ({ documentId, userId }: DocumentEditorPageProps) => 
                                     <PoppinsText color='black'>Page {pages.find(page => page.value.id === activePageId.value)?.value.pageNumber || 1}</PoppinsText>
                                 </TouchableOpacity>
                             </Row>
-                        </Animated.View>
-                    )}
-
+                        </StateAnimatedView.Option>
+                    </StateAnimatedView.Container>
                 </View>
 
                 <DocumentEditor

@@ -1,74 +1,55 @@
 /**
- * StateAnimatedView - A compound component system for page-based screen transitions
+ * StateAnimatedView - A compound component system for state-based animations
  * 
- * This component provides a declarative API for managing screen transitions based on
- * page hierarchy and directional animations. Unlike traditional state-based animation
- * systems, this uses a page-tree approach where animations are determined by the
- * relative position of pages in the component tree.
+ * This component provides a declarative API for managing animations that trigger
+ * only when the attached state variable changes to specific values. Unlike React's
+ * entering/exiting animations, these animations are unaffected by component mounting/unmounting
+ * and only respond to state changes.
  * 
  * @example Basic Usage
  * ```tsx
- * <StateAnimatedView.Container stateVar={currentScreen} className='flex-1'>
- *   <StateAnimatedView.Option page={1} stateValue='allGames'>
- *     <AllGamesPage />
+ * <StateAnimatedView.Container stateVar={showSidebar} className='flex-1'>
+ *   <StateAnimatedView.Option 
+ *     stateValue={true}
+ *     onValue={FadeInLeft.duration(100)}
+ *     onNotValue={FadeOutLeft.duration(100)}
+ *   >
+ *     <SidebarContent />
  *   </StateAnimatedView.Option>
  *   
- *   <StateAnimatedView.OptionContainer page={2} pushInAnimation={fromRight}>
- *     <StateAnimatedView.Option stateValue='game'>
- *       <GamePage />
- *     </StateAnimatedView.Option>
- *   </StateAnimatedView.OptionContainer>
+ *   <StateAnimatedView.Option 
+ *     stateValue={false}
+ *     onValue={FadeInLeft.duration(100)}
+ *     onNotValue={FadeOutLeft.duration(100)}
+ *   >
+ *     <ButtonContent />
+ *   </StateAnimatedView.Option>
  * </StateAnimatedView.Container>
  * ```
  * 
- * @example Custom Animation Direction
- * ```tsx
- * <StateAnimatedView.OptionContainer page={3} pushInAnimation={fromTop}>
- *   <StateAnimatedView.Option stateValue='settings'>
- *     <SettingsPage />
- *   </StateAnimatedView.Option>
- * </StateAnimatedView.OptionContainer>
- * ```
- * 
  * @component StateAnimatedView.Container
- * The root container that manages the current active state and coordinates transitions.
+ * The root container that manages the current active state and coordinates animations.
  * 
  * @props {TState} stateVar - The current active state value
  * @props {string} className - Optional CSS classes for styling
- * @props {ReactNode} children - Option and OptionContainer components
+ * @props {ReactNode} children - Option components
  * 
  * @component StateAnimatedView.Option
- * Represents a single screen/page in the navigation hierarchy.
+ * Represents a content option that animates based on state value changes.
  * 
  * @props {TState} stateValue - The state value that activates this option
- * @props {number} page - Page number (inherited from OptionContainer if not provided)
- * @props {ReactNode} children - Content to render when this option is active
- * 
- * @component StateAnimatedView.OptionContainer
- * Groups options with shared animation settings and page numbering.
- * The higher-numbered page's pushInAnimation controls both forward and backward transitions.
- * 
- * @props {number} page - Page number for determining animation direction
- * @props {StateAnimatedViewPushInAnimation} pushInAnimation - Animation preset (defaults to fromRight)
- * @props {ReactNode} children - Option components within this container
+ * @props {ReactNode} children - Content to render when this option's state value matches
+ * @props {AnimationConfig} onValue - Animation to play when state becomes this value
+ * @props {AnimationConfig} onNotValue - Animation to play when state changes away from this value
  * 
  * @animation Behavior
- * - Only adjacent page changes animate (page difference of exactly 1)
- * - Same-page changes and non-adjacent jumps render with no animation
- * - The higher-numbered page's pushInAnimation determines the transition direction
- * - Elements are completely removed from DOM after exit animation completes
- * 
- * @animation Presets
- * - fromRight: Enter from right, exit to left (default)
- * - fromLeft: Enter from left, exit to right  
- * - fromTop: Enter from top, exit to bottom
- * - fromBottom: Enter from bottom, exit to top
- * 
- * @performance Notes
- * - Leaving elements have pointerEvents='none' during transition
- * - DOM cleanup happens exactly when exit animation completes
- * - No performance overhead from hidden elements after transition
+ * - Animations only trigger when the stateVar changes
+ * - No entering/exiting animations - immune to component mount/unmount
+ * - onValue triggers when state becomes this option's stateValue
+ * - onNotValue triggers when state changes from this option's stateValue to something else
+ * - Only one option renders at a time based on matching stateValue
  */
+
 import React, { PropsWithChildren, ReactNode, useEffect, useMemo, useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated, {
@@ -78,68 +59,47 @@ import Animated, {
     withTiming,
 } from 'react-native-reanimated';
 
-type TransitionStateKey = string;
+type StateKey = string | number | boolean | null | undefined;
 
-export type StateAnimatedViewAnimation = {
+export interface AnimationConfig {
     duration?: number;
     opacity?: [number, number];
     x?: [number, number];
     y?: [number, number];
     scale?: [number, number];
-};
+}
 
-type StateAnimatedViewTransition = {
-    entering: StateAnimatedViewAnimation;
-    exiting: StateAnimatedViewAnimation;
-};
-
-export type StateAnimatedViewPushInAnimation = {
-    forward: StateAnimatedViewTransition;
-    backward: StateAnimatedViewTransition;
-};
-
-interface StateAnimatedViewContainerProps<TState extends TransitionStateKey> extends PropsWithChildren {
+interface StateAnimatedViewContainerProps<TState extends StateKey> extends PropsWithChildren {
     stateVar: TState;
     className?: string;
 }
 
-interface StateAnimatedViewOptionProps<TState extends TransitionStateKey> extends PropsWithChildren {
+interface StateAnimatedViewOptionProps<TState extends StateKey> extends PropsWithChildren {
     stateValue: TState;
-    page?: number;
+    onValue?: AnimationConfig;
+    onNotValue?: AnimationConfig;
+    className?: string;
 }
 
-interface StateAnimatedViewOptionContainerProps extends PropsWithChildren {
-    page: number;
-    pushInAnimation?: StateAnimatedViewPushInAnimation;
-}
-
-type ResolvedOption<TState extends TransitionStateKey> = {
+type ResolvedOption<TState extends StateKey> = {
     stateValue: TState;
-    page: number;
-    pushInAnimation?: StateAnimatedViewPushInAnimation;
-    children: ReactNode;
-};
-
-type LeavingContent = {
-    key: string;
+    onValue?: AnimationConfig;
+    onNotValue?: AnimationConfig;
+    className?: string;
     children: ReactNode;
 };
 
 const DEFAULT_DURATION = 250;
+const NO_ANIMATION: AnimationConfig = {};
 
-const NO_ANIMATION_TRANSITION: StateAnimatedViewTransition = {
-    entering: {},
-    exiting: {},
-};
-
-const getDuration = (animation: StateAnimatedViewAnimation) => animation.duration ?? DEFAULT_DURATION;
+const getDuration = (animation: AnimationConfig) => animation.duration ?? DEFAULT_DURATION;
 
 const getValuePair = (value?: [number, number], fallbackStart = 0, fallbackEnd = 0) => {
     return value ?? [fallbackStart, fallbackEnd];
 };
 
 const applyAnimation = (
-    animation: StateAnimatedViewAnimation,
+    animation: AnimationConfig,
     opacity: SharedValue<number>,
     translateX: SharedValue<number>,
     translateY: SharedValue<number>,
@@ -162,98 +122,10 @@ const applyAnimation = (
     scale.value = withTiming(scaleEnd, { duration });
 };
 
-const createTransition = (
-    entering: StateAnimatedViewAnimation,
-    exiting: StateAnimatedViewAnimation,
-): StateAnimatedViewTransition => ({
-    entering,
-    exiting,
-});
+const StateAnimatedViewOption = <TState extends StateKey>(_props: StateAnimatedViewOptionProps<TState>) => null;
 
-const createPushInAnimation = (
-    forward: StateAnimatedViewTransition,
-    backward: StateAnimatedViewTransition,
-): StateAnimatedViewPushInAnimation => ({
-    forward,
-    backward,
-});
-
-const enterFromBottom = (duration = 350, distance = 24): StateAnimatedViewAnimation => ({
-    duration,
-    opacity: [0, 1],
-    y: [distance, 0],
-});
-
-const enterFromRight = (duration = 300, distance = 24): StateAnimatedViewAnimation => ({
-    duration,
-    opacity: [0, 1],
-    x: [distance, 0],
-});
-
-const enterFromLeft = (duration = 300, distance = 24): StateAnimatedViewAnimation => ({
-    duration,
-    opacity: [0, 1],
-    x: [-distance, 0],
-});
-
-const enterFromTop = (duration = 350, distance = 24): StateAnimatedViewAnimation => ({
-    duration,
-    opacity: [0, 1],
-    y: [-distance, 0],
-});
-
-const exitToBottom = (duration = 250, distance = 24): StateAnimatedViewAnimation => ({
-    duration,
-    opacity: [1, 0],
-    y: [0, distance],
-});
-
-const exitToTop = (duration = 250, distance = 24): StateAnimatedViewAnimation => ({
-    duration,
-    opacity: [1, 0],
-    y: [0, -distance],
-});
-
-const exitToLeft = (duration = 250, distance = 24): StateAnimatedViewAnimation => ({
-    duration,
-    opacity: [1, 0],
-    x: [0, -distance],
-});
-
-const exitToRight = (duration = 250, distance = 24): StateAnimatedViewAnimation => ({
-    duration,
-    opacity: [1, 0],
-    x: [0, distance],
-});
-
-const fromRight = createPushInAnimation(
-    createTransition(enterFromRight(), exitToLeft()),
-    createTransition(enterFromLeft(), exitToRight()),
-);
-
-const fromLeft = createPushInAnimation(
-    createTransition(enterFromLeft(), exitToRight()),
-    createTransition(enterFromRight(), exitToLeft()),
-);
-
-const fromTop = createPushInAnimation(
-    createTransition(enterFromTop(), exitToBottom()),
-    createTransition(enterFromBottom(), exitToTop()),
-);
-
-const fromBottom = createPushInAnimation(
-    createTransition(enterFromBottom(), exitToTop()),
-    createTransition(enterFromTop(), exitToBottom()),
-);
-
-const StateAnimatedViewOption = <TState extends TransitionStateKey>(_props: StateAnimatedViewOptionProps<TState>) => null;
-
-const StateAnimatedViewOptionContainer = (_props: StateAnimatedViewOptionContainerProps) => null;
-
-const collectOptions = <TState extends TransitionStateKey>(
+const collectOptions = <TState extends StateKey>(
     children: ReactNode,
-    inheritedPage?: number,
-    inheritedPushInAnimation?: StateAnimatedViewPushInAnimation,
 ): ResolvedOption<TState>[] => {
     const options: ResolvedOption<TState>[] = [];
 
@@ -266,21 +138,6 @@ const collectOptions = <TState extends TransitionStateKey>(
             options.push(
                 ...collectOptions<TState>(
                     (child.props as PropsWithChildren).children,
-                    inheritedPage,
-                    inheritedPushInAnimation,
-                ),
-            );
-            return;
-        }
-
-        if (child.type === StateAnimatedViewOptionContainer) {
-            const optionContainerProps = child.props as StateAnimatedViewOptionContainerProps;
-
-            options.push(
-                ...collectOptions<TState>(
-                    optionContainerProps.children,
-                    optionContainerProps.page,
-                    optionContainerProps.pushInAnimation ?? fromRight,
                 ),
             );
             return;
@@ -288,16 +145,11 @@ const collectOptions = <TState extends TransitionStateKey>(
 
         if (child.type === StateAnimatedViewOption) {
             const optionProps = child.props as StateAnimatedViewOptionProps<TState>;
-            const page = optionProps.page ?? inheritedPage;
-
-            if (page == null) {
-                return;
-            }
-
             options.push({
                 stateValue: optionProps.stateValue,
-                page,
-                pushInAnimation: inheritedPushInAnimation,
+                onValue: optionProps.onValue,
+                onNotValue: optionProps.onNotValue,
+                className: optionProps.className,
                 children: optionProps.children,
             });
         }
@@ -306,33 +158,7 @@ const collectOptions = <TState extends TransitionStateKey>(
     return options;
 };
 
-const getTransitionForPageChange = <TState extends TransitionStateKey>(
-    previousOption?: ResolvedOption<TState>,
-    nextOption?: ResolvedOption<TState>,
-) => {
-    if (!previousOption || !nextOption) {
-        return null;
-    }
-
-    if (previousOption.page === nextOption.page) {
-        return null;
-    }
-
-    if (Math.abs(previousOption.page - nextOption.page) !== 1) {
-        return null;
-    }
-
-    const higherPageOption = previousOption.page > nextOption.page ? previousOption : nextOption;
-    const pushInAnimation = higherPageOption.pushInAnimation;
-
-    if (!pushInAnimation) {
-        return null;
-    }
-
-    return nextOption.page > previousOption.page ? pushInAnimation.forward : pushInAnimation.backward;
-};
-
-const StateAnimatedViewContainer = <TState extends TransitionStateKey>({
+const StateAnimatedViewContainer = <TState extends StateKey>({
     stateVar,
     className,
     children,
@@ -343,104 +169,59 @@ const StateAnimatedViewContainer = <TState extends TransitionStateKey>({
 
     const previousStateRef = useRef<TState | undefined>(undefined);
     const previousOptionRef = useRef<ResolvedOption<TState> | undefined>(currentOption);
-    const previousContentRef = useRef<ReactNode>(currentContent);
-    const leavingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-    const [leavingContent, setLeavingContent] = useState<LeavingContent | null>(null);
 
-    const enteringOpacity = useSharedValue(1);
-    const enteringTranslateX = useSharedValue(0);
-    const enteringTranslateY = useSharedValue(0);
-    const enteringScale = useSharedValue(1);
-    const leavingOpacity = useSharedValue(1);
-    const leavingTranslateX = useSharedValue(0);
-    const leavingTranslateY = useSharedValue(0);
-    const leavingScale = useSharedValue(1);
+    const opacity = useSharedValue(1);
+    const translateX = useSharedValue(0);
+    const translateY = useSharedValue(0);
+    const scale = useSharedValue(1);
 
-    const enteringStyle = useAnimatedStyle(() => {
+    const animatedStyle = useAnimatedStyle(() => {
         return {
-            opacity: enteringOpacity.value,
+            opacity: opacity.value,
             transform: [
-                { translateX: enteringTranslateX.value },
-                { translateY: enteringTranslateY.value },
-                { scale: enteringScale.value },
-            ],
-        };
-    });
-
-    const leavingStyle = useAnimatedStyle(() => {
-        return {
-            opacity: leavingOpacity.value,
-            transform: [
-                { translateX: leavingTranslateX.value },
-                { translateY: leavingTranslateY.value },
-                { scale: leavingScale.value },
+                { translateX: translateX.value },
+                { translateY: translateY.value },
+                { scale: scale.value },
             ],
         };
     });
 
     useEffect(() => {
         const previousState = previousStateRef.current;
+        const previousOption = previousOptionRef.current;
 
         if (previousState == null) {
-            applyAnimation(NO_ANIMATION_TRANSITION.entering, enteringOpacity, enteringTranslateX, enteringTranslateY, enteringScale);
+            // Initial render - no animation
+            applyAnimation(NO_ANIMATION, opacity, translateX, translateY, scale);
             previousStateRef.current = stateVar;
             previousOptionRef.current = currentOption;
-            previousContentRef.current = currentContent;
             return;
         }
 
         if (previousState !== stateVar) {
-            if (leavingTimeoutRef.current) {
-                clearTimeout(leavingTimeoutRef.current);
+            // State changed - trigger appropriate animations
+            
+            // Animate the previous option away (if it exists)
+            if (previousOption?.onNotValue) {
+                applyAnimation(previousOption.onNotValue, opacity, translateX, translateY, scale);
             }
-
-            const activeTransition = getTransitionForPageChange(previousOptionRef.current, currentOption);
-
-            if (!activeTransition || previousContentRef.current == null) {
-                setLeavingContent(null);
-                applyAnimation(NO_ANIMATION_TRANSITION.entering, enteringOpacity, enteringTranslateX, enteringTranslateY, enteringScale);
-                applyAnimation(NO_ANIMATION_TRANSITION.exiting, leavingOpacity, leavingTranslateX, leavingTranslateY, leavingScale);
-            } else {
-                setLeavingContent({
-                    key: `${String(previousState)}-${String(stateVar)}-${Date.now()}`,
-                    children: previousContentRef.current,
-                });
-
-                applyAnimation(activeTransition.entering, enteringOpacity, enteringTranslateX, enteringTranslateY, enteringScale);
-                applyAnimation(activeTransition.exiting, leavingOpacity, leavingTranslateX, leavingTranslateY, leavingScale);
-
-                leavingTimeoutRef.current = setTimeout(() => {
-                    setLeavingContent(null);
-                }, getDuration(activeTransition.exiting));
+            
+            // Animate the current option in (if it exists and is different from previous)
+            if (currentOption && currentOption.stateValue !== previousState && currentOption.onValue) {
+                applyAnimation(currentOption.onValue, opacity, translateX, translateY, scale);
+            } else if (!currentOption?.onNotValue && !currentOption?.onValue) {
+                // No animation specified, reset to default
+                applyAnimation(NO_ANIMATION, opacity, translateX, translateY, scale);
             }
         }
 
         previousStateRef.current = stateVar;
         previousOptionRef.current = currentOption;
-        previousContentRef.current = currentContent;
-    }, [currentContent, currentOption, enteringOpacity, enteringScale, enteringTranslateX, enteringTranslateY, leavingOpacity, leavingScale, leavingTranslateX, leavingTranslateY, stateVar]);
-
-    useEffect(() => {
-        return () => {
-            if (leavingTimeoutRef.current) {
-                clearTimeout(leavingTimeoutRef.current);
-            }
-        };
-    }, []);
+    }, [currentContent, currentOption, opacity, scale, translateX, translateY, stateVar]);
 
     return (
         <View className={className} style={styles.container}>
-            {leavingContent ? (
-                <Animated.View
-                    key={leavingContent.key}
-                    pointerEvents='none'
-                    style={[styles.overlay, leavingStyle]}
-                >
-                    {leavingContent.children}
-                </Animated.View>
-            ) : null}
-
-            <Animated.View key={String(stateVar)} style={[styles.fill, enteringStyle]}>
+            <Animated.View style={[styles.fill, animatedStyle]} className={currentOption?.className}>
                 {currentContent}
             </Animated.View>
         </View>
@@ -455,23 +236,11 @@ const styles = StyleSheet.create({
     fill: {
         flex: 1,
     },
-    overlay: {
-        ...StyleSheet.absoluteFillObject,
-    },
 });
 
 const StateAnimatedView = {
     Container: StateAnimatedViewContainer,
     Option: StateAnimatedViewOption,
-    OptionContainer: StateAnimatedViewOptionContainer,
-};
-
-export {
-    createPushInAnimation,
-    fromBottom,
-    fromLeft,
-    fromRight,
-    fromTop,
 };
 
 export default StateAnimatedView;

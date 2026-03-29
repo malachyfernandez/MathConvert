@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { View } from 'react-native';
 import Column from '../layout/Column';
 import Row from '../layout/Row';
@@ -8,6 +8,7 @@ import { useUserListGet } from 'hooks/useUserListGet';
 import { useUserListSet } from 'hooks/useUserListSet';
 import { MathDocument, MathDocumentPage } from 'types/mathDocuments';
 import DocumentContent from './DocumentContent';
+import DocumentContentPreview from './DocumentContentPreview';
 import ImageColumn from './ImageColumn';
 import NewPageDialog from './NewPageDialog';
 
@@ -66,6 +67,8 @@ const DocumentEditor = ({ documentId, userId, activePageId, onSetActivePageId }:
         });
     };
 
+    const [isPreview, setIsPreview] = useState(true);
+
     if (!documentRecord.value) {
         return (
             <Column className='flex-1 rounded-2xl border-2 border-border bg-inner-background p-6' gap={2}>
@@ -106,13 +109,22 @@ const DocumentEditor = ({ documentId, userId, activePageId, onSetActivePageId }:
 
             {activePage?.imageUrl && (
                 <View className='flex-1 min-w-min sm:min-w-[400px] shrink-0 px-4 sm:pl-0'>
-                    <DocumentContent
-                        documentTitle={documentRecord.value?.title ?? 'Untitled math document'}
-                        documentId={documentId}
-                        activePage={activePage}
-                        onReplacePage={replacePage}
-                        onDeletePage={(nextPageId) => onSetActivePageId(nextPageId)}
-                    />
+                    {isPreview ? (
+                        <DocumentContentPreview
+                            documentId={documentId}
+                            activePage={activePage}
+                            text={`HERE IS MARKDOWN LOOK AT ME!`}
+                        />
+                    ) : (
+                        <DocumentContent
+                            documentTitle={documentRecord.value?.title ?? 'Untitled math document'}
+                            documentId={documentId}
+                            activePage={activePage}
+                            onReplacePage={replacePage}
+                            onDeletePage={(nextPageId) => onSetActivePageId(nextPageId)}
+                        />
+
+                    )}
                 </View>
             )}
         </View>

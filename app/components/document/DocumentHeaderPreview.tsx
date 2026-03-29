@@ -1,0 +1,61 @@
+import React from 'react';
+import { LayoutChangeEvent, View } from 'react-native';
+import Column from '../layout/Column';
+import Row from '../layout/Row';
+import PoppinsText from '../ui/text/PoppinsText';
+import StatusButton from '../ui/StatusButton';
+import { Tabs } from 'heroui-native';
+import { BlurView } from 'expo-blur';
+
+interface DocumentHeaderPreviewProps {
+    activeTab: string;
+    onTabChange: (tab: string) => void;
+    onLayout?: (event: LayoutChangeEvent) => void;
+}
+
+const DocumentHeaderPreview = ({ activeTab, onTabChange, onLayout }: DocumentHeaderPreviewProps) => {
+    return (
+        <View className='absolute top-0 left-0 right-0 z-10' onLayout={onLayout}>
+            <BlurView 
+                intensity={20} 
+                tint='light'
+                className='absolute top-0 left-0 right-0 h-full'
+            />
+            <View className='relative bg-background/50 border-b border-subtle-border'>
+                <Column className='p-4' gap={3}>
+                    <Row className='justify-between items-center'>
+                        <Tabs value={activeTab} onValueChange={onTabChange} variant="secondary" className="flex-1">
+                            <Tabs.List>
+                                <Tabs.Indicator />
+                                <Tabs.Trigger value="preview">
+                                    {({ isSelected }) => (
+                                        <Tabs.Label className={isSelected ? 'text-black font-medium' : 'text-gray-500'}>
+                                            Preview
+                                        </Tabs.Label>
+                                    )}
+                                </Tabs.Trigger>
+                                <Tabs.Trigger value="editor">
+                                    {({ isSelected }) => (
+                                        <Tabs.Label className={isSelected ? 'text-black font-medium' : 'text-gray-500'}>
+                                            Editor
+                                        </Tabs.Label>
+                                    )}
+                                </Tabs.Trigger>
+                            </Tabs.List>
+                        </Tabs>
+                        
+                        <Row gap={2} className='ml-4'>
+                            <StatusButton 
+                                buttonText="Save Changes" 
+                                buttonAltText="No changes"
+                                className="h-10 w-36"
+                            />
+                        </Row>
+                    </Row>
+                </Column>
+            </View>
+        </View>
+    );
+};
+
+export default DocumentHeaderPreview;

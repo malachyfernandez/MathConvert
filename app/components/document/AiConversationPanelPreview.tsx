@@ -8,9 +8,11 @@ import AppButton from '../ui/buttons/AppButton';
 
 interface AiConversationPanelPreviewProps {
     onLayout?: (event: LayoutChangeEvent) => void;
+    onKeep: () => void;
+    onDiscard: () => void;
 }
 
-const AiConversationPanelPreview = ({ onLayout }: AiConversationPanelPreviewProps) => {
+const AiConversationPanelPreview = ({ onLayout, onKeep, onDiscard }: AiConversationPanelPreviewProps) => {
     return (
         <View className='absolute bottom-0 left-0 right-0' onLayout={onLayout}>
             <BlurView
@@ -29,14 +31,14 @@ const AiConversationPanelPreview = ({ onLayout }: AiConversationPanelPreviewProp
                             <AppButton
                                 variant='outline-alt'
                                 className='flex-1 h-12'
-                                onPress={() => { }}
+                                onPress={onDiscard}
                             >
                                 <PoppinsText weight='medium'>Discard</PoppinsText>
                             </AppButton>
                             <AppButton
                                 variant='green'
                                 className='flex-1 h-12'
-                                onPress={() => { }}
+                                onPress={onKeep}
                             >
                                 <PoppinsText weight='medium' color='white'>Replace</PoppinsText>
                             </AppButton>

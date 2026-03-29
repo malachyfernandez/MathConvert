@@ -20,9 +20,11 @@ interface DocumentContentPreviewProps {
     documentId: string;
     activePage: MathDocumentPage;
     text: string;
+    onKeep: () => void;
+    onDiscard: () => void;
 }
 
-const DocumentContentPreview = ({ documentId, activePage, text }: DocumentContentPreviewProps) => {
+const DocumentContentPreview = ({ documentId, activePage, text, onKeep, onDiscard }: DocumentContentPreviewProps) => {
     const [activeTab, setActiveTab] = useState('preview');
     const [headerHeight, setHeaderHeight] = useState(0);
     const [footerHeight, setFooterHeight] = useState(0);
@@ -87,6 +89,8 @@ const DocumentContentPreview = ({ documentId, activePage, text }: DocumentConten
             {/* Static AI Section */}
             <AiConversationPanelPreview
                 onLayout={handleFooterLayout}
+                onKeep={onKeep}
+                onDiscard={onDiscard}
             />
         </View >
     );

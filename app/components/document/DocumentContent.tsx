@@ -31,9 +31,10 @@ interface DocumentContentProps {
     activePage: MathDocumentPage;
     onReplacePage: (nextPage: MathDocumentPage, description: string) => void;
     onDeletePage: (pageId: string) => void;
+    setPreviewMarkdown: (markdown: string) => void;
 }
 
-const DocumentContent = ({ documentTitle, documentId, activePage, onReplacePage }: DocumentContentProps) => {
+const DocumentContent = ({ documentTitle, documentId, activePage, onReplacePage, setPreviewMarkdown }: DocumentContentProps) => {
     const convertMathImageToMarkdown = useAction(api.mathAi.convertMathImageToMarkdown);
     const { setGeneratingPage, isPageGenerating } = useGeneration();
     const { showToast } = useToast();
@@ -238,6 +239,7 @@ const DocumentContent = ({ documentTitle, documentId, activePage, onReplacePage 
                         onUpdatePage={onReplacePage}
                         onUpdateMarkdown={setMarkdownDraft}
                         onLayout={handleFooterLayout}
+                        setPreviewMarkdown={setPreviewMarkdown}
                     />
                 </>
             ) : (

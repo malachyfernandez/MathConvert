@@ -6,6 +6,7 @@ import PoppinsText from '../ui/text/PoppinsText';
 import { useUserList } from 'hooks/useUserList';
 import { useUserListGet } from 'hooks/useUserListGet';
 import { useUserListSet } from 'hooks/useUserListSet';
+import { useUndoRedo, useCreateUndoSnapshot } from 'hooks/useUndoRedo';
 import { MathDocument, MathDocumentPage } from 'types/mathDocuments';
 import DocumentContent from './DocumentContent';
 import DocumentContentPreview from './DocumentContentPreview';
@@ -20,6 +21,8 @@ interface DocumentEditorProps {
 }
 
 const DocumentEditor = ({ documentId, userId, activePageId, onSetActivePageId }: DocumentEditorProps) => {
+    const { executeCommand } = useUndoRedo();
+    const createUndoSnapshot = useCreateUndoSnapshot();
     const scopedUserIds = userId ? [userId] : ['__loading__'];
 
     const [documentRecord] = useUserList<MathDocument>({
@@ -65,6 +68,35 @@ const DocumentEditor = ({ documentId, userId, activePageId, onSetActivePageId }:
             searchKeys: ['title', 'markdown'],
             sortKey: 'pageNumber',
         });
+    };
+
+    const replacePageWithUndo = (nextPage: MathDocumentPage, description: string) => {
+        if (!activePage) return;
+        
+        const previousPage = createUndoSnapshot(activePage);
+        const nextPageSnapshot = createUndoSnapshot(nextPage);
+
+        executeCommand({
+            action: () => replacePage(nextPage, description),
+            undoAction: () => replacePage(previousPage, description),
+            description
+        });
+    };
+
+    const handleKeepPreview = () => {
+        if (!activePage || !previewMarkdown) return;
+        
+        const updatedPage = {
+            ...activePage,
+            markdown: previewMarkdown,
+        };
+        
+        replacePageWithUndo(updatedPage, 'Replaced content with preview');
+        setPreviewMarkdown('');
+    };
+
+    const handleDiscardPreview = () => {
+        setPreviewMarkdown('');
     };
 
     const [previewMarkdown, setPreviewMarkdown] = useState("");
@@ -114,6 +146,8 @@ const DocumentEditor = ({ documentId, userId, activePageId, onSetActivePageId }:
                             documentId={documentId}
                             activePage={activePage}
                             text={previewMarkdown}
+                            onKeep={handleKeepPreview}
+                            onDiscard={handleDiscardPreview}
                         />
                     ) : (
                         <DocumentContent
@@ -122,8 +156,8 @@ const DocumentEditor = ({ documentId, userId, activePageId, onSetActivePageId }:
                             activePage={activePage}
                             onReplacePage={replacePage}
                             onDeletePage={(nextPageId) => onSetActivePageId(nextPageId)}
+                            setPreviewMarkdown={setPreviewMarkdown}
                         />
-
                     )}
                 </View>
             )}

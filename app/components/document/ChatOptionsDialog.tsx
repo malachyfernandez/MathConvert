@@ -3,6 +3,7 @@ import { Pressable, ActivityIndicator, ScrollView, View } from 'react-native';
 import { ScrollShadow } from 'heroui-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import Column from '../layout/Column';
+import Row from '../layout/Row';
 import PoppinsText from '../ui/text/PoppinsText';
 import AppButton from '../ui/buttons/AppButton';
 import ConvexDialog from '../ui/dialog/ConvexDialog';
@@ -18,9 +19,10 @@ interface ChatOptionsDialogProps {
     page: MathDocumentPage;
     onUpdatePage: (nextPage: MathDocumentPage, description: string) => void;
     onUpdateMarkdown: (markdown: string) => void;
+    setPreviewMarkdown: (markdown: string) => void;
 }
 
-const ChatOptionsDialog = ({ followUps, page, onUpdatePage, onUpdateMarkdown }: ChatOptionsDialogProps) => {
+const ChatOptionsDialog = ({ followUps, page, onUpdatePage, onUpdateMarkdown, setPreviewMarkdown }: ChatOptionsDialogProps) => {
     const [isOpen, setIsOpen] = useState(false);
     const [currentFollowUps, setCurrentFollowUps] = useState(followUps);
     const [originalPageId, setOriginalPageId] = useState<string | null>(null);
@@ -123,10 +125,21 @@ const ChatOptionsDialog = ({ followUps, page, onUpdatePage, onUpdateMarkdown }: 
                                             ) : (
                                                 currentFollowUps.slice().reverse().map((followUp) => (
                                                     <Column key={followUp.id} className='rounded-xl border border-subtle-border bg-background p-4' gap={2}>
-                                                        <PoppinsText weight='medium'>{followUp.prompt}</PoppinsText>
-                                                        <PoppinsText varient='subtext' className='text-xs'>
-                                                            {new Date(followUp.createdAt).toLocaleString()}
-                                                        </PoppinsText>
+                                                        <Row className='justify-between items-start'>
+                                                            <Column className='flex-1'>
+                                                                <PoppinsText weight='medium'>{followUp.prompt}</PoppinsText>
+                                                                <PoppinsText varient='subtext' className='text-xs'>
+                                                                    {new Date(followUp.createdAt).toLocaleString()}
+                                                                </PoppinsText>
+                                                            </Column>
+                                                            <AppButton
+                                                                variant='outline'
+                                                                className='h-8 px-3'
+                                                                onPress={() => setPreviewMarkdown(followUp.resultingMarkdown)}
+                                                            >
+                                                                <PoppinsText weight='medium' className='text-xs'>View</PoppinsText>
+                                                            </AppButton>
+                                                        </Row>
                                                     </Column>
                                                 ))
                                             )}

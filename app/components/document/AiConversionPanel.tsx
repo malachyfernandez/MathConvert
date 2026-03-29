@@ -20,9 +20,10 @@ interface AiConversionPanelProps {
     onUpdatePage: (nextPage: MathDocumentPage, description: string) => void;
     onUpdateMarkdown: (markdown: string) => void;
     onLayout?: (event: LayoutChangeEvent) => void;
+    setPreviewMarkdown: (markdown: string) => void;
 }
 
-const AiConversionPanel = ({ page, onUpdatePage, onUpdateMarkdown, onLayout }: AiConversionPanelProps) => {
+const AiConversionPanel = ({ page, onUpdatePage, onUpdateMarkdown, onLayout, setPreviewMarkdown }: AiConversionPanelProps) => {
     const convertMathImageToMarkdown = useAction(api.mathAi.convertMathImageToMarkdown);
     const { setGeneratingPage, isPageGenerating } = useGeneration();
     const [prompt, setPrompt] = useState('');
@@ -114,6 +115,7 @@ const AiConversionPanel = ({ page, onUpdatePage, onUpdateMarkdown, onLayout }: A
                             page={page}
                             onUpdatePage={onUpdatePage}
                             onUpdateMarkdown={onUpdateMarkdown}
+                            setPreviewMarkdown={setPreviewMarkdown}
                         />
                     </Row>
                     

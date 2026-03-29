@@ -18,9 +18,11 @@ interface NewPageDialogProps {
     documentId: string;
     existingPageCount: number;
     onCreate: (pageId: string) => void;
+    triggerButtonVariant?: 'black' | 'green';
+    createButtonVariant?: 'black' | 'green';
 }
 
-const NewPageDialog = ({ documentId, existingPageCount, onCreate }: NewPageDialogProps) => {
+const NewPageDialog = ({ documentId, existingPageCount, onCreate, triggerButtonVariant = 'green', createButtonVariant = 'green' }: NewPageDialogProps) => {
     const setPage = useUserListSet<MathDocumentPage>();
     const [isOpen, setIsOpen] = useState(false);
     const nextPageNumber = existingPageCount + 1;
@@ -85,7 +87,7 @@ const NewPageDialog = ({ documentId, existingPageCount, onCreate }: NewPageDialo
     return (
         <ConvexDialog.Root isOpen={isOpen} onOpenChange={setIsOpen}>
             <ConvexDialog.Trigger asChild>
-                <AppButton variant='green' className='h-12 px-5'>
+                <AppButton variant={triggerButtonVariant} className='h-12 px-5'>
                     <PoppinsText weight='medium' color='white'>Add page</PoppinsText>
                 </AppButton>
             </ConvexDialog.Trigger>
@@ -163,7 +165,7 @@ const NewPageDialog = ({ documentId, existingPageCount, onCreate }: NewPageDialo
                             </Column>
                             
                             {canCreate ? (
-                                <AppButton variant='green' className='h-12' onPress={() => void handleCreate()}>
+                                <AppButton variant={createButtonVariant} className='h-12' onPress={() => void handleCreate()}>
                                     <PoppinsText weight='medium' color='white'>
                                         {isUploading ? <ActivityIndicator color='white' /> : 'Create page'}
                                     </PoppinsText>

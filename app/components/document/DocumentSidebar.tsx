@@ -127,6 +127,8 @@ const DocumentSidebar = ({ documentId, userId, activePageId, onSetActivePageId, 
                     <NewPageDialog 
                         documentId={documentId} 
                         existingPageCount={highestPageNumber} 
+                        triggerButtonVariant='green'
+                        createButtonVariant='green'
                         onCreate={(pageId) => {
                             onSetActivePageId(pageId);
                             onHideSidebar?.();

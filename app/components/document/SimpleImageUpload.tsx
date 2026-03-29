@@ -126,7 +126,7 @@ const SimpleImageUpload = ({ url, setUrl, buttonLabel = 'Upload Image', emptyLab
     return (
         <Column gap={2} className={className}>
             <AppButton 
-                variant={isUploading || isButtonClicked ? 'grey' : 'green'} 
+                variant={isUploading || isButtonClicked ? 'grey' : 'black'} 
                 className={`h-12 px-5 ${className}`}
                 onPress={handleFileUpload}
                 disabled={isUploading || isButtonClicked}

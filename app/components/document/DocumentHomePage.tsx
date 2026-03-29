@@ -57,7 +57,7 @@ const DocumentHomePage = ({ userId, setActiveDocumentId }: DocumentHomePageProps
             <Column className='max-w-[800px] w-full mx-auto' gap={3}>
                 <PoppinsText weight='bold' className='text-3xl'>MathConvert</PoppinsText>
                 
-                <NewDocumentDialog onCreate={setActiveDocumentId} />
+                <NewDocumentDialog onCreate={setActiveDocumentId} buttonVariant='green' />
             </Column>
 
             <ScrollShadow LinearGradientComponent={LinearGradient} className='flex-1'>

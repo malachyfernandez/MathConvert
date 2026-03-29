@@ -19,7 +19,9 @@ const DocumentCard = ({ document, pageCount, onPress }: DocumentCardProps) => {
                 <PoppinsText weight='bold' className='text-xl'>
                     {document.title}
                 </PoppinsText>
-                <PoppinsText>{document.description || 'No description yet.'}</PoppinsText>
+                {document.description && (
+                    <PoppinsText>{document.description}</PoppinsText>
+                )}
                 <PoppinsText varient='subtext'>
                     {pageCount} {pageCount === 1 ? 'page' : 'pages'}
                 </PoppinsText>

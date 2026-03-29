@@ -21,7 +21,7 @@ const ShareButton = ({ documentTitle, documentId, activePage, className }: Share
     const { showToast } = useToast();
     const setDocument = useUserListSet();
     const setPage = useUserListSet<MathDocumentPage>();
-    
+
     const [isSharing, setIsSharing] = useState(false);
     const [shareTrigger, setShareTrigger] = useState(false);
     const [isProcessing, setIsProcessing] = useState(false);
@@ -44,9 +44,9 @@ const ShareButton = ({ documentTitle, documentId, activePage, className }: Share
 
             // TODO: This "share link" currently relies on PUBLIC userVariables records.
             // A true private share-link/token system would require backend support.
-            
+
             setIsSharing(true);
-            
+
             try {
                 // Ensure the document is PUBLIC
                 await setDocument({
@@ -77,7 +77,7 @@ const ShareButton = ({ documentTitle, documentId, activePage, className }: Share
 
                 // Build and copy the URL
                 const shareUrl = buildViewOnlyDocumentUrl(documentId);
-                
+
                 try {
                     await navigator.clipboard.writeText(shareUrl);
                     showToast('View-only link copied. Document is now publicly viewable.');
@@ -104,13 +104,16 @@ const ShareButton = ({ documentTitle, documentId, activePage, className }: Share
     };
 
     return (
-        <AppButton 
-            variant='outline-alt' 
-            className={`h-10 w-30 ${className || ''}`} 
+        <AppButton
+            variant='outline-alt'
+            className={`h-10 w-20 sm:w-30 ${className || ''}`}
             onPress={triggerShareLink}
             disabled={isSharing}
         >
-            <PoppinsText weight='medium'>
+            <PoppinsText weight='medium' className='sm:hidden'>
+                {isSharing ? '...' : 'Share'}
+            </PoppinsText>
+            <PoppinsText weight='medium' className='hidden sm:block'>
                 {isSharing ? 'Sharing...' : 'Share Link'}
             </PoppinsText>
         </AppButton>

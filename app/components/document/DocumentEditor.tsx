@@ -105,7 +105,7 @@ const DocumentEditor = ({ documentId, userId, activePageId, onSetActivePageId }:
             </View>
 
             {activePage?.imageUrl && (
-                <View className='flex-1 min-w-[400px] shrink-0 sm:pr-4'>
+                <View className='flex-1 min-w-min sm:min-w-[400px] shrink-0 px-4 sm:pl-0'>
                     <DocumentContent
                         documentTitle={documentRecord.value?.title ?? 'Untitled math document'}
                         documentId={documentId}

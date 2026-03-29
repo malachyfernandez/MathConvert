@@ -7,16 +7,19 @@ import ConvexDialog from '../ui/dialog/ConvexDialog';
 import DialogHeader from '../ui/dialog/DialogHeader';
 import StatusButton from '../ui/StatusButton';
 import { useUserListSet } from 'hooks/useUserListSet';
+import { useUserListRemove } from 'hooks/useUserListRemove';
 import { MathDocument } from 'types/mathDocuments';
 
 interface EditDocumentDialogProps {
     document: MathDocument;
     isOpen: boolean;
     onOpenChange: (open: boolean) => void;
+    onDelete: () => void;
 }
 
-const EditDocumentDialog = ({ document, isOpen, onOpenChange }: EditDocumentDialogProps) => {
+const EditDocumentDialog = ({ document, isOpen, onOpenChange, onDelete }: EditDocumentDialogProps) => {
     const setDocument = useUserListSet<MathDocument>();
+    const removeDocument = useUserListRemove();
     const [title, setTitle] = useState(document.title);
     const [description, setDescription] = useState(document.description);
 
@@ -47,6 +50,15 @@ const EditDocumentDialog = ({ document, isOpen, onOpenChange }: EditDocumentDial
         onOpenChange(false);
     };
 
+    const handleDelete = async () => {
+        await removeDocument({
+            key: 'mathDocuments',
+            itemId: document.id,
+        });
+        onDelete();
+        onOpenChange(false);
+    };
+
     const isValidTitle = title.trim().length > 0;
 
     return (
@@ -73,17 +85,22 @@ const EditDocumentDialog = ({ document, isOpen, onOpenChange }: EditDocumentDial
                                     placeholder='Optional description'
                                 />
                             </Column>
-                            {isValidTitle ? (
-                                <AppButton variant='green' className='h-12' onPress={() => void handleSave()}>
-                                    <PoppinsText weight='medium' color='white'>Save changes</PoppinsText>
+                            <Column gap={2}>
+                                {isValidTitle ? (
+                                    <AppButton variant='black' className='h-12' onPress={() => void handleSave()}>
+                                        <PoppinsText weight='medium' color='white'>Save changes</PoppinsText>
+                                    </AppButton>
+                                ) : (
+                                    <StatusButton 
+                                        buttonText="Save changes" 
+                                        buttonAltText="Add a title"
+                                        className="h-12 w-full"
+                                    />
+                                )}
+                                <AppButton variant='red' className='h-12' onPress={handleDelete}>
+                                    <PoppinsText weight='medium' color='red'>Delete document</PoppinsText>
                                 </AppButton>
-                            ) : (
-                                <StatusButton 
-                                    buttonText="Save changes" 
-                                    buttonAltText="Add a title"
-                                    className="h-12 w-full"
-                                />
-                            )}
+                            </Column>
                         </Column>
                     </Column>
                 </ConvexDialog.Content>

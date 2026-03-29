@@ -44,7 +44,7 @@ const ChatOptionsDialog = ({ followUps, page, onUpdatePage, onUpdateMarkdown }: 
                         <DialogHeader text='Chat Options' subtext='Manage your AI conversation and regenerate responses.' />
                         <Column className='pt-5' gap={6}>
                             <AppButton
-                                variant='green'
+                                variant='black'
                                 className={`h-12 ${isGenerating ? 'opacity-50' : ''}`}
                                 onPress={isGenerating ? undefined : handleRegenerate}
                             >

@@ -61,7 +61,7 @@ const PageConfigDialog = ({ page, isOpen, onOpenChange, onUpdate, onDelete }: Pa
 
                             <Column gap={2}>
                                 {isValidTitle ? (
-                                    <AppButton variant='green' className='h-12' onPress={handleSave}>
+                                    <AppButton variant='black' className='h-12' onPress={handleSave}>
                                         <PoppinsText weight='medium' color='white'>Save changes</PoppinsText>
                                     </AppButton>
                                 ) : (

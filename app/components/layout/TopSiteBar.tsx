@@ -47,13 +47,13 @@ const TopSiteBar = ({ className = '', isInDocument, onHomePress, documentId, use
     return (
         <Column className={className}>
             <Row className='justify-between items-center h-24 px-4'>
-                <Row className='items-center'>
+                <Row className='items-center flex-1'>
                     <TouchableOpacity onPress={onHomePress}>
                         <PoppinsText weight='bold' className='text-lg'>{isInDocument ? '<' : 'MathConvert'}</PoppinsText>
                     </TouchableOpacity>
                     {isInDocument && documentRecord.value && (
                         <>
-                            <DocumentDetails document={documentRecord.value} />
+                            <DocumentDetails document={documentRecord.value} onDelete={onHomePress} />
 
                         </>
                     )}

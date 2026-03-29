@@ -12,9 +12,10 @@ import { generateId } from 'utils/generateId';
 
 interface NewDocumentDialogProps {
     onCreate: (documentId: string) => void;
+    buttonVariant?: 'black' | 'green';
 }
 
-const NewDocumentDialog = ({ onCreate }: NewDocumentDialogProps) => {
+const NewDocumentDialog = ({ onCreate, buttonVariant = 'black' }: NewDocumentDialogProps) => {
     const setDocument = useUserListSet<MathDocument>();
     const [isOpen, setIsOpen] = useState(false);
     const [title, setTitle] = useState('');
@@ -48,7 +49,7 @@ const NewDocumentDialog = ({ onCreate }: NewDocumentDialogProps) => {
     return (
         <ConvexDialog.Root isOpen={isOpen} onOpenChange={setIsOpen}>
             <ConvexDialog.Trigger asChild>
-                <AppButton variant='green' className='h-12 px-5'>
+                <AppButton variant={buttonVariant} className='h-12 px-5'>
                     <PoppinsText weight='medium' color='white'>New document</PoppinsText>
                 </AppButton>
             </ConvexDialog.Trigger>
@@ -75,7 +76,7 @@ const NewDocumentDialog = ({ onCreate }: NewDocumentDialogProps) => {
                                 />
                             </Column>
                             {isValidTitle ? (
-                            <AppButton variant='green' className='h-12' onPress={() => void handleCreate()}>
+                            <AppButton variant={buttonVariant} className='h-12' onPress={() => void handleCreate()}>
                                 <PoppinsText weight='medium' color='white'>Create document</PoppinsText>
                             </AppButton>
                         ) : (

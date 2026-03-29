@@ -67,7 +67,7 @@ const DocumentEditor = ({ documentId, userId, activePageId, onSetActivePageId }:
         });
     };
 
-    const [isPreview, setIsPreview] = useState(true);
+    const [previewMarkdown, setPreviewMarkdown] = useState("");
 
     if (!documentRecord.value) {
         return (
@@ -109,11 +109,11 @@ const DocumentEditor = ({ documentId, userId, activePageId, onSetActivePageId }:
 
             {activePage?.imageUrl && (
                 <View className='flex-1 min-w-min sm:min-w-[400px] shrink-0 px-4 sm:pl-0'>
-                    {isPreview ? (
+                    {previewMarkdown ? (
                         <DocumentContentPreview
                             documentId={documentId}
                             activePage={activePage}
-                            text={`HERE IS MARKDOWN LOOK AT ME!`}
+                            text={previewMarkdown}
                         />
                     ) : (
                         <DocumentContent

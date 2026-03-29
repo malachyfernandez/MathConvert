@@ -3,7 +3,6 @@ import { LayoutChangeEvent, View } from 'react-native';
 import Column from '../layout/Column';
 import Row from '../layout/Row';
 import PoppinsText from '../ui/text/PoppinsText';
-import StatusButton from '../ui/StatusButton';
 import { Tabs } from 'heroui-native';
 import { BlurView } from 'expo-blur';
 
@@ -43,14 +42,6 @@ const DocumentHeaderPreview = ({ activeTab, onTabChange, onLayout }: DocumentHea
                                 </Tabs.Trigger>
                             </Tabs.List>
                         </Tabs>
-                        
-                        <Row gap={2} className='ml-4'>
-                            <StatusButton 
-                                buttonText="Save Changes" 
-                                buttonAltText="No changes"
-                                className="h-10 w-36"
-                            />
-                        </Row>
                     </Row>
                 </Column>
             </View>

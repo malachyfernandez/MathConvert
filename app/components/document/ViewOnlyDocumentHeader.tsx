@@ -56,7 +56,7 @@ const ViewOnlyDocumentHeader = ({
         if (!isNaN(numericValue) && numericValue > 0) {
             // Cap at 500 for upper bound
             const cappedValue = Math.min(numericValue, 555);
-            
+
             // Convert to zoom level (no arbitrary limits)
             const newZoomLevel = cappedValue / 100;
 
@@ -109,7 +109,7 @@ const ViewOnlyDocumentHeader = ({
         if (pageWidth && screenWidth && onZoomChange) {
             const availableWidth = screenWidth - margin;
             const requiredZoom = availableWidth / pageWidth;
-            
+
             // Only apply auto-fit if the page doesn't fit (zoom < 1.0)
             if (requiredZoom < 1.0) {
                 onZoomChange(requiredZoom);
@@ -137,8 +137,8 @@ const ViewOnlyDocumentHeader = ({
                         </PoppinsText>
                         <PoppinsText varient='subtext'>{secondaryText}</PoppinsText>
                     </Column>
-                    <Row className='items-center justify-between' gap={3}>
-                        <Tabs value={activeTab} onValueChange={(value) => onTabChange(value as ViewOnlyTab)} variant='secondary' className='flex-1'>
+                    <Row className='items-center justify-between flex-wrap' gap={3}>
+                        <Tabs value={activeTab} onValueChange={(value) => onTabChange(value as ViewOnlyTab)} variant='secondary' className='shrink-0'>
                             <Tabs.List>
                                 <Tabs.Indicator />
                                 <Tabs.Trigger value='imageOverlay'>
@@ -180,7 +180,7 @@ const ViewOnlyDocumentHeader = ({
                                             {zoomInputValue}
                                         </PoppinsText>
                                     </View>
-                                    
+
                                     <PoppinsTextInput
                                         className='text-xs text-center overflow-visible pr-1 rounded-none'
                                         weight='medium'

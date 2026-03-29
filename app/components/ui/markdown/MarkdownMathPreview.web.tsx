@@ -1,4 +1,4 @@
-// Used by: ContentPreview.tsx and MathPageWorkspace.tsx
+// Used by: ContentPreview.tsx
 // Web-only markdown renderer with MathJax support for mathematical content
 
 import React from 'react';

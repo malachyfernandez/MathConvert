@@ -70,7 +70,7 @@ const DocumentSidebar = ({ documentId, userId, activePageId, onSetActivePageId, 
             value: updatedPage,
             privacy: 'PUBLIC',
             filterKey: 'documentId',
-            searchKeys: ['title', 'markdown', 'initialGuidance'],
+            searchKeys: ['title', 'markdown'],
             sortKey: 'pageNumber',
         });
     };
@@ -91,7 +91,7 @@ const DocumentSidebar = ({ documentId, userId, activePageId, onSetActivePageId, 
                         value: deletedPage,
                         privacy: 'PUBLIC',
                         filterKey: 'documentId',
-                        searchKeys: ['title', 'markdown', 'initialGuidance'],
+                        searchKeys: ['title', 'markdown'],
                         sortKey: 'pageNumber',
                     });
                     onSetActivePageId(deletedPage.id);
@@ -109,7 +109,7 @@ const DocumentSidebar = ({ documentId, userId, activePageId, onSetActivePageId, 
                 value: page,
                 privacy: 'PUBLIC',
                 filterKey: 'documentId',
-                searchKeys: ['title', 'markdown', 'initialGuidance'],
+                searchKeys: ['title', 'markdown'],
                 sortKey: 'pageNumber',
             });
         });

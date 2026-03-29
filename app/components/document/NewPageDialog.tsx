@@ -11,6 +11,7 @@ import StatusButton from '../ui/StatusButton';
 import SimpleImageUpload from './SimpleImageUpload';
 import ImageUrlModal from './ImageUrlModal';
 import { useUserListSet } from 'hooks/useUserListSet';
+import { useUserVariable } from 'hooks/useUserVariable';
 import { useAction } from 'convex/react';
 import { api } from '../../../convex/_generated/api';
 import { useGeneration } from '../../../contexts/GenerationContext';
@@ -38,6 +39,13 @@ const NewPageDialog = ({ documentId, existingPageCount, onCreate, triggerButtonV
     const [isGenerating, setIsGenerating] = useState(false);
     const [createdPage, setCreatedPage] = useState<MathDocumentPage | null>(null);
     const [errorMessage, setErrorMessage] = useState('');
+
+    // Get user-wide AI guidance
+    const [aiGuidance] = useUserVariable({
+        key: 'aiGuidance',
+        defaultValue: 'Convert this handwritten math to Markdown + LaTeX with exact transcription.',
+        privacy: 'PRIVATE'
+    });
 
     const handleImageUrlAccept = (url: string) => {
         setImageUrl(url);
@@ -73,7 +81,6 @@ const NewPageDialog = ({ documentId, existingPageCount, onCreate, triggerButtonV
             title: title.trim() || `Page ${nextPageNumber}`,
             imageUrl,
             markdown: '',
-            initialGuidance: '',
             lastAiPrompt: '',
             followUps: [],
         };
@@ -84,7 +91,7 @@ const NewPageDialog = ({ documentId, existingPageCount, onCreate, triggerButtonV
             value: newPage,
             privacy: 'PUBLIC',
             filterKey: 'documentId',
-            searchKeys: ['title', 'markdown', 'initialGuidance'],
+            searchKeys: ['title', 'markdown'],
             sortKey: 'pageNumber',
         });
 
@@ -103,14 +110,14 @@ const NewPageDialog = ({ documentId, existingPageCount, onCreate, triggerButtonV
 
                 const result = await convertMathImageToMarkdown({
                     imageUrl: newPage.imageUrl,
-                    guidance: 'Convert this handwritten math to LaTeX',
+                    guidance: aiGuidance.value,
                     currentMarkdown: '',
                 });
 
                 const updatedPage: MathDocumentPage = {
                     ...newPage,
                     markdown: result.markdown,
-                    lastAiPrompt: 'Convert this handwritten math to LaTeX',
+                    lastAiPrompt: aiGuidance.value,
                     lastGeneratedAt: Date.now(),
                 };
 
@@ -120,7 +127,7 @@ const NewPageDialog = ({ documentId, existingPageCount, onCreate, triggerButtonV
                     value: updatedPage,
                     privacy: 'PUBLIC',
                     filterKey: 'documentId',
-                    searchKeys: ['title', 'markdown', 'initialGuidance'],
+                    searchKeys: ['title', 'markdown'],
                     sortKey: 'pageNumber',
                 });
             } catch (error) {
@@ -130,10 +137,6 @@ const NewPageDialog = ({ documentId, existingPageCount, onCreate, triggerButtonV
                 setIsGenerating(false);
             }
         }
-    };
-
-    const getContextualPrompt = () => {
-        return 'Convert this handwritten math to LaTeX';
     };
 
     const isValidTitle = title.trim().length > 0;

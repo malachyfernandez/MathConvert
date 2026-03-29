@@ -61,7 +61,7 @@ const DocumentEditor = ({ documentId, userId, activePageId, onSetActivePageId }:
             value: nextPage,
             privacy: 'PUBLIC',
             filterKey: 'documentId',
-            searchKeys: ['title', 'markdown', 'initialGuidance'],
+            searchKeys: ['title', 'markdown'],
             sortKey: 'pageNumber',
         });
     };

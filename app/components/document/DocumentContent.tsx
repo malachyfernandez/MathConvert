@@ -18,6 +18,7 @@ import { MathDocumentPage } from 'types/mathDocuments';
 import { useGeneration } from '../../../contexts/GenerationContext';
 import { useToast } from '../../../contexts/ToastContext';
 import { useUserListSet } from 'hooks/useUserListSet';
+import { useUserVariable } from 'hooks/useUserVariable';
 import DocumentHeader from './DocumentHeader';
 import ContentEditor from './ContentEditor';
 import ContentPreview from './ContentPreview';
@@ -43,6 +44,13 @@ const DocumentContent = ({ documentTitle, documentId, activePage, onReplacePage 
     const [headerHeight, setHeaderHeight] = useState(0);
     const [footerHeight, setFooterHeight] = useState(0);
     const [dotCount, setDotCount] = useState(1);
+
+    // Get user-wide AI guidance
+    const [aiGuidance] = useUserVariable({
+        key: 'aiGuidance',
+        defaultValue: 'Convert this handwritten math to Markdown + LaTeX with exact transcription.',
+        privacy: 'PRIVATE'
+    });
 
     const isGenerating = isPageGenerating(activePage.id);
 
@@ -88,7 +96,7 @@ const DocumentContent = ({ documentTitle, documentId, activePage, onReplacePage 
 
             const result = await convertMathImageToMarkdown({
                 imageUrl: currentPage.imageUrl,
-                guidance: 'Convert this handwritten math to LaTeX',
+                guidance: aiGuidance.value,
                 currentMarkdown: currentPage.markdown,
                 followUpPrompt: undefined,
             });
@@ -96,7 +104,7 @@ const DocumentContent = ({ documentTitle, documentId, activePage, onReplacePage 
             const nextPage = {
                 ...currentPage,
                 markdown: result.markdown,
-                lastAiPrompt: 'Convert this handwritten math to LaTeX',
+                lastAiPrompt: aiGuidance.value,
                 lastGeneratedAt: Date.now(),
             };
 

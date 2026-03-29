@@ -26,7 +26,6 @@ export interface MathDocumentPage {
     title: string;
     imageUrl: string;
     markdown: string;
-    initialGuidance: string;
     lastAiPrompt: string;
     lastGeneratedAt?: number;
     followUps: MathDocumentPageFollowUp[];

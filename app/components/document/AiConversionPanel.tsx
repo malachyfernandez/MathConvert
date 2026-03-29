@@ -9,6 +9,7 @@ import { useAction } from 'convex/react';
 import { api } from '../../../convex/_generated/api';
 import { MathDocumentPage } from 'types/mathDocuments';
 import { useGeneration } from '../../../contexts/GenerationContext';
+import { useUserVariable } from 'hooks/useUserVariable';
 import { generateId } from 'utils/generateId';
 import AiPromptInput from './AiPromptInput';
 import ChatOptionsDialog from './ChatOptionsDialog';
@@ -27,13 +28,20 @@ const AiConversionPanel = ({ page, onUpdatePage, onUpdateMarkdown, onLayout }: A
     const [prompt, setPrompt] = useState('');
     const [errorMessage, setErrorMessage] = useState('');
     
+    // Get user-wide AI guidance
+    const [aiGuidance] = useUserVariable({
+        key: 'aiGuidance',
+        defaultValue: 'Convert this handwritten math to Markdown + LaTeX with exact transcription.',
+        privacy: 'PRIVATE'
+    });
+    
     const isGenerating = isPageGenerating(page.id);
 
     const getContextualPrompt = () => {
         if (page.markdown) {
             return `Follow-up: ${prompt || 'Continue working on this math content'}`;
         } else {
-            return prompt || 'Convert this handwritten math to LaTeX';
+            return prompt || aiGuidance.value;
         }
     };
 

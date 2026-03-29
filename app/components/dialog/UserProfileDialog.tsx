@@ -4,6 +4,7 @@ import Column from '../layout/Column';
 import Row from '../layout/Row';
 import AppButton from '../ui/buttons/AppButton';
 import PoppinsText from '../ui/text/PoppinsText';
+import PoppinsTextInput from '../ui/forms/PoppinsTextInput';
 import ConvexDialog from '../ui/dialog/ConvexDialog';
 import DialogHeader from '../ui/dialog/DialogHeader';
 import { useUserVariable } from 'hooks/useUserVariable';
@@ -21,6 +22,13 @@ const UserProfileDialog = ({ children }: UserProfileDialogProps) => {
     const [userData] = useUserVariable({
         key: 'userData',
         defaultValue: { name: '', email: '', userId: '' },
+        privacy: 'PRIVATE'
+    });
+
+    // Get/set user-wide AI guidance
+    const [aiGuidance, setAiGuidance] = useUserVariable({
+        key: 'aiGuidance',
+        defaultValue: 'Convert this handwritten math to Markdown + LaTeX with exact transcription.',
         privacy: 'PRIVATE'
     });
 
@@ -59,6 +67,21 @@ const UserProfileDialog = ({ children }: UserProfileDialogProps) => {
                                 <PoppinsText varient='subtext' className='text-xs font-mono'>
                                     {userData.value?.userId || 'Not available'}
                                 </PoppinsText>
+                            </Column>
+                            
+                            {/* AI Guidance Section */}
+                            <Column gap={2}>
+                                <PoppinsText weight='medium'>AI Conversion Guidance</PoppinsText>
+                                <PoppinsText varient='subtext' className='text-xs'>
+                                    Default instructions for AI when converting math images
+                                </PoppinsText>
+                                <PoppinsTextInput
+                                    value={aiGuidance.value}
+                                    onChangeText={setAiGuidance}
+                                    className='w-full border border-subtle-border bg-inner-background p-3 min-h-20'
+                                    multiline={true}
+                                    placeholder='Enter guidance for AI conversion...'
+                                />
                             </Column>
                             
                             {/* Sign Out Button */}

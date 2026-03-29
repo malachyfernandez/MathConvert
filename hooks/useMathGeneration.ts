@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useAction } from 'convex/react';
 import { api } from '../convex/_generated/api';
 import { MathDocumentPage } from 'types/mathDocuments';
+import { useUserVariable } from 'hooks/useUserVariable';
 
 interface UseMathGenerationProps {
     page: MathDocumentPage;
@@ -13,6 +14,13 @@ export const useMathGeneration = ({ page, onUpdatePage, onUpdateMarkdown }: UseM
     const convertMathImageToMarkdown = useAction(api.mathAi.convertMathImageToMarkdown);
     const [isGenerating, setIsGenerating] = useState(false);
     const [errorMessage, setErrorMessage] = useState('');
+
+    // Get user-wide AI guidance
+    const [aiGuidance] = useUserVariable({
+        key: 'aiGuidance',
+        defaultValue: 'Convert this handwritten math to Markdown + LaTeX with exact transcription.',
+        privacy: 'PRIVATE'
+    });
 
     const handleInitialGeneration = async () => {
         if (!page.imageUrl) {
@@ -26,7 +34,7 @@ export const useMathGeneration = ({ page, onUpdatePage, onUpdateMarkdown }: UseM
 
             const result = await convertMathImageToMarkdown({
                 imageUrl: page.imageUrl,
-                guidance: 'Convert this handwritten math to LaTeX',
+                guidance: aiGuidance.value,
                 currentMarkdown: page.markdown,
                 followUpPrompt: undefined,
             });
@@ -34,7 +42,7 @@ export const useMathGeneration = ({ page, onUpdatePage, onUpdateMarkdown }: UseM
             const nextPage = {
                 ...page,
                 markdown: result.markdown,
-                lastAiPrompt: 'Convert this handwritten math to LaTeX',
+                lastAiPrompt: aiGuidance.value,
                 lastGeneratedAt: Date.now(),
             };
 

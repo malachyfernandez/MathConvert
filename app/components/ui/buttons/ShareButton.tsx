@@ -1,7 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import { Platform } from 'react-native';
-import { useAction } from 'convex/react';
-import { api } from '../../../../convex/_generated/api';
 import { MathDocumentPage } from 'types/mathDocuments';
 import { useToast } from '../../../../contexts/ToastContext';
 import { useUserListSet } from 'hooks/useUserListSet';
@@ -17,7 +15,6 @@ interface ShareButtonProps {
 }
 
 const ShareButton = ({ documentTitle, documentId, activePage, className }: ShareButtonProps) => {
-    const convertMathImageToMarkdown = useAction(api.mathAi.convertMathImageToMarkdown);
     const { showToast } = useToast();
     const setDocument = useUserListSet();
     const setPage = useUserListSet<MathDocumentPage>();
@@ -71,7 +68,7 @@ const ShareButton = ({ documentTitle, documentId, activePage, className }: Share
                     value: activePage,
                     privacy: 'PUBLIC',
                     filterKey: 'documentId',
-                    searchKeys: ['title', 'markdown', 'initialGuidance'],
+                    searchKeys: ['title', 'markdown'],
                     sortKey: 'pageNumber',
                 });
 

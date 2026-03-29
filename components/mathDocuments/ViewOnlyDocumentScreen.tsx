@@ -22,6 +22,8 @@ const ViewOnlyDocumentScreen = ({ documentId }: ViewOnlyDocumentScreenProps) => 
     const [zoomLevel, setZoomLevel] = useState(1);
     const [currentScrollY, setCurrentScrollY] = useState(0);
     const [screenWidth, setScreenWidth] = useState(0);
+    const [screenHeight, setScreenHeight] = useState(0);
+    const [contentHeight, setContentHeight] = useState(0);
     const [pageWidth, setPageWidth] = useState(0);
     const [userSetZoom, setUserSetZoom] = useState(1); // Track last user-set zoom
     const [zoomSource, setZoomSource] = useState<'user' | 'auto'>('user'); // Track who set the zoom
@@ -68,10 +70,10 @@ const ViewOnlyDocumentScreen = ({ documentId }: ViewOnlyDocumentScreenProps) => 
                 // Calculate the scroll position adjustment to maintain the same visual position
                 // Standardize current scroll to zoom level 1, then apply new zoom
                 const adjustedScrollY = currentScrollY * (newZoomLevel / zoomLevel);
-                
+
                 // Apply zoom level
                 setZoomLevel(newZoomLevel);
-                
+
                 // Apply adjusted scroll position after a brief delay to allow the zoom to render
                 setTimeout(() => {
                     if (scrollViewRef.current) {
@@ -90,27 +92,26 @@ const ViewOnlyDocumentScreen = ({ documentId }: ViewOnlyDocumentScreenProps) => 
     // Measure screen width and calculate page width on mount
     useEffect(() => {
         if (Platform.OS === 'web') {
-            // Get screen width (accounting for padding)
+            // Get screen dimensions (accounting for padding)
             const width = Dimensions.get('window').width - 32; // 16px padding on each side
+            const height = Dimensions.get('window').height;
             setScreenWidth(width);
+            setScreenHeight(height);
             console.log('SETScreen width:', width);
-            
+
             // Calculate page width based on standard letter size (8.5 x 11 inches)
-            // Assuming 11 inches = 792px at 72dpi (standard web DPI)
-            const standardPageHeight = 792;
-            // const standardPageWidth = standardPageHeight * DEFAULT_PAGE_ASPECT_RATIO;
-            const standardPageWidth = 900;
-            setPageWidth(standardPageWidth);
+            const pageWidth = 920; // Fixed width for letter size
+            setPageWidth(pageWidth);
         }
     }, []);
 
     // Auto-fit zoom calculation
     const calculateAutoFitZoom = useCallback(() => {
         if (!screenWidth || !pageWidth) return null;
-        
+
         const availableWidth = screenWidth - 40; // margin
         const requiredZoom = availableWidth / pageWidth;
-        
+
         // Only apply auto-fit if the page doesn't fit and it's less than the user's last set zoom
         if (requiredZoom < 1.0 && requiredZoom < userSetZoom) {
             return requiredZoom;
@@ -152,10 +153,12 @@ const ViewOnlyDocumentScreen = ({ documentId }: ViewOnlyDocumentScreenProps) => 
             if (!intervalId) {
                 const checkScreenWidth = () => {
                     const width = Dimensions.get('window').width - 32;
+                    const height = Dimensions.get('window').height;
                     setScreenWidth(width);
+                    setScreenHeight(height);
                     console.log('SET 2 Screen width:', width);
                 };
-                
+
                 // Check immediately and start interval
                 checkScreenWidth();
                 intervalId = setInterval(checkScreenWidth, 50);
@@ -168,7 +171,9 @@ const ViewOnlyDocumentScreen = ({ documentId }: ViewOnlyDocumentScreenProps) => 
                 intervalId = null;
                 // Check one final time to catch any changes in the last 150ms
                 const width = Dimensions.get('window').width - 32;
+                const height = Dimensions.get('window').height;
                 setScreenWidth(width);
+                setScreenHeight(height);
                 console.log('SET 3 Screen width:', width);
             }
         };
@@ -178,10 +183,10 @@ const ViewOnlyDocumentScreen = ({ documentId }: ViewOnlyDocumentScreenProps) => 
             if (resizeTimeoutRef) {
                 clearTimeout(resizeTimeoutRef);
             }
-            
+
             // Start monitoring immediately
             startMonitoring();
-            
+
             // Set timeout to stop monitoring after resize ends
             resizeTimeoutRef = setTimeout(() => {
                 stopMonitoring();
@@ -189,7 +194,7 @@ const ViewOnlyDocumentScreen = ({ documentId }: ViewOnlyDocumentScreenProps) => 
         };
 
         window.addEventListener('resize', handleResize);
-        
+
         return () => {
             window.removeEventListener('resize', handleResize);
             if (resizeTimeoutRef) {
@@ -203,6 +208,11 @@ const ViewOnlyDocumentScreen = ({ documentId }: ViewOnlyDocumentScreenProps) => 
     useEffect(() => {
         applyAutoFitZoom();
     }, [screenWidth, applyAutoFitZoom]);
+
+    const handleContentLayout = (event: any) => {
+        const height = event.nativeEvent.layout.height;
+        setContentHeight(height);
+    };
 
     const handleAspectRatioChange = (pageId: string, aspectRatio: number) => {
         setPageAspectRatios((current) => {
@@ -334,26 +344,28 @@ const ViewOnlyDocumentScreen = ({ documentId }: ViewOnlyDocumentScreenProps) => 
                 }}
                 scrollEventThrottle={16}
             >
-                <Column className='mx-auto w-full' gap={6} style={{ transform: [{ scale: zoomLevel }], transformOrigin: 'top center', marginBottom: 2004 }}>
-                    {pages.length ? (
-                        pages.map((page: MathDocumentPage) => (
-                            <ViewOnlyDocumentPage
-                                key={page.id}
-                                activeTab={activeTab}
-                                page={page}
-                                onAspectRatioChange={handleAspectRatioChange}
-                            />
-                        ))
-                    ) : (
-                        <View className='items-center justify-center rounded-2xl border border-subtle-border bg-inner-background p-8'>
-                            <Column className='items-center' gap={2}>
-                                <PoppinsText weight='bold'>No pages yet</PoppinsText>
-                                <PoppinsText varient='subtext' className='text-center'>
-                                    This document does not have any pages to display.
-                                </PoppinsText>
-                            </Column>
-                        </View>
-                    )}
+                <Column className='mx-auto w-full gap-6 transition-all' style={{ transform: [{ scale: zoomLevel }], transformOrigin: 'top center', marginBottom: (screenHeight - 100) + (contentHeight * zoomLevel - contentHeight) }}>
+                    <Column className='w-full h-full' onLayout={handleContentLayout}>
+                        {pages.length ? (
+                            pages.map((page: MathDocumentPage) => (
+                                <ViewOnlyDocumentPage
+                                    key={page.id}
+                                    activeTab={activeTab}
+                                    page={page}
+                                    onAspectRatioChange={handleAspectRatioChange}
+                                />
+                            ))
+                        ) : (
+                            <View className='items-center justify-center rounded-2xl border border-subtle-border bg-inner-background p-8'>
+                                <Column className='items-center' gap={2}>
+                                    <PoppinsText weight='bold'>No pages yet</PoppinsText>
+                                    <PoppinsText varient='subtext' className='text-center'>
+                                        This document does not have any pages to display.
+                                    </PoppinsText>
+                                </Column>
+                            </View>
+                        )}
+                    </Column>
                 </Column>
             </ScrollView>
         </View>

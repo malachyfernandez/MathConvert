@@ -49,7 +49,7 @@ const ViewOnlyDocumentPage = ({ activeTab, page, onAspectRatioChange }: ViewOnly
 
     return (
         <Column gap={3} className='w-full'>
-            <Row gap={0} className={`px-1 mx-auto`} style={{ width: 920 }}>
+            <Row gap={0} className={`px-1 mx-auto`}>
                 <PoppinsText weight='medium'>
                     {page.title || `Page ${page.pageNumber}`}
                 </PoppinsText>

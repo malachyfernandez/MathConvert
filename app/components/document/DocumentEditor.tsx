@@ -19,6 +19,7 @@ interface DocumentEditorProps {
 }
 
 const DocumentEditor = ({ documentId, userId, activePageId, onSetActivePageId }: DocumentEditorProps) => {
+    const scopedUserIds = userId ? [userId] : ['__loading__'];
     
     const [documentRecord] = useUserList<MathDocument>({
         key: 'mathDocuments',

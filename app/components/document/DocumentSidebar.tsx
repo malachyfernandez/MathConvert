@@ -22,9 +22,10 @@ interface DocumentSidebarProps {
     userId: string;
     activePageId: string;
     onSetActivePageId: (pageId: string) => void;
+    onHideSidebar?: () => void;
 }
 
-const DocumentSidebar = ({ documentId, userId, activePageId, onSetActivePageId }: DocumentSidebarProps) => {
+const DocumentSidebar = ({ documentId, userId, activePageId, onSetActivePageId, onHideSidebar }: DocumentSidebarProps) => {
     const { executeCommand } = useUndoRedo();
     const createUndoSnapshot = useCreateUndoSnapshot();
     const scopedUserIds = userId ? [userId] : ['__loading__'];
@@ -123,7 +124,14 @@ const DocumentSidebar = ({ documentId, userId, activePageId, onSetActivePageId }
             <Column className={`flex-1 ${Platform.OS === 'web' ? 'w-64' : 'w-full'}`} gap={4}>
                 <Column className='rounded-tr-2xl border-t-2 border-r-2 border-border bg-inner-background p-4 flex-1' gap={3}>
                     <PoppinsText weight='bold' varient='cardHeader'>Pages</PoppinsText>
-                    <NewPageDialog documentId={documentId} existingPageCount={highestPageNumber} onCreate={onSetActivePageId} />
+                    <NewPageDialog 
+                        documentId={documentId} 
+                        existingPageCount={highestPageNumber} 
+                        onCreate={(pageId) => {
+                            onSetActivePageId(pageId);
+                            onHideSidebar?.();
+                        }} 
+                    />
                     <ScrollShadow LinearGradientComponent={LinearGradient} className='flex-1'>
                         <ScrollView className='flex-1'>
                             <Column gap={2} className='pb-6'>
@@ -132,7 +140,10 @@ const DocumentSidebar = ({ documentId, userId, activePageId, onSetActivePageId }
                                         key={page.itemId ?? page.value.id}
                                         page={page.value}
                                         isActive={page.value.id === activePageId}
-                                        onPress={() => onSetActivePageId(page.value.id)}
+                                        onPress={() => {
+    onSetActivePageId(page.value.id);
+    onHideSidebar?.();
+}}
                                         onConfigure={() => handlePageConfig(page.value)}
                                     />
                                 ))}

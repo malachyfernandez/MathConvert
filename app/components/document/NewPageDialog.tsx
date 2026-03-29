@@ -80,7 +80,7 @@ const NewPageDialog = ({ documentId, existingPageCount, onCreate, triggerButtonV
             pageNumber: nextPageNumber,
             title: title.trim() || `Page ${nextPageNumber}`,
             imageUrl,
-            markdown: '',
+            markdown: startGeneration ? '' : 'BLANK PAGE',
             lastAiPrompt: '',
             followUps: [],
         };
@@ -104,7 +104,7 @@ const NewPageDialog = ({ documentId, existingPageCount, onCreate, triggerButtonV
             setCreatedPage(newPage);
             setIsGenerating(true);
             setErrorMessage('');
-            
+
             try {
                 setGeneratingPage(pageId, true);
 
@@ -157,14 +157,10 @@ const NewPageDialog = ({ documentId, existingPageCount, onCreate, triggerButtonV
                     <Column>
                         <DialogHeader text='Add page' subtext='Create a new page for your document.' />
                         <Column className='pt-5' gap={4}>
-                            <Column gap={1}>
-                                <PoppinsText weight='medium'>Page title</PoppinsText>
-                                <PoppinsTextInput value={title} onChangeText={setTitle} className='w-full border border-subtle-border bg-inner-background p-3' placeholder={`Page ${nextPageNumber}`} />
-                            </Column>
-                            
+
                             <Column gap={1}>
                                 <PoppinsText weight='medium'>Math image</PoppinsText>
-                                
+
                                 <View className='w-full h-56 overflow-hidden rounded-lg border border-subtle-border bg-background relative'>
                                     {imageUrl ? (
                                         <>
@@ -203,9 +199,9 @@ const NewPageDialog = ({ documentId, existingPageCount, onCreate, triggerButtonV
                                         <Column className='flex-1 items-center justify-center p-4'>
                                             <PoppinsText varient='subtext' className='text-center mb-4'>Upload a math image to get started</PoppinsText>
                                             <Row gap={2}>
-                                                <AppButton 
-                                                    variant='outline-alt' 
-                                                    className='h-12 px-5' 
+                                                <AppButton
+                                                    variant='outline-alt'
+                                                    className='h-12 px-5'
                                                     onPress={() => setIsImageUrlModalOpen(true)}
                                                 >
                                                     <PoppinsText weight='medium'>Use Image URL</PoppinsText>
@@ -222,38 +218,37 @@ const NewPageDialog = ({ documentId, existingPageCount, onCreate, triggerButtonV
                                     )}
                                 </View>
                             </Column>
-                            
-                            {/* Blank page option */}
-                            <Column className='pt-2 pb-4'>
-                                <PoppinsText weight='medium' className='text-center text-text'>
-                                    {imageUrl ? 'Blank page (with image)' : 'Blank page'}
-                                </PoppinsText>
+                            <Column gap={1} className='pb-4'>
+                                <PoppinsText weight='medium'>Page title</PoppinsText>
+                                <PoppinsTextInput value={title} onChangeText={setTitle} className='w-full border border-subtle-border bg-inner-background p-3' placeholder={`Page ${nextPageNumber}`} />
                             </Column>
-                            
+
+
                             {/* Buttons */}
-                            <Column gap={3}>
+                            <Row gap={3} className='w-full items-center justify-between'>
                                 {isValidTitle && hasImage ? (
                                     <>
-                                        <AppButton variant={createButtonVariant} className='h-12' onPress={() => void handleCreate(true)}>
-                                            <PoppinsText weight='medium' color='white'>
-                                                Create page and start AI conversion
+
+                                        <AppButton variant='outline-alt' className='h-12 max-w-[150px] w-full' onPress={() => void handleCreate(false)}>
+                                            <PoppinsText weight='medium'>
+                                                {`No Generation`}
                                             </PoppinsText>
                                         </AppButton>
-                                        <AppButton variant='outline-alt' className='h-12' onPress={() => void handleCreate(false)}>
-                                            <PoppinsText weight='medium'>
-                                                Create blank page
+                                        <AppButton variant={createButtonVariant} className='h-12 flex-1' onPress={() => void handleCreate(true)}>
+                                            <PoppinsText weight='medium' color='white'>
+                                                {`Generate Page  →`}
                                             </PoppinsText>
                                         </AppButton>
                                     </>
                                 ) : (
-                                    <StatusButton 
-                                        buttonText="Create page" 
+                                    <StatusButton
+                                        buttonText="Create page"
                                         buttonAltText={!hasImage ? "Upload an image first" : "Add a title"}
                                         className="h-12 w-full"
                                     />
                                 )}
-                            </Column>
-                            
+                            </Row>
+
                             {errorMessage ? (
                                 <PoppinsText className='text-red-500 text-sm text-center'>{errorMessage}</PoppinsText>
                             ) : null}
@@ -261,7 +256,7 @@ const NewPageDialog = ({ documentId, existingPageCount, onCreate, triggerButtonV
                     </Column>
                 </ConvexDialog.Content>
             </ConvexDialog.Portal>
-            
+
             <ImageUrlModal
                 isOpen={isImageUrlModalOpen}
                 onOpenChange={setIsImageUrlModalOpen}

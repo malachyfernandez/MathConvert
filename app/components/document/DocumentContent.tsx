@@ -131,6 +131,10 @@ const DocumentContent = ({ documentTitle, documentId, activePage, onReplacePage 
         // This will be updated when the parent component re-renders with the new activePage
     };
 
+    const handleSetBlankPage = () => {
+        handleSaveMarkdown('BLANK PAGE');
+    };
+
     return (
         <View className='flex-1'>
             {activePage.markdown ? (
@@ -227,6 +231,17 @@ const DocumentContent = ({ documentTitle, documentId, activePage, onReplacePage 
                                 </PoppinsText>
                             </Row>
                         </AppButton>
+                        {!isGenerating && (
+                            <AppButton
+                                variant='outline-alt'
+                                onPress={handleSetBlankPage}
+                                className='h-12 w-40'
+                            >
+                                <PoppinsText weight='medium'>
+                                    No Generation
+                                </PoppinsText>
+                            </AppButton>
+                        )}
 
                         {errorMessage ? <PoppinsText className='text-red-500 text-center mt-2'>{errorMessage}</PoppinsText> : null}
                     </Column>

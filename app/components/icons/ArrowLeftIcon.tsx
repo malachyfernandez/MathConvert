@@ -54,3 +54,5 @@ export function ArrowLeftIcon({ size = 24, color = 'currentColor' }: ArrowLeftIc
     </Svg>
   );
 }
+
+export default ArrowLeftIcon;

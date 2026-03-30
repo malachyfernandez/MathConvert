@@ -162,8 +162,8 @@ This deploys your functions to production. Note the deployment URL (e.g., `https
 
 **Required variables:**
 ```bash
-npx convex env set UPLOADTHING_TOKEN <your_token> --prod
-npx convex env set OPENROUTER_API_KEY <your_key> --prod
+npx convex env set UPLOADTHING_TOKEN <your_uploadthing_token> --prod
+npx convex env set OPENROUTER_API_KEY <your_openrouter_key> --prod
 ```
 
 **Check current variables:**

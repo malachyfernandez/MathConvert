@@ -102,3 +102,5 @@ export function ListIcon({ size = 24, color = 'currentColor' }: ListIconProps) {
     </Svg>
   );
 }
+
+export default ListIcon;

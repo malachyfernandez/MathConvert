@@ -420,3 +420,5 @@ export const createMarkdownMathSourceDocument = (markdown: string, headerHeight:
 </body>
 </html>`;
 };
+
+export default createMarkdownMathSourceDocument;

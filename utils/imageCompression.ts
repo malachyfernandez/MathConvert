@@ -241,3 +241,15 @@ export const prepareImageForUpload = async (
         lastModified: Date.now(),
     };
 };
+
+export const prepareWebFileForUpload = async (file: File): Promise<UploadThingReactNativeFile> => {
+    return await prepareWebImageForUpload({
+        uri: file.name,
+        width: 0,
+        height: 0,
+        fileName: file.name,
+        mimeType: file.type,
+        fileSize: file.size,
+        file,
+    } as ImagePickerAsset);
+};

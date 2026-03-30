@@ -57,3 +57,5 @@ export function PagesButton({ onPress }: PagesButtonProps) {
         </TouchableOpacity>
     );
 }
+
+export default PagesButton;

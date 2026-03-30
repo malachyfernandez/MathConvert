@@ -9,7 +9,7 @@ This log details every change made during this session, in reverse chronological
 
 ## 2025-03-30 14:07 — Added OpenRouter API key to local .env and Convex production
 
-**Change:** Added `OPENROUTER_API_KEY=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` to:
+**Change:** Added `OPENROUTER_API_KEY=<your_openrouter_api_key>` to:
 - `.env` (local reference only)
 - Convex production environment via `npx convex env set OPENROUTER_API_KEY ... --prod`
 

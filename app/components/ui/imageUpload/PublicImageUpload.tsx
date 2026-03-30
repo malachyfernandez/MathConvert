@@ -49,19 +49,22 @@
  */
 import React, { Dispatch, SetStateAction, useState } from 'react';
 import { useAction } from 'convex/react';
-import { ActivityIndicator, Image, View } from 'react-native';
+import { ActivityIndicator, Image, View, Platform } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { api } from '../../../../convex/_generated/api';
 import Column from '../../layout/Column';
 import AppButton from '../buttons/AppButton';
 import PoppinsText from '../text/PoppinsText';
-import { prepareImageForUpload, UploadThingReactNativeFile } from '../../../../utils/imageCompression';
+import { prepareImageForUpload, prepareWebFileForUpload, UploadThingReactNativeFile } from '../../../../utils/imageCompression';
 
 type UrlSetter = Dispatch<SetStateAction<string>>;
 
 interface UploadThingSignedUpload {
     url: string;
     key: string;
+    serverData?: {
+        url?: string;
+    };
 }
 
 interface UploadThingUploadedFileResponse {
@@ -80,6 +83,63 @@ interface PublicImageUploadProps {
     buttonLabel?: string;
     emptyLabel?: string;
 }
+
+const UPLOAD_TIMEOUT_MS = 90000;
+
+const withTimeout = async <T,>(promise: Promise<T>, message: string, timeoutMs: number = UPLOAD_TIMEOUT_MS) => {
+    return await Promise.race([
+        promise,
+        new Promise<T>((_, reject) => {
+            setTimeout(() => reject(new Error(message)), timeoutMs);
+        }),
+    ]);
+};
+
+const getUploadErrorMessage = (error: unknown) => {
+    if (error instanceof Error && error.message.trim()) {
+        return error.message;
+    }
+
+    return 'Image upload failed.';
+};
+
+const pickWebImageFile = async () => {
+    if (typeof document === 'undefined' || typeof window === 'undefined') {
+        throw new Error('The browser file picker is unavailable in this environment.');
+    }
+
+    return await new Promise<File | null>((resolve) => {
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = 'image/*';
+        input.style.display = 'none';
+
+        let resolved = false;
+
+        const cleanup = () => {
+            window.removeEventListener('focus', handleWindowFocus);
+            input.remove();
+        };
+
+        const finalize = (file: File | null) => {
+            if (resolved) return;
+            resolved = true;
+            cleanup();
+            resolve(file);
+        };
+
+        const handleWindowFocus = () => {
+            window.setTimeout(() => {
+                finalize(input.files?.[0] ?? null);
+            }, 300);
+        };
+
+        input.onchange = () => finalize(input.files?.[0] ?? null);
+        window.addEventListener('focus', handleWindowFocus, { once: true });
+        document.body.appendChild(input);
+        input.click();
+    });
+};
 
 const uploadFileToPresignedUrl = async (
     file: UploadThingReactNativeFile,
@@ -127,35 +187,75 @@ const PublicImageUpload = ({
     const generatePublicImageUploadUrl = useAction(api.uploadthing.generatePublicImageUploadUrl);
 
     const handleUpload = async () => {
-        setErrorMessage('');
-
-        const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
-
-        if (!permission.granted) {
-            setErrorMessage('Media library permission is required to upload an image.');
-            return;
-        }
-
-        const result = await ImagePicker.launchImageLibraryAsync({
-            mediaTypes: ['images'],
-            allowsEditing: true,
-            quality: 1,
-        });
-
-        if (result.canceled || !result.assets?.length) {
-            return;
-        }
-
         try {
+            setErrorMessage('');
+
+            if (Platform.OS === 'web') {
+                const selectedFile = await pickWebImageFile();
+
+                if (!selectedFile) {
+                    return;
+                }
+
+                setIsUploading(true);
+                const file = await withTimeout(
+                    prepareWebFileForUpload(selectedFile),
+                    'Preparing the image took too long. Please try a smaller image.',
+                );
+                const signedUpload = await withTimeout(generatePublicImageUploadUrl({
+                    name: file.name,
+                    size: file.size,
+                    type: file.type,
+                    lastModified: file.lastModified,
+                }) as Promise<UploadThingSignedUpload>, 'Generating the upload URL took too long. Please try again.');
+                const uploadedFile = await withTimeout(
+                    uploadFileToPresignedUrl(file, signedUpload),
+                    'Uploading the image took too long. Please try again.',
+                );
+                const publicUrl = uploadedFile.serverData?.url ?? uploadedFile.ufsUrl ?? uploadedFile.url;
+
+                if (!publicUrl) {
+                    throw new Error('Upload completed but no public URL was returned.');
+                }
+
+                setUrl(publicUrl);
+                return;
+            }
+
+            if (Platform.OS !== 'web') {
+                const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+
+                if (!permission.granted) {
+                    setErrorMessage('Media library permission is required to upload an image.');
+                    return;
+                }
+            }
+
+            const result = await ImagePicker.launchImageLibraryAsync({
+                mediaTypes: ['images'],
+                allowsEditing: true,
+                quality: 1,
+            });
+
+            if (result.canceled || !result.assets?.length) {
+                return;
+            }
+
             setIsUploading(true);
-            const file = await prepareImageForUpload(result.assets[0]);
-            const signedUpload = await generatePublicImageUploadUrl({
+            const file = await withTimeout(
+                prepareImageForUpload(result.assets[0]),
+                'Preparing the image took too long. Please try a smaller image.',
+            );
+            const signedUpload = await withTimeout(generatePublicImageUploadUrl({
                 name: file.name,
                 size: file.size,
                 type: file.type,
                 lastModified: file.lastModified,
-            }) as UploadThingSignedUpload;
-            const uploadedFile = await uploadFileToPresignedUrl(file, signedUpload);
+            }) as Promise<UploadThingSignedUpload>, 'Generating the upload URL took too long. Please try again.');
+            const uploadedFile = await withTimeout(
+                uploadFileToPresignedUrl(file, signedUpload),
+                'Uploading the image took too long. Please try again.',
+            );
             const publicUrl = uploadedFile.serverData?.url ?? uploadedFile.ufsUrl ?? uploadedFile.url;
 
             if (!publicUrl) {
@@ -164,8 +264,7 @@ const PublicImageUpload = ({
 
             setUrl(publicUrl);
         } catch (error) {
-            const message = error instanceof Error ? error.message : 'Image upload failed.';
-            setErrorMessage(message);
+            setErrorMessage(getUploadErrorMessage(error));
         } finally {
             setIsUploading(false);
         }
@@ -185,6 +284,10 @@ const PublicImageUpload = ({
                         </PoppinsText>
                     )}
                 </AppButton>
+
+                {isUploading ? (
+                    <PoppinsText varient='subtext'>Uploading image...</PoppinsText>
+                ) : null}
 
                 {errorMessage ? (
                     <PoppinsText className='text-red-500'>{errorMessage}</PoppinsText>

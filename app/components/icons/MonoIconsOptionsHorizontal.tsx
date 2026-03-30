@@ -8,3 +8,5 @@ export function MonoIconsOptionsHorizontal(props: SvgProps) {
     </Svg>
   );
 }
+
+export default MonoIconsOptionsHorizontal;

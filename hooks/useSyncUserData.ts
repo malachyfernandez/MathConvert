@@ -1,13 +1,20 @@
 import { useEffect } from "react";
 import { useUser } from "@clerk/clerk-expo";
+import { useConvexAuth } from "convex/react";
 
 export const useSyncUserData = (userData: any, setUserData: any) => {
     const { user, isLoaded: isClerkLoaded } = useUser();
+    const { isLoading: isConvexAuthLoading, isAuthenticated: isConvexAuthenticated } = useConvexAuth();
 
     useEffect(() => {
         // Don't proceed if Clerk hasn't loaded yet
         if (!isClerkLoaded) {
             console.log("⏳ Clerk still loading, skipping sync");
+            return;
+        }
+
+        if (isConvexAuthLoading) {
+            console.log("⏳ Convex auth still loading, skipping sync");
             return;
         }
 
@@ -17,6 +24,11 @@ export const useSyncUserData = (userData: any, setUserData: any) => {
         // Only proceed if user is fully loaded and authenticated
         if (!isLoggedIn) {
             console.log("🔒 User not authenticated, skipping sync");
+            return;
+        }
+
+        if (!isConvexAuthenticated) {
+            console.log("🔒 Convex not authenticated, skipping sync");
             return;
         }
 
@@ -42,5 +54,5 @@ export const useSyncUserData = (userData: any, setUserData: any) => {
                 console.log("↻ Syncing userData with Clerk");
             }
         }
-    }, [user, userData, isClerkLoaded]);
+    }, [user, userData, isClerkLoaded, isConvexAuthLoading, isConvexAuthenticated]);
 };

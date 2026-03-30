@@ -437,7 +437,7 @@ export function useUserVariable<T>({
                     msSinceSet: Date.now() - startedAt,
                 });
             })
-            .catch(() => {
+            .catch((error) => {
                 const pending = pendingOpRef.current;
                 if (!pending || pending.id !== opId) return;
 
@@ -446,6 +446,7 @@ export function useUserVariable<T>({
                 }
 
                 pendingOpRef.current = null;
+                console.error(`useUserVariable set failed for key="${key}"`, error);
                 setOpState({
                     lastOpStatus: "idle",
                     lastOpStartedAt: undefined,

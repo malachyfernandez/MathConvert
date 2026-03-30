@@ -17,7 +17,7 @@ interface UserProfileDialogProps {
 const UserProfileDialog = ({ children }: UserProfileDialogProps) => {
     const [isOpen, setIsOpen] = useState(false);
     const { signOut } = useClerk();
-    
+
     // Get user data from userVariables
     const [userData] = useUserVariable({
         key: 'userData',
@@ -52,29 +52,32 @@ const UserProfileDialog = ({ children }: UserProfileDialogProps) => {
                     <ConvexDialog.Close iconProps={{ color: 'rgb(246, 238, 219)' }} className='w-10 h-10 bg-accent-hover absolute right-4 top-4 z-10' />
                     <Column>
                         <DialogHeader text='Profile' subtext='Your account information' />
-                        
-                        <Column className='pt-5 px-5 pb-5' gap={4}>
+
+                        <Column className='pt-5 px-5 pb-5' gap={6}>
                             {/* Profile Info Section */}
-                            <Column gap={3}>
-                                <PoppinsText className='text-base'>
-                                    {userData.value?.name || 'Not set'}
-                                </PoppinsText>
-                                
-                                <PoppinsText className='text-base'>
-                                    {userData.value?.email || 'Not available'}
-                                </PoppinsText>
-                                
-                                <PoppinsText varient='subtext' className='text-xs font-mono'>
-                                    {userData.value?.userId || 'Not available'}
-                                </PoppinsText>
+                            <Column gap={3} className='w-full items-center'>
+                                <Row className='items-center' gap={4}>
+                                    <PoppinsText className='text-base  border-r border-subtle-border pr-4'>
+                                        {`${userData.value?.name || 'Not set'}`}
+                                    </PoppinsText>
+                                    {/* <PoppinsText className='text-2xl !text-subtle-border'>||</PoppinsText> */}
+
+                                    <PoppinsText className='text-base' varient='subtext'>
+                                        {userData.value?.email || 'Not available'}
+                                    </PoppinsText>
+                                </Row>
+
+                                <Column className='px-4'>
+                                    <PoppinsText varient='subtext' className='text-xs font-mono'>
+                                        {userData.value?.userId || 'Not available'}
+                                    </PoppinsText>
+                                </Column>
                             </Column>
-                            
+
                             {/* AI Guidance Section */}
-                            <Column gap={2}>
-                                <PoppinsText weight='medium'>AI Conversion Guidance</PoppinsText>
-                                <PoppinsText varient='subtext' className='text-xs'>
-                                    Default instructions for AI when converting math images
-                                </PoppinsText>
+                            <Column gap={2} className='border-t border-subtle-border pt-6'>
+                                <PoppinsText weight='medium' varient='cardHeader' className='pl-2'>AI Conversion Guidance</PoppinsText>
+
                                 <PoppinsTextInput
                                     value={aiGuidance.value}
                                     onChangeText={setAiGuidance}
@@ -82,13 +85,16 @@ const UserProfileDialog = ({ children }: UserProfileDialogProps) => {
                                     multiline={true}
                                     placeholder='Enter guidance for AI conversion...'
                                 />
+                                <PoppinsText varient='subtext' className='text-xs'>
+                                    Default instructions for AI when converting images
+                                </PoppinsText>
                             </Column>
-                            
+
                             {/* Sign Out Button */}
                             <View className='mt-auto'>
-                                <AppButton 
-                                    variant='red' 
-                                    className='h-12 w-full' 
+                                <AppButton
+                                    variant='red'
+                                    className='h-12 w-full'
                                     onPress={handleSignOut}
                                 >
                                     <PoppinsText weight='medium' color='red'>

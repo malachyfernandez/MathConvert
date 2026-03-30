@@ -49,7 +49,7 @@ const TopSiteBar = ({ className = '', isInDocument, onHomePress, documentId, use
             <Row className='justify-between items-center h-24 px-4'>
                 <Row className='items-center flex-1'>
                     <TouchableOpacity onPress={onHomePress}>
-                        <PoppinsText weight='bold' className='text-lg'>{isInDocument ? '<' : 'MathConvert'}</PoppinsText>
+                        <PoppinsText weight='bold' className='text-lg'>{isInDocument ? '<' : 'Paper'}</PoppinsText>
                     </TouchableOpacity>
                     {isInDocument && documentRecord.value && (
                         <>

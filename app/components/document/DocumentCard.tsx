@@ -4,7 +4,7 @@ import Column from '../layout/Column';
 import Row from '../layout/Row';
 import PoppinsText from '../ui/text/PoppinsText';
 import { MathDocument } from 'types/mathDocuments';
-import { FileText, Calendar, ChevronRight } from 'lucide-react-native';
+import { FileText, Calendar, ChevronRight, StickyNote } from 'lucide-react-native';
 import { useUserListLength } from 'hooks/useUserListLength';
 import { useAuth } from '@clerk/clerk-expo';
 
@@ -27,7 +27,7 @@ const DocumentCard = ({ document, onPress }: DocumentCardProps) => {
         <TouchableOpacity 
             onPress={onPress} 
             activeOpacity={0.85} 
-            className='w-full rounded-2xl border border-subtle-border bg-inner-background p-5 shadow-sm'
+            className='w-full rounded-2xl border border-subtle-border bg-inner-background p-5 shadow-sm hover:brightness-110'
         >
             <Row className='items-center justify-between'>
                 <Column className='flex-1 gap-2'>
@@ -43,14 +43,14 @@ const DocumentCard = ({ document, onPress }: DocumentCardProps) => {
                     )}
                     
                     <Row className='items-center gap-4 ml-6'>
-                        <Row className='items-center gap-1'>
-                            <FileText size={14} className="text-subtext" />
+                        <Row className='items-center gap-1' gap={2}>
+                            <StickyNote size={14} className="text-subtext" />
                             <PoppinsText varient='subtext'>
                                 {pageCount} {pageCount === 1 ? 'page' : 'pages'}
                             </PoppinsText>
                         </Row>
                         
-                        <Row className='items-center gap-1'>
+                        <Row className='items-center gap-1' gap={2}>
                             <Calendar size={14} className="text-subtext" />
                             <PoppinsText varient='subtext'>Last opened {lastOpenedLabel}</PoppinsText>
                         </Row>

@@ -140,8 +140,8 @@ export const convertMathImageToMarkdown = action({
                 headers: {
                     Authorization: `Bearer ${apiKey}`,
                     'Content-Type': 'application/json',
-                    'HTTP-Referer': 'https://mathconvert.app',
-                    'X-OpenRouter-Title': 'MathConvert',
+                    'HTTP-Referer': 'https://paper.app',
+                    'X-OpenRouter-Title': 'Paper',
                     'X-OpenRouter-Speed': 'nitro',
                 },
                 body: JSON.stringify(requestBody),

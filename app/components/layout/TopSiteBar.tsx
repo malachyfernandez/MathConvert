@@ -5,7 +5,8 @@ import AppButton from '../ui/buttons/AppButton';
 import ShareButton from '../ui/buttons/ShareButton';
 import PoppinsText from '../ui/text/PoppinsText';
 import { UserIcon } from '../ui/icons/UserIcon';
-import { TouchableOpacity } from 'react-native';
+import { TouchableOpacity, Image } from 'react-native';
+import { Svg, Rect, Line } from 'react-native-svg';
 import UserProfileDialog from '../dialog/UserProfileDialog';
 import { useUserList } from 'hooks/useUserList';
 import { useUserListGet } from 'hooks/useUserListGet';
@@ -48,7 +49,18 @@ const TopSiteBar = ({ className = '', isInDocument, onHomePress, documentId, use
         <Column className={className}>
             <Row className='justify-between items-center h-24 px-4'>
                 <Row className='items-center flex-1'>
-                    <TouchableOpacity onPress={onHomePress}>
+                    <TouchableOpacity onPress={onHomePress} className='flex-row items-center gap-2'>
+                        {!isInDocument && (
+                            <Svg width={48} height={48} viewBox="0 0 32 32">
+                                <Rect width="32" height="32" fill="#f3f4f6" rx="4" />
+                                <Rect x="6" y="4" width="20" height="24" fill="#ffffff" stroke="#d1d5db" strokeWidth="1" rx="2" />
+                                <Line x1="10" y1="10" x2="22" y2="10" stroke="#9ca3af" strokeWidth="1.5" />
+                                <Line x1="10" y1="14" x2="22" y2="14" stroke="#9ca3af" strokeWidth="1.5" />
+                                <Line x1="10" y1="18" x2="18" y2="18" stroke="#9ca3af" strokeWidth="1.5" />
+                                <Line x1="10" y1="22" x2="20" y2="22" stroke="#9ca3af" strokeWidth="1.5" />
+                                <Rect x="8" y="6" width="4" height="3" fill="#3b82f6" opacity={0.8} rx="0.5" />
+                            </Svg>
+                        )}
                         <PoppinsText weight='bold' className='text-lg'>{isInDocument ? '<' : 'Paper'}</PoppinsText>
                     </TouchableOpacity>
                     {isInDocument && documentRecord.value && (

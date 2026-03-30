@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "base-convex-rn-clerk-hooks",
-    "slug": "base-convex-rn-clerk-hooks",
+    "name": "Paper",
+    "slug": "paper",
     "scheme": "my-convex-app",
     "version": "1.0.0",
     "web": {
@@ -27,7 +27,7 @@
     ],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.anonymous.base-convex-rn-clerk-hooks"
+      "bundleIdentifier": "com.malachyfernandez.paper"
     },
     "android": {
       "adaptiveIcon": {

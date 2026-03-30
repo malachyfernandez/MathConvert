@@ -1,6 +1,12 @@
 # Final Workflow
 
-This is the single canonical workflow for this project and for future projects that use the same stack.
+## Goal
+
+Provide a single, unambiguous workflow that:
+- Stabilizes this project for local development and production deployment
+- Prevents the same runtime, upload, and environment mistakes from recurring
+- Enables future projects with the same stack to start from a known-good process
+- Can be followed by even a weak automation agent without error
 
 Stack:
 - Expo / React Native Web

@@ -1,6 +1,6 @@
-# WolffsPoint Codebase Guide
+# Paper Codebase Guide
 
-Welcome to WolffsPoint! This document provides a comprehensive overview of the codebase architecture, patterns, and philosophy. For detailed information about the userVariables system, see [userVariables-system.md](./userVariables-system.md).
+Welcome to Paper! This document provides a comprehensive overview of the codebase architecture, patterns, and philosophy. For detailed information about the userVariables system, see [userVariables-system.md](./userVariables-system.md).
 
 ## Table of Contents
 
@@ -19,7 +19,7 @@ Welcome to WolffsPoint! This document provides a comprehensive overview of the c
 
 ## Architecture Overview
 
-WolffsPoint is a React Native application built with a modular, component-first architecture. The app follows these key principles:
+Paper is a React Native application built with a modular, component-first architecture. The app follows these key principles:
 
 1. **Component-First Design**: Everything is a component with its own state and logic
 2. **Modular Subscriptions**: Each component subscribes to its own userVariables
@@ -490,4 +490,4 @@ For all scrollable content, use the ScrollShadow wrapper from HeroUI:
 
 ---
 
-This guide should help you understand and contribute to the WolffsPoint codebase effectively. For specific implementation details, refer to the JSDocs in individual components and the [userVariables system documentation](./userVariables-system.md).
+This guide should help you understand and contribute to the Paper codebase effectively. For specific implementation details, refer to the JSDocs in individual components and the [userVariables system documentation](./userVariables-system.md).

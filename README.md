@@ -1,11 +1,6 @@
-# Base convex-RN-clerk-hooks project
+# Paper
 
-This repository is a **base project** for building React Native apps with:
-
-- **Expo**
-- **Convex** backend
-- **Clerk** authentication
-- Custom hooks for Convex and Clerk integration
+A modern React Native application built with Expo, Convex backend, and Clerk authentication. Paper provides a seamless mobile experience with real-time data synchronization and secure user management.
 
 ---
 
@@ -23,8 +18,8 @@ This repository is a **base project** for building React Native apps with:
 1. **Clone the repo**
 
    ```bash
-   git clone https://github.com/malachyfernandez/convex-RN-clerk-hooks-project.git
-   cd convex-RN-clerk-hooks-project
+   git clone https://github.com/malachyfernandez/paper-app.git
+   cd paper-app
    ```
 
 2. **Install dependencies**
@@ -72,7 +67,7 @@ Whenever you want to start a new app based on this setup:
 1. **Clone into a new folder**
 
    ```bash
-   git clone https://github.com/malachyfernandez/convex-RN-clerk-hooks-project.git my-new-app
+   git clone https://github.com/malachyfernandez/paper-app.git my-new-app
    cd my-new-app
    ```
 
@@ -111,9 +106,9 @@ Whenever you want to start a new app based on this setup:
 
 Internally, the project uses the technical name:
 
-- `base-convex-rn-clerk-hooks`
+- `paper`
 
-This is used for things like `package.json` and the Expo slug. 
+This is used for things like `package.json` and the Expo slug.
 
 If you create a new project from this base, you can edit:
 

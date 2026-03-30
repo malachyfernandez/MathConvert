@@ -29,7 +29,7 @@ export default function RootLayout() {
               },
             }}
           >
-            <ClerkProvider publishableKey={publishableKey} tokenCache={tokenCache}>
+            <ClerkProvider publishableKey={publishableKey} tokenCache={tokenCache} clerkJSUrl="https://js.clerk.dev">
               <ClerkLoaded>
                 <WebDropdownProvider>
                   <ConvexProviderWithClerk client={convex} useAuth={useAuth}>

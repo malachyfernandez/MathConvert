@@ -5,5 +5,9 @@ export default {
       domain: "https://trusty-civet-87.clerk.accounts.dev",
       applicationID: "convex",
     },
+    {
+      domain: "https://clerk.paper.malachyf.com",
+      applicationID: "convex",
+    },
   ],
 };

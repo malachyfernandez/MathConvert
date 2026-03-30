@@ -1,4 +1,5 @@
 import { useMutation, useQuery } from "convex/react";
+import { useConvexAuth } from "convex/react";
 import { api } from "../convex/_generated/api";
 import { useEffect, useRef, useState } from "react";
 import { devWarn } from "../utils/devWarnings";
@@ -260,6 +261,7 @@ export function useUserVariable<T>({
 
     const opIdRef = useRef(0);
     const didAutoCreateRef = useRef(false);
+    const { isLoading: isConvexAuthLoading, isAuthenticated: isConvexAuthenticated } = useConvexAuth();
 
     const decodedRecordValue =
         record?.value === undefined
@@ -331,6 +333,14 @@ export function useUserVariable<T>({
     );
 
     const setValue = (newValue: T) => {
+        if (isConvexAuthLoading || !isConvexAuthenticated) {
+            devWarn(
+                "uservar_auth_not_ready",
+                `Blocked set for key="${key}" because Convex auth is not ready.`
+            );
+            return;
+        }
+
         const startedAt = Date.now();
         const opId = (opIdRef.current += 1);
         const encodedValue = encodeUserValue(newValue);
@@ -457,12 +467,14 @@ export function useUserVariable<T>({
 
     useEffect(() => {
         if (didAutoCreateRef.current) return;
+        if (isConvexAuthLoading) return;
+        if (!isConvexAuthenticated) return;
         if (record !== null) return;
         if (defaultValue === undefined) return;
 
         didAutoCreateRef.current = true;
         setValue(defaultValue as T);
-    }, [record, defaultValue]);
+    }, [record, defaultValue, isConvexAuthLoading, isConvexAuthenticated]);
 
     useEffect(() => {
         return () => {

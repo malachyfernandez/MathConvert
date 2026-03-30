@@ -26,10 +26,9 @@ export function encodeUserValue<T>(value: T): T {
 
   if (typeof value === "object" && value !== null) {
     return Object.fromEntries(
-      Object.entries(value).map(([key, nestedValue]) => [
-        key,
-        encodeUserValue(nestedValue),
-      ])
+      Object.entries(value)
+        .filter(([, nestedValue]) => nestedValue !== undefined)
+        .map(([key, nestedValue]) => [key, encodeUserValue(nestedValue)])
     ) as T;
   }
 

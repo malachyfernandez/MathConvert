@@ -21,23 +21,25 @@ export const useSyncUserData = (userData: any, setUserData: any) => {
         }
 
         if (isLoaded) {
-            const clerkEmail = user.primaryEmailAddress?.emailAddress;
-            const clerkName = user.fullName;
+            const clerkEmail = user.primaryEmailAddress?.emailAddress ?? "";
+            const clerkName = user.fullName ?? "";
+            const clerkUserId = user.id ?? "";
 
             // Check if data actually needs updating to avoid infinite loops
             const needsUpdate =
                 !userData.email ||
                 userData.email !== clerkEmail ||
-                userData.name !== clerkName;
+                userData.name !== clerkName ||
+                userData.userId !== clerkUserId;
 
             if (needsUpdate) {
                 setUserData({
                     ...userData,
                     name: clerkName,
                     email: clerkEmail,
-                    userId: user.id,
+                    userId: clerkUserId,
                 });
-                console.log("✅ Synced UserData with Clerk:");
+                console.log("↻ Syncing userData with Clerk");
             }
         }
     }, [user, userData, isClerkLoaded]);

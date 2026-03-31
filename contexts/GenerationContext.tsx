@@ -7,6 +7,7 @@ interface GenerationContextType {
   isPageGenerating: (pageId: string) => boolean;
   isPageRecentlyCompleted: (pageId: string) => boolean;
   clearRecentlyCompleted: (pageId: string) => void;
+  clearRecentlyCompletedForActivePage: (pageId: string) => void; // New function
 }
 
 const GenerationContext = createContext<GenerationContextType | undefined>(undefined);
@@ -63,6 +64,13 @@ export const GenerationProvider: React.FC<{ children: ReactNode }> = ({ children
     });
   };
 
+  const clearRecentlyCompletedForActivePage = (pageId: string) => {
+    // Clear the checkmark if the page is currently active
+    if (recentlyCompletedPages.has(pageId)) {
+      clearRecentlyCompleted(pageId);
+    }
+  };
+
   return (
     <GenerationContext.Provider value={{ 
       generatingPages, 
@@ -70,7 +78,8 @@ export const GenerationProvider: React.FC<{ children: ReactNode }> = ({ children
       setGeneratingPage, 
       isPageGenerating, 
       isPageRecentlyCompleted,
-      clearRecentlyCompleted 
+      clearRecentlyCompleted,
+      clearRecentlyCompletedForActivePage 
     }}>
       {children}
     </GenerationContext.Provider>

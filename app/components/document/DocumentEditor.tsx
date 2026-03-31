@@ -7,6 +7,7 @@ import { useUserList } from 'hooks/useUserList';
 import { useUserListGet } from 'hooks/useUserListGet';
 import { useUserListSet } from 'hooks/useUserListSet';
 import { useUndoRedo, useCreateUndoSnapshot } from 'hooks/useUndoRedo';
+import { useGeneration } from '../../../contexts/GenerationContext';
 import { MathDocument, MathDocumentPage } from 'types/mathDocuments';
 import DocumentContent from './DocumentContent';
 import DocumentContentPreview from './DocumentContentPreview';
@@ -23,6 +24,7 @@ interface DocumentEditorProps {
 const DocumentEditor = ({ documentId, userId, activePageId, onSetActivePageId }: DocumentEditorProps) => {
     const { executeCommand } = useUndoRedo();
     const createUndoSnapshot = useCreateUndoSnapshot();
+    const { clearRecentlyCompletedForActivePage } = useGeneration();
     const scopedUserIds = userId ? [userId] : ['__loading__'];
 
     const [documentRecord] = useUserList<MathDocument>({
@@ -57,6 +59,13 @@ const DocumentEditor = ({ documentId, userId, activePageId, onSetActivePageId }:
             onSetActivePageId(pages[0].value.id);
         }
     }, [activePageId, pages, onSetActivePageId]);
+
+    // Clear checkmark when active page changes
+    useEffect(() => {
+        if (activePageId) {
+            clearRecentlyCompletedForActivePage(activePageId);
+        }
+    }, [activePageId, clearRecentlyCompletedForActivePage]);
 
     const replacePage = (nextPage: MathDocumentPage, _description: string) => {
         void setPage({

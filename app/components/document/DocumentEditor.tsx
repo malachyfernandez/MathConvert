@@ -37,6 +37,7 @@ const DocumentEditor = ({ documentId, userId, activePageId, onSetActivePageId }:
         key: 'mathDocumentPages',
         filterFor: documentId,
         userIds: scopedUserIds,
+        returnTop: 100,
     }) ?? [];
 
     const activePage = pages.find((page) => page.value.id === activePageId)?.value || null;

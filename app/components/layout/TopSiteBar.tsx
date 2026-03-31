@@ -40,6 +40,7 @@ const TopSiteBar = ({ className = '', isInDocument, onHomePress, documentId, use
         key: 'mathDocumentPages',
         filterFor: documentId || '',
         userIds: scopedUserIds,
+        returnTop: 100,
     }) ?? [];
 
     // Find active page (same logic as DocumentEditor line 35)

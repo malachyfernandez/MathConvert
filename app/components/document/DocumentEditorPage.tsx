@@ -55,6 +55,7 @@ const DocumentEditorPage = ({ documentId, userId }: DocumentEditorPageProps) => 
         key: 'mathDocumentPages',
         filterFor: documentId,
         userIds: scopedUserIds,
+        returnTop: 100,
     }) ?? [];
 
     // HERE

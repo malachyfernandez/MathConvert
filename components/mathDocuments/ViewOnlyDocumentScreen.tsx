@@ -40,6 +40,7 @@ const ViewOnlyDocumentScreen = ({ documentId }: ViewOnlyDocumentScreenProps) => 
     const pageRecords = useUserListGet<MathDocumentPage>({
         key: 'mathDocumentPages',
         filterFor: documentId,
+        returnTop: 100,
     });
 
     const isLoading = documentRecords === undefined || pageRecords === undefined;

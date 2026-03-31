@@ -83,6 +83,7 @@ export function useListSearch<T = any>({
         key: searchKey,
         userIds,
         searchFor: searchQuery.trim() || undefined,
+        returnTop: 100,
     });
 
     // Get additional items if specified (like pages for documents)
@@ -90,6 +91,7 @@ export function useListSearch<T = any>({
         useUserListGet<any>({
             key,
             userIds,
+            returnTop: 100,
         })
     );
 

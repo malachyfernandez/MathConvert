@@ -45,6 +45,7 @@ const DocumentSidebar = ({ documentId, userId, activePageId, onSetActivePageId, 
         key: 'mathDocumentPages',
         filterFor: documentId,
         userIds: scopedUserIds,
+        returnTop: 100,
     }) ?? [];
 
     const sortedPages = [...pages].sort((left, right) => left.value.pageNumber - right.value.pageNumber);

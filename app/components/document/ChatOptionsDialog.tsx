@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { Pressable, ActivityIndicator, ScrollView, View } from 'react-native';
 import { ScrollShadow } from 'heroui-native';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -25,7 +25,7 @@ interface ChatOptionsDialogProps {
 const ChatOptionsDialog = ({ followUps, page, onUpdatePage, onUpdateMarkdown, setPreviewMarkdown }: ChatOptionsDialogProps) => {
     const [isOpen, setIsOpen] = useState(false);
     const [currentFollowUps, setCurrentFollowUps] = useState(followUps);
-    const [originalPageId, setOriginalPageId] = useState<string | null>(null);
+    const originalPageIdRef = useRef<string | null>(null); // ✅ useRef instead of useState
     const { setGeneratingPage } = useGeneration();
     
     // Update current follow-ups when props change
@@ -40,7 +40,7 @@ const ChatOptionsDialog = ({ followUps, page, onUpdatePage, onUpdateMarkdown, se
         shouldUpdatePage: () => {
             // Check if the current page ID matches the original page ID we captured
             // This ensures we only update if the user is still on the same page
-            return page.id === originalPageId;
+            return page.id === originalPageIdRef.current; // ✅ Uses ref instead of state
         },
         onFollowUpUpdate: (resultingMarkdown: string) => {
             // Simple approach: add the follow-up only after generation completes
@@ -53,7 +53,11 @@ const ChatOptionsDialog = ({ followUps, page, onUpdatePage, onUpdateMarkdown, se
             
             const updatedFollowUps = [...currentFollowUps, regenerationFollowUp];
             setCurrentFollowUps(updatedFollowUps);
-            const updatedPage = { ...page, followUps: updatedFollowUps };
+            const updatedPage = { 
+                ...page, 
+                markdown: resultingMarkdown, // ✅ CRITICAL: Ensures the new markdown gets saved!
+                followUps: updatedFollowUps 
+            };
             onUpdatePage(updatedPage, 'Added regeneration follow-up with result');
         },
     });
@@ -63,7 +67,7 @@ const ChatOptionsDialog = ({ followUps, page, onUpdatePage, onUpdateMarkdown, se
         setIsOpen(false);
         
         // Capture the original page ID before starting generation
-        setOriginalPageId(page.id);
+        originalPageIdRef.current = page.id; // ✅ Uses ref instead of state
         
         // Clear the editor first
         onUpdateMarkdown('');
@@ -78,7 +82,7 @@ const ChatOptionsDialog = ({ followUps, page, onUpdatePage, onUpdateMarkdown, se
             // Clear the global generation state after completion
             setGeneratingPage(page.id, false);
             // Clear the original page ID after generation completes
-            setOriginalPageId(null);
+            originalPageIdRef.current = null; // ✅ Uses ref instead of state
         }
     };
 

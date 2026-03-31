@@ -76,7 +76,7 @@ const PageImageCard = ({ imageUrl, onChangeImageUrl }: PageImageCardProps) => {
                 <PoppinsTextInput
                     value={externalUrl}
                     onChangeText={setExternalUrl}
-                    placeholder='https://example.com/handwritten-math.jpg'
+                    placeholder='https://example.com/handwritten-notes.jpg'
                     autoCapitalize='none'
                     autoCorrect={false}
                     className='w-full border border-subtle-border bg-background p-3'

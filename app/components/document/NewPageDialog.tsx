@@ -59,7 +59,7 @@ const NewPageDialog = ({ documentId, existingPageCount, onCreate, triggerButtonV
     // Get user-wide AI guidance
     const [aiGuidance] = useUserVariable({
         key: 'aiGuidance',
-        defaultValue: 'Convert this handwritten math to Markdown + LaTeX with exact transcription.',
+        defaultValue: 'Convert this handwritten notes to Markdown with LaTeX support.',
         privacy: 'PRIVATE'
     });
 

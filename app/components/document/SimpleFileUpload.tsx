@@ -235,6 +235,7 @@ const SimpleFileUpload = ({ onFilesReady, buttonLabel = 'Upload File', className
                         id: preparedFile.name,
                         previewUrl: publicUrl,
                         file: selectedFile,
+                        uploadedUrl: publicUrl, // Add the uploaded URL!
                     }]);
                     return;
                 }
@@ -288,6 +289,7 @@ const SimpleFileUpload = ({ onFilesReady, buttonLabel = 'Upload File', className
                     id: preparedFile.name,
                     previewUrl: publicUrl,
                     file: result.assets[0].file || new File([], result.assets[0].fileName || 'image'),
+                    uploadedUrl: publicUrl, // Add the uploaded URL!
                 }]);
             } else {
                 setIsButtonClicked(false);

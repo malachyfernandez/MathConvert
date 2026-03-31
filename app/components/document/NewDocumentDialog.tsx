@@ -30,7 +30,7 @@ const NewDocumentDialog = ({ onCreate, buttonVariant = 'black' }: NewDocumentDia
             itemId: documentId,
             value: {
                 id: documentId,
-                title: title.trim() || 'Untitled math document',
+                title: title.trim() || 'Untitled notes document',
                 description: description.trim(),
                 createdAt: now,
                 lastOpenedAt: now,
@@ -58,7 +58,7 @@ const NewDocumentDialog = ({ onCreate, buttonVariant = 'black' }: NewDocumentDia
                 <ConvexDialog.Content>
                     <ConvexDialog.Close iconProps={{ color: 'rgb(246, 238, 219)' }} className='w-10 h-10 bg-accent-hover absolute right-4 top-4 z-10' />
                     <Column>
-                        <DialogHeader text='Create document' subtext='Start a new handwritten math conversion document.' />
+                        <DialogHeader text='Create document' subtext='Start a new handwritten notes conversion document.' />
                         <Column className='pt-5' gap={3}>
                             <Column gap={1}>
                                 <PoppinsText weight='medium'>Title</PoppinsText>

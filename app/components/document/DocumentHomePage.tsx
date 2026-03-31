@@ -125,7 +125,7 @@ const DocumentHomePage = ({ userId, setActiveDocumentId }: DocumentHomePageProps
                                 <PoppinsText className='text-center text-subtext'>
                                     {searchQuery
                                         ? `Try adjusting your search for "${searchQuery}"`
-                                        : 'Create your first document to start converting handwritten math to LaTeX.'
+                                        : 'Create your first document to start converting handwritten notes to Markdown.'
                                     }
                                 </PoppinsText>
                             </Column>

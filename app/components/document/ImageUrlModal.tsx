@@ -72,14 +72,14 @@ const ImageUrlModal = ({ isOpen, onOpenChange, onAccept }: ImageUrlModalProps) =
                 <ConvexDialog.Content>
                     <ConvexDialog.Close iconProps={{ color: 'rgb(246, 238, 219)' }} className='w-10 h-10 bg-accent-hover absolute right-4 top-4 z-10' />
                     <Column>
-                        <DialogHeader text='Use Image URL' subtext='Enter a direct image URL to use for your math page.' />
+                        <DialogHeader text='Use Image URL' subtext='Enter a direct image URL to use for your notes page.' />
                         <Column className='pt-5' gap={3}>
                             <Column gap={1}>
                                 <PoppinsText weight='medium'>Image URL</PoppinsText>
                                 <PoppinsTextInput
                                     value={url}
                                     onChangeText={setUrl}
-                                    placeholder='https://example.com/handwritten-math.jpg'
+                                    placeholder='https://example.com/handwritten-notes.jpg'
                                     autoCapitalize='none'
                                     autoCorrect={false}
                                     className='w-full border border-subtle-border bg-inner-background p-3'

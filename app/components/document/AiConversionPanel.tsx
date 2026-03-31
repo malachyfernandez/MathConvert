@@ -46,7 +46,7 @@ const AiConversionPanel = ({ page, onUpdatePage, onUpdateMarkdown, onLayout, set
     // Get user-wide AI guidance
     const [aiGuidance] = useUserVariable({
         key: 'aiGuidance',
-        defaultValue: 'Convert this handwritten math to Markdown + LaTeX with exact transcription.',
+        defaultValue: 'Convert this handwritten notes to Markdown with LaTeX support.',
         privacy: 'PRIVATE'
     });
     
@@ -54,7 +54,7 @@ const AiConversionPanel = ({ page, onUpdatePage, onUpdateMarkdown, onLayout, set
 
     const getContextualPrompt = () => {
         if (page.markdown) {
-            return `Follow-up: ${prompt || 'Continue working on this math content'}`;
+            return `Follow-up: ${prompt || 'Continue working on this notes content'}`;
         } else {
             return prompt || aiGuidance.value;
         }

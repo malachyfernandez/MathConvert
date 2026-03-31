@@ -1,6 +1,18 @@
 # Paper
 
-A modern React Native application built with Expo, Convex backend, and Clerk authentication. Paper provides a seamless mobile experience with real-time data synchronization and secure user management.
+A modern React Native application that converts handwritten notes to accessible Markdown and LaTeX. Built with Expo, Convex backend, and Clerk authentication, Paper provides a seamless mobile experience for digitizing and organizing handwritten mathematical and technical content with real-time data synchronization and secure user management.
+
+---
+
+## Features
+
+- **Handwritten Note Recognition**: Advanced OCR technology specifically optimized for mathematical and technical content
+- **Markdown Conversion**: Convert handwritten notes to clean, structured Markdown format
+- **LaTeX Generation**: Transform mathematical expressions and equations into properly formatted LaTeX
+- **Document Management**: Organize, reorder, and manage your digitized notes
+- **Cross-Platform**: Works on iOS, Android, and Web platforms
+- **Real-time Sync**: Automatic synchronization across all your devices
+- **Secure Authentication**: User authentication and data protection with Clerk
 
 ---
 
@@ -18,8 +30,8 @@ A modern React Native application built with Expo, Convex backend, and Clerk aut
 1. **Clone the repo**
 
    ```bash
-   git clone https://github.com/malachyfernandez/paper-app.git
-   cd paper-app
+   git clone https://github.com/malachyfernandez/paper.git
+   cd paper
    ```
 
 2. **Install dependencies**
@@ -67,7 +79,7 @@ Whenever you want to start a new app based on this setup:
 1. **Clone into a new folder**
 
    ```bash
-   git clone https://github.com/malachyfernandez/paper-app.git my-new-app
+   git clone https://github.com/malachyfernandez/paper.git my-new-app
    cd my-new-app
    ```
 

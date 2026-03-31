@@ -64,7 +64,7 @@ const DocumentContent = ({ documentTitle, documentId, activePage, onReplacePage,
     // Get user-wide AI guidance
     const [aiGuidance] = useUserVariable({
         key: 'aiGuidance',
-        defaultValue: 'Convert this handwritten math to Markdown + LaTeX with exact transcription.',
+        defaultValue: 'Convert this handwritten notes to Markdown with LaTeX support.',
         privacy: 'PRIVATE'
     });
 
@@ -75,7 +75,7 @@ const DocumentContent = ({ documentTitle, documentId, activePage, onReplacePage,
     // Sync markdownDraft when activePage changes (e.g., after AI generation)
     useEffect(() => {
         setMarkdownDraft(activePage.markdown);
-    }, [activePage.markdown]);
+    }, [activePage.markdown, activePage.lastGeneratedAt]);
 
     // Animate dots during generation
     useEffect(() => {
@@ -286,21 +286,21 @@ const DocumentContent = ({ documentTitle, documentId, activePage, onReplacePage,
                 <View className='flex-1 items-center justify-center p-8'>
                     <Column className='items-center gap-4' style={{ maxWidth: '700px' }}>
                         <PoppinsText weight='bold' className='text-xl text-center'>
-                            {isGenerating ? `Converting${'.'.repeat(dotCount)}` : 'Convert to LaTeX'}
+                            {isGenerating ? `Converting${'.'.repeat(dotCount)}` : 'Convert to Markdown'}
                         </PoppinsText>
                         <PoppinsText varient='subtext' className='text-center'>
-                            {isGenerating ? 'Keep this tab open, but you can navigate to other pages' : 'Click to generate LaTeX from handwritten math image.'}
+                            {isGenerating ? 'Keep this tab open, but you can navigate to other pages' : 'Click to generate Markdown from handwritten notes image.'}
                         </PoppinsText>
                         <AppButton
                             variant={isGenerating ? 'grey' : 'green'}
                             onPress={handleInitialGeneration}
-                            className='h-12 w-40'
+                            className='h-12 w-48'
                             disabled={isGenerating}
                         >
                             <Row className='items-center' gap={2}>
                                 {isGenerating && <Spinner size="sm" color="white" />}
                                 <PoppinsText weight='medium' color='white'>
-                                    Generate LaTeX
+                                    Generate Markdown
                                 </PoppinsText>
                             </Row>
                         </AppButton>

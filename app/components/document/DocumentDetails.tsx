@@ -21,7 +21,7 @@ const DocumentDetails = ({ document, onDelete }: DocumentDetailsProps) => {
                         {/* <PoppinsText weight='bold' varient='cardHeader'>Details</PoppinsText> */}
                         <Column className='rounded-lg border border-subtle-border bg-inner-background px-3 h-14 max-w-64 w-full shrink justify-center overflow-hidden ' gap={0}>
                             <PoppinsText weight='medium' className='text-text opacity-70'>
-                                {document.title || 'Untitled math document'}
+                                {document.title || 'Untitled notes document'}
                             </PoppinsText>
                             <PoppinsText varient='subtext' className='text-nowrap'>
                                 {document.description || 'No description yet.'}

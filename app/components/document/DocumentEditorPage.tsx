@@ -85,7 +85,7 @@ const DocumentEditorPage = ({ documentId, userId }: DocumentEditorPageProps) => 
                     <Column className='rounded-2xl border-2 border-border bg-inner-background p-6' gap={4} style={{ maxWidth: '400px' }}>
                         <Column gap={2}>
                             <PoppinsText weight='bold' className='text-xl'>No pages yet</PoppinsText>
-                            <PoppinsText>Create the first page to convert handwritten math to LaTeX.</PoppinsText>
+                            <PoppinsText>Create the first page to convert handwritten notes to Markdown.</PoppinsText>
                         </Column>
                         <NewPageDialog documentId={documentId} existingPageCount={0} onCreate={setActivePageId} />
                     </Column>

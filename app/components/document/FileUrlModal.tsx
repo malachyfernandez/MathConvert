@@ -20,7 +20,7 @@ const FileUrlModal = ({ isOpen, onOpenChange, onFilesReady }: FileUrlModalProps)
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState('');
     const [statusMessage, setStatusMessage] = useState('');
-    const [previewFiles, setPreviewFiles] = useState<Array<{ id: string; previewUrl: string; file: File }>>([]);
+    const [previewFiles, setPreviewFiles] = useState<Array<{ id: string; previewUrl: string; file: File; uploadedUrl?: string }>>([]);
 
     const checkFileUrl = async (fileUrl: string) => {
         if (!fileUrl.trim()) {
@@ -52,6 +52,7 @@ const FileUrlModal = ({ isOpen, onOpenChange, onFilesReady }: FileUrlModalProps)
                         id: generateId(),
                         previewUrl: fileUrl,
                         file,
+                        uploadedUrl: fileUrl, // Add uploadedUrl for URL files
                     }]);
                     setStatusMessage('');
                     setIsLoading(false);
@@ -99,14 +100,14 @@ const FileUrlModal = ({ isOpen, onOpenChange, onFilesReady }: FileUrlModalProps)
                 <ConvexDialog.Content>
                     <ConvexDialog.Close iconProps={{ color: 'rgb(246, 238, 219)' }} className='w-10 h-10 bg-accent-hover absolute right-4 top-4 z-10' />
                     <Column>
-                        <DialogHeader text='Use File URL' subtext='Enter a direct image or PDF URL to use for your math pages.' />
+                        <DialogHeader text='Use File URL' subtext='Enter a direct image or PDF URL to use for your notes pages.' />
                         <Column className='pt-5' gap={3}>
                             <Column gap={1}>
                                 <PoppinsText weight='medium'>File URL</PoppinsText>
                                 <PoppinsTextInput
                                     value={url}
                                     onChangeText={setUrl}
-                                    placeholder='https://example.com/handwritten-math.jpg or document.pdf'
+                                    placeholder='https://example.com/handwritten-notes.jpg or document.pdf'
                                     autoCapitalize='none'
                                     autoCorrect={false}
                                     className='w-full border border-subtle-border bg-inner-background p-3'

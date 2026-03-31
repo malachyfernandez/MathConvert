@@ -55,7 +55,7 @@ export default function HomeScreen() {
               <Column className="w-[80vw] p-6 max-w-96 bg-text border-4 border-primary-accent items-center" gap={6}>
                 <DialogHeader
                   text="Welcome to Paper"
-                  subtext="Sign in with Google to convert handwritten math to LaTeX."
+                  subtext="Sign in with Google to convert handwritten notes to Markdown."
                   className="w-[80vw] max-w-96"
                 />
                 <Column gap={8} className="items-center">

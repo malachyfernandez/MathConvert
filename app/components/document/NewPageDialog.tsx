@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Image, ActivityIndicator, View } from 'react-native';
+import { Image, ActivityIndicator, View, ScrollView, Platform, Pressable } from 'react-native';
 import Column from '../layout/Column';
 import Row from '../layout/Row';
 import AppButton from '../ui/buttons/AppButton';
@@ -8,8 +8,8 @@ import PoppinsTextInput from '../ui/forms/PoppinsTextInput';
 import ConvexDialog from '../ui/dialog/ConvexDialog';
 import DialogHeader from '../ui/dialog/DialogHeader';
 import StatusButton from '../ui/StatusButton';
-import SimpleImageUpload from './SimpleImageUpload';
-import ImageUrlModal from './ImageUrlModal';
+import SimpleFileUpload from './SimpleFileUpload';
+import FileUrlModal from './FileUrlModal';
 import { useUserListSet } from 'hooks/useUserListSet';
 import { useUserListRemove } from 'hooks/useUserListRemove';
 import { useUserVariable } from 'hooks/useUserVariable';
@@ -19,6 +19,15 @@ import { api } from '../../../convex/_generated/api';
 import { useGeneration } from '../../../contexts/GenerationContext';
 import { MathDocumentPage } from 'types/mathDocuments';
 import { generateId } from 'utils/generateId';
+
+interface DraftPage {
+    id: string;
+    pageIndex: number;
+    previewUrl: string;
+    uploadedUrl?: string;
+    status: 'processing' | 'uploading' | 'ready' | 'error';
+    error?: string;
+}
 
 interface NewPageDialogProps {
     documentId: string;
@@ -37,13 +46,15 @@ const NewPageDialog = ({ documentId, existingPageCount, onCreate, triggerButtonV
     const { setGeneratingPage, isPageGenerating } = useGeneration();
     const [isOpen, setIsOpen] = useState(false);
     const nextPageNumber = existingPageCount + 1;
-    const [title, setTitle] = useState(`Page ${nextPageNumber}`);
-    const [imageUrl, setImageUrl] = useState('');
-    const [isImageUrlModalOpen, setIsImageUrlModalOpen] = useState(false);
-    const [isUploading, setIsUploading] = useState(false);
+    const [titleInput, setTitleInput] = useState(`Page ${nextPageNumber}`);
+    const [draftPages, setDraftPages] = useState<DraftPage[]>([]);
+    const [sourceKind, setSourceKind] = useState<'image' | 'pdf' | null>(null);
+    const [isFileUrlModalOpen, setIsFileUrlModalOpen] = useState(false);
+    const [isProcessingFile, setIsProcessingFile] = useState(false);
     const [isGenerating, setIsGenerating] = useState(false);
-    const [createdPage, setCreatedPage] = useState<MathDocumentPage | null>(null);
+    const [createdPages, setCreatedPages] = useState<MathDocumentPage[]>([]);
     const [errorMessage, setErrorMessage] = useState('');
+    const [statusMessage, setStatusMessage] = useState('');
 
     // Get user-wide AI guidance
     const [aiGuidance] = useUserVariable({
@@ -52,131 +63,208 @@ const NewPageDialog = ({ documentId, existingPageCount, onCreate, triggerButtonV
         privacy: 'PRIVATE'
     });
 
-    const handleImageUrlAccept = (url: string) => {
-        setImageUrl(url);
+    const handleFilesReady = async (files: Array<{ id: string; previewUrl: string; file: File; uploadedUrl?: string }>) => {
+        try {
+            setIsProcessingFile(true);
+            setStatusMessage('Processing files...');
+            setErrorMessage('');
+
+            const newDraftPages: DraftPage[] = files.map((file, index) => ({
+                id: file.id,
+                pageIndex: index,
+                previewUrl: file.previewUrl,
+                uploadedUrl: file.uploadedUrl,
+                status: file.uploadedUrl ? 'ready' : 'processing',
+            }));
+
+            setDraftPages(newDraftPages);
+            setSourceKind(files.length === 1 ? 'image' : 'pdf');
+            setStatusMessage('');
+        } catch (error) {
+            setErrorMessage(error instanceof Error ? error.message : 'Failed to process files.');
+        } finally {
+            setIsProcessingFile(false);
+        }
+    };
+
+    const revokePreviewUrl = (url: string) => {
+        if (url.startsWith('blob:')) {
+            URL.revokeObjectURL(url);
+        }
+    };
+
+    const removeDraftPage = (pageId: string) => {
+        setDraftPages(prev => {
+            const page = prev.find(p => p.id === pageId);
+            if (page) {
+                revokePreviewUrl(page.previewUrl);
+            }
+            return prev.filter(p => p.id !== pageId);
+        });
+    };
+
+    const resetDialog = () => {
+        draftPages.forEach(page => revokePreviewUrl(page.previewUrl));
+        setDraftPages([]);
+        setSourceKind(null);
+        setTitleInput(`Page ${nextPageNumber}`);
+        setErrorMessage('');
+        setStatusMessage('');
     };
 
     // Reset state when dialog opens
     useEffect(() => {
         if (isOpen) {
-            setTitle(`Page ${nextPageNumber}`);
-            setImageUrl('');
-            setIsImageUrlModalOpen(false);
-            setIsUploading(false);
-            setIsGenerating(false);
-            setCreatedPage(null);
-            setErrorMessage('');
+            resetDialog();
         }
     }, [isOpen, nextPageNumber]);
 
     // Ensure modal states are properly closed when dialog closes
     useEffect(() => {
         if (!isOpen) {
-            setIsImageUrlModalOpen(false);
-            setIsUploading(false);
+            setIsFileUrlModalOpen(false);
+            setIsProcessingFile(false);
         }
     }, [isOpen]);
 
-    const handleCreate = async (startGeneration: boolean = false) => {
-        const pageId = generateId();
-        const newPage: MathDocumentPage = {
-            id: pageId,
-            documentId,
-            pageNumber: nextPageNumber,
-            title: title.trim() || `Page ${nextPageNumber}`,
-            imageUrl,
-            markdown: startGeneration ? '' : 'BLANK PAGE',
-            lastAiPrompt: '',
-            followUps: [],
+    // Cleanup blob URLs when component unmounts
+    useEffect(() => {
+        return () => {
+            draftPages.forEach(page => revokePreviewUrl(page.previewUrl));
         };
+    }, [draftPages]);
+
+    const handleCreate = async (startGeneration: boolean = false) => {
+        const readyPages = draftPages.filter(page => page.status === 'ready');
+        
+        const pagesToCreate = readyPages.map((draft, index) => {
+            const pageNumber = nextPageNumber + index;
+
+            const title = readyPages.length === 1
+                ? titleInput.trim() || `Page ${pageNumber}` 
+                : titleInput.trim().length > 0
+                    ? `${titleInput.trim()} - ${index + 1}` 
+                    : `Page ${pageNumber}`;
+
+            return {
+                id: generateId(),
+                documentId,
+                pageNumber,
+                title,
+                imageUrl: draft.uploadedUrl!,
+                markdown: startGeneration ? '' : 'BLANK PAGE',
+                lastAiPrompt: '',
+                followUps: [],
+            } satisfies MathDocumentPage;
+        });
 
         executeCommand({
             action: async () => {
-                await setPage({
-                    key: 'mathDocumentPages',
-                    itemId: pageId,
-                    value: newPage,
-                    privacy: 'PUBLIC',
-                    filterKey: 'documentId',
-                    searchKeys: ['title', 'markdown'],
-                    sortKey: 'pageNumber',
-                });
+                await Promise.all(
+                    pagesToCreate.map((page) =>
+                        setPage({
+                            key: 'mathDocumentPages',
+                            itemId: page.id,
+                            value: page,
+                            privacy: 'PUBLIC',
+                            filterKey: 'documentId',
+                            searchKeys: ['title', 'markdown'],
+                            sortKey: 'pageNumber',
+                        }),
+                    ),
+                );
             },
             undoAction: async () => {
-                void removePage({ key: 'mathDocumentPages', itemId: pageId });
+                await Promise.all(
+                    pagesToCreate.map((page) =>
+                        removePage({
+                            key: 'mathDocumentPages',
+                            itemId: page.id,
+                        }),
+                    ),
+                );
             },
-            description: `Created page - ${newPage.title}`
+            description: `Created ${pagesToCreate.length} page(s)`,
         });
 
-        // Close dialog immediately and navigate to the new page
+        // Close dialog immediately and navigate to the first created page
         setIsOpen(false);
-        onCreate(pageId);
+        resetDialog();
+        onCreate(pagesToCreate[0].id);
 
-        if (startGeneration && imageUrl) {
+        if (startGeneration && pagesToCreate.length > 0) {
             // Start generation in the background after dialog is closed
-            setCreatedPage(newPage);
+            setCreatedPages(pagesToCreate);
             setIsGenerating(true);
             setErrorMessage('');
 
-            try {
-                setGeneratingPage(pageId, true);
+            // Generate pages sequentially
+            for (const page of pagesToCreate) {
+                try {
+                    setGeneratingPage(page.id, true);
 
-                const result = await convertMathImageToMarkdown({
-                    imageUrl: newPage.imageUrl,
-                    guidance: aiGuidance.value,
-                    currentMarkdown: '',
-                });
+                    const result = await convertMathImageToMarkdown({
+                        imageUrl: page.imageUrl,
+                        guidance: aiGuidance.value,
+                        currentMarkdown: '',
+                        documentTitle: '', // You might want to pass document title here
+                        pageTitle: page.title,
+                    });
 
-                const updatedPage: MathDocumentPage = {
-                    ...newPage,
-                    markdown: result.markdown,
-                    lastAiPrompt: aiGuidance.value,
-                    lastGeneratedAt: Date.now(),
-                };
+                    const updatedPage: MathDocumentPage = {
+                        ...page,
+                        markdown: result.markdown,
+                        lastAiPrompt: aiGuidance.value,
+                        lastGeneratedAt: Date.now(),
+                    };
 
-                executeCommand({
-                    action: async () => {
-                        await setPage({
-                            key: 'mathDocumentPages',
-                            itemId: pageId,
-                            value: updatedPage,
-                            privacy: 'PUBLIC',
-                            filterKey: 'documentId',
-                            searchKeys: ['title', 'markdown'],
-                            sortKey: 'pageNumber',
-                        });
-                    },
-                    undoAction: async () => {
-                        await setPage({
-                            key: 'mathDocumentPages',
-                            itemId: pageId,
-                            value: newPage,
-                            privacy: 'PUBLIC',
-                            filterKey: 'documentId',
-                            searchKeys: ['title', 'markdown'],
-                            sortKey: 'pageNumber',
-                        });
-                    },
-                    description: `Generated AI content for page - ${updatedPage.title}`
-                });
-            } catch (error) {
-                setErrorMessage(error instanceof Error ? error.message : 'AI conversion failed.');
-            } finally {
-                setGeneratingPage(pageId, false);
-                setIsGenerating(false);
+                    executeCommand({
+                        action: async () => {
+                            await setPage({
+                                key: 'mathDocumentPages',
+                                itemId: page.id,
+                                value: updatedPage,
+                                privacy: 'PUBLIC',
+                                filterKey: 'documentId',
+                                searchKeys: ['title', 'markdown'],
+                                sortKey: 'pageNumber',
+                            });
+                        },
+                        undoAction: async () => {
+                            await setPage({
+                                key: 'mathDocumentPages',
+                                itemId: page.id,
+                                value: page,
+                                privacy: 'PUBLIC',
+                                filterKey: 'documentId',
+                                searchKeys: ['title', 'markdown'],
+                                sortKey: 'pageNumber',
+                            });
+                        },
+                        description: `Generated AI content for page - ${updatedPage.title}`
+                    });
+                } catch (error) {
+                    setErrorMessage(error instanceof Error ? error.message : 'AI conversion failed.');
+                } finally {
+                    setGeneratingPage(page.id, false);
+                }
             }
         }
     };
 
-    const isValidTitle = title.trim().length > 0;
-    const hasImage = imageUrl.trim().length > 0;
-    const canCreate = isValidTitle && hasImage;
+    const readyPages = draftPages.filter((page) => page.status === 'ready');
+    const hasPages = readyPages.length > 0;
+    const isStillProcessing = draftPages.some(
+        (page) => page.status === 'processing' || page.status === 'uploading',
+    );
+
+    const canCreate = hasPages && !isStillProcessing;
 
     return (
         <ConvexDialog.Root isOpen={isOpen} onOpenChange={setIsOpen}>
             <ConvexDialog.Trigger asChild>
                 <AppButton variant={triggerButtonVariant} className='h-12 px-5'>
-                    <PoppinsText weight='medium' color='white'>Add page</PoppinsText>
+                    <PoppinsText weight='medium' color='white'>Add pages</PoppinsText>
                 </AppButton>
             </ConvexDialog.Trigger>
             <ConvexDialog.Portal>
@@ -184,95 +272,125 @@ const NewPageDialog = ({ documentId, existingPageCount, onCreate, triggerButtonV
                 <ConvexDialog.Content>
                     <ConvexDialog.Close iconProps={{ color: 'rgb(246, 238, 219)' }} className='w-10 h-10 bg-accent-hover absolute right-4 top-4 z-10' />
                     <Column>
-                        <DialogHeader text='Add page' subtext='Create a new page for your document.' />
+                        <DialogHeader text='Add Pages' subtext='Create one or more pages for your document.' />
                         <Column className='pt-5' gap={4}>
 
                             <Column gap={1}>
-                                <PoppinsText weight='medium'>Math image</PoppinsText>
+                                <PoppinsText weight='medium'>
+                                    {draftPages.length === 1 ? 'Title' : 'Title prefix (optional)'}
+                                </PoppinsText>
+                                <PoppinsTextInput 
+                                    value={titleInput} 
+                                    onChangeText={setTitleInput} 
+                                    className='w-full border border-subtle-border bg-inner-background p-3' 
+                                    placeholder={draftPages.length === 1 ? `Page ${nextPageNumber}` : 'Homework 7'} 
+                                />
+                            </Column>
 
-                                <View className='w-full h-56 overflow-hidden rounded-lg border border-subtle-border bg-background relative'>
-                                    {imageUrl ? (
-                                        <>
+                            <Column gap={1}>
+                                <PoppinsText weight='medium'>Files</PoppinsText>
+
+                                <Row gap={2}>
+                                    <View className='flex-1'>
+                                        <SimpleFileUpload
+                                            onFilesReady={handleFilesReady}
+                                            buttonLabel='Upload File'
+                                            className='w-full'
+                                        />
+                                    </View>
+                                    <View className='flex-1'>
+                                        <AppButton
+                                            variant='outline-alt'
+                                            className='h-12 w-full'
+                                            onPress={() => setIsFileUrlModalOpen(true)}
+                                            disabled={Platform.OS !== 'web'}
+                                        >
+                                            <PoppinsText weight='medium'>
+                                                {Platform.OS === 'web' ? 'Use File URL' : 'URL (Web only)'}
+                                            </PoppinsText>
+                                        </AppButton>
+                                    </View>
+                                </Row>
+                            </Column>
+
+                            <Column gap={1}>
+                                <PoppinsText weight='medium'>Preview</PoppinsText>
+                                
+                                <View className='w-full h-56 rounded-lg border border-subtle-border bg-background overflow-hidden'>
+                                    {draftPages.length === 1 ? (
+                                        <View className='flex-1 items-center justify-center p-3'>
                                             <Image
-                                                source={{ uri: imageUrl }}
+                                                source={{ uri: draftPages[0].previewUrl }}
                                                 className='w-full h-full'
                                                 resizeMode='contain'
                                             />
-                                            <View className='absolute bottom-0 left-0 right-0 p-4 pt-12 bg-linear-to-t from-background to-transparent'>
-                                                <PoppinsText varient='subtext' className='text-xs mb-2 text-center'>
-                                                    {imageUrl}
-                                                </PoppinsText>
-                                                <Row gap={2}>
-                                                    <View className='flex-1'>
-                                                        <AppButton
-                                                            variant='outline-alt'
-                                                            className='h-12 w-full'
-                                                            onPress={() => setIsImageUrlModalOpen(true)}
-                                                        >
-                                                            <PoppinsText weight='medium'>Use Image URL</PoppinsText>
-                                                        </AppButton>
-                                                    </View>
-                                                    <View className='flex-1'>
-                                                        <SimpleImageUpload
-                                                            url={imageUrl}
-                                                            setUrl={setImageUrl}
-                                                            buttonLabel='Change Image'
-                                                            emptyLabel='Upload page image'
-                                                            className='w-full'
-                                                        />
-                                                    </View>
-                                                </Row>
-                                            </View>
-                                        </>
-                                    ) : (
-                                        <Column className='flex-1 items-center justify-center p-4'>
-                                            <PoppinsText varient='subtext' className='text-center mb-4'>Upload a math image to get started</PoppinsText>
-                                            <Row gap={2}>
-                                                <AppButton
-                                                    variant='outline-alt'
-                                                    className='h-12 px-5'
-                                                    onPress={() => setIsImageUrlModalOpen(true)}
+                                        </View>
+                                    ) : draftPages.length > 1 ? (
+                                        <ScrollView
+                                            horizontal
+                                            showsHorizontalScrollIndicator={false}
+                                            className='h-full'
+                                            contentContainerStyle={{ padding: 12, gap: 12 }}
+                                        >
+                                            {draftPages.map((page, index) => (
+                                                <View
+                                                    key={page.id}
+                                                    className='w-36 h-full rounded-lg border border-subtle-border bg-inner-background overflow-hidden relative'
                                                 >
-                                                    <PoppinsText weight='medium'>Use Image URL</PoppinsText>
-                                                </AppButton>
-                                                <SimpleImageUpload
-                                                    url={imageUrl}
-                                                    setUrl={setImageUrl}
-                                                    buttonLabel='Upload Image'
-                                                    emptyLabel='Upload page image'
-                                                    className='flex-1'
-                                                />
-                                            </Row>
-                                        </Column>
+                                                    <Image
+                                                        source={{ uri: page.previewUrl }}
+                                                        className='w-full h-full'
+                                                        resizeMode='cover'
+                                                    />
+
+                                                    <Pressable
+                                                        className='absolute top-2 right-2 w-7 h-7 rounded-full bg-background/90 items-center justify-center border border-subtle-border'
+                                                        onPress={() => removeDraftPage(page.id)}
+                                                    >
+                                                        <PoppinsText weight='bold'>−</PoppinsText>
+                                                    </Pressable>
+
+                                                    <View className='absolute bottom-0 left-0 right-0 px-2 py-2 bg-linear-to-t from-background to-transparent'>
+                                                        <PoppinsText varient='subtext' className='text-xs text-center'>
+                                                            {`Page ${index + 1}`}
+                                                        </PoppinsText>
+                                                    </View>
+                                                </View>
+                                            ))}
+                                        </ScrollView>
+                                    ) : (
+                                        <View className='flex-1 items-center justify-center p-4'>
+                                            <PoppinsText varient='subtext' className='text-center'>
+                                                Upload an image or PDF to get started
+                                            </PoppinsText>
+                                        </View>
                                     )}
                                 </View>
                             </Column>
-                            <Column gap={1} className='pb-4'>
-                                <PoppinsText weight='medium'>Page title</PoppinsText>
-                                <PoppinsTextInput value={title} onChangeText={setTitle} className='w-full border border-subtle-border bg-inner-background p-3' placeholder={`Page ${nextPageNumber}`} />
-                            </Column>
 
+                            {statusMessage && (
+                                <PoppinsText className='text-blue-500 text-center'>{statusMessage}</PoppinsText>
+                            )}
 
                             {/* Buttons */}
                             <Row gap={3} className='w-full items-center justify-between'>
-                                {isValidTitle && hasImage ? (
+                                {canCreate ? (
                                     <>
-
                                         <AppButton variant='outline-alt' className='h-12 max-w-[150px] w-full' onPress={() => void handleCreate(false)}>
                                             <PoppinsText weight='medium'>
-                                                {`No Generation`}
+                                                {draftPages.length === 1 ? 'No Generation' : `Create ${draftPages.length} Blank Pages`}
                                             </PoppinsText>
                                         </AppButton>
                                         <AppButton variant={createButtonVariant} className='h-12 flex-1' onPress={() => void handleCreate(true)}>
                                             <PoppinsText weight='medium' color='white'>
-                                                {`Generate Page  →`}
+                                                {draftPages.length === 1 ? 'Generate Page →' : `Generate ${draftPages.length} Pages →`}
                                             </PoppinsText>
                                         </AppButton>
                                     </>
                                 ) : (
                                     <StatusButton
-                                        buttonText="Create page"
-                                        buttonAltText={!hasImage ? "Upload an image first" : "Add a title"}
+                                        buttonText="Create pages"
+                                        buttonAltText={!hasPages ? "Upload files first" : "Processing files..."}
                                         className="h-12 w-full"
                                     />
                                 )}
@@ -286,10 +404,10 @@ const NewPageDialog = ({ documentId, existingPageCount, onCreate, triggerButtonV
                 </ConvexDialog.Content>
             </ConvexDialog.Portal>
 
-            <ImageUrlModal
-                isOpen={isImageUrlModalOpen}
-                onOpenChange={setIsImageUrlModalOpen}
-                onAccept={handleImageUrlAccept}
+            <FileUrlModal
+                isOpen={isFileUrlModalOpen}
+                onOpenChange={setIsFileUrlModalOpen}
+                onFilesReady={handleFilesReady}
             />
         </ConvexDialog.Root>
     );

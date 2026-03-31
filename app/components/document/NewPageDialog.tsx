@@ -46,7 +46,7 @@ const NewPageDialog = ({ documentId, existingPageCount, onCreate, triggerButtonV
     const { setGeneratingPage, isPageGenerating } = useGeneration();
     const [isOpen, setIsOpen] = useState(false);
     const nextPageNumber = existingPageCount + 1;
-    const [titleInput, setTitleInput] = useState(`Page ${nextPageNumber}`);
+    const [titleInput, setTitleInput] = useState('Page');
     const [draftPages, setDraftPages] = useState<DraftPage[]>([]);
     const [sourceKind, setSourceKind] = useState<'image' | 'pdf' | null>(null);
     const [isFileUrlModalOpen, setIsFileUrlModalOpen] = useState(false);
@@ -107,7 +107,7 @@ const NewPageDialog = ({ documentId, existingPageCount, onCreate, triggerButtonV
         draftPages.forEach(page => revokePreviewUrl(page.previewUrl));
         setDraftPages([]);
         setSourceKind(null);
-        setTitleInput(`Page ${nextPageNumber}`);
+        setTitleInput('Page');
         setErrorMessage('');
         setStatusMessage('');
     };
@@ -140,17 +140,13 @@ const NewPageDialog = ({ documentId, existingPageCount, onCreate, triggerButtonV
         const pagesToCreate = readyPages.map((draft, index) => {
             const pageNumber = nextPageNumber + index;
 
-            const title = readyPages.length === 1
-                ? titleInput.trim() || `Page ${pageNumber}` 
-                : titleInput.trim().length > 0
-                    ? `${titleInput.trim()} - ${index + 1}` 
-                    : `Page ${pageNumber}`;
+            const title = titleInput.trim() || 'Page';
 
             return {
                 id: generateId(),
                 documentId,
                 pageNumber,
-                title,
+                title, // Store just the title, no number
                 imageUrl: draft.uploadedUrl!,
                 markdown: startGeneration ? '' : 'BLANK PAGE',
                 lastAiPrompt: '',
@@ -276,6 +272,11 @@ const NewPageDialog = ({ documentId, existingPageCount, onCreate, triggerButtonV
 
     const canCreate = hasPages && !isStillProcessing;
 
+    // Helper function to render page title with number
+    const renderPageTitle = (title: string, pageNumber: number) => {
+        return `${title} - ${pageNumber}`;
+    };
+
     return (
         <ConvexDialog.Root isOpen={isOpen} onOpenChange={setIsOpen}>
             <ConvexDialog.Trigger asChild>
@@ -299,7 +300,7 @@ const NewPageDialog = ({ documentId, existingPageCount, onCreate, triggerButtonV
                                     value={titleInput} 
                                     onChangeText={setTitleInput} 
                                     className='w-full border border-subtle-border bg-inner-background p-3' 
-                                    placeholder={draftPages.length === 1 ? `Page ${nextPageNumber}` : 'Homework 7'} 
+                                    placeholder={draftPages.length === 1 ? 'Page' : 'Homework 7'} 
                                 />
                             </Column>
 
@@ -368,7 +369,7 @@ const NewPageDialog = ({ documentId, existingPageCount, onCreate, triggerButtonV
 
                                                     <View className='absolute bottom-0 left-0 right-0 px-2 py-2 bg-linear-to-t from-background to-transparent'>
                                                         <PoppinsText varient='subtext' className='text-xs text-center'>
-                                                            {`Page ${index + 1}`}
+                                                            {renderPageTitle('Page', nextPageNumber + index)}
                                                         </PoppinsText>
                                                     </View>
                                                 </View>

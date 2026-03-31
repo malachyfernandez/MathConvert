@@ -3,18 +3,15 @@ import { Platform, ScrollView, View } from 'react-native';
 import { ScrollShadow } from 'heroui-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import Column from '../layout/Column';
-import Row from '../layout/Row';
 import AppButton from '../ui/buttons/AppButton';
 import PoppinsText from '../ui/text/PoppinsText';
 import ConvexDialog from '../ui/dialog/ConvexDialog';
 import DialogHeader from '../ui/dialog/DialogHeader';
 import StatusButton from '../ui/StatusButton';
-import StatusIconButton from '../ui/StatusIconButton';
 import { MathDocumentPage } from 'types/mathDocuments';
-import ChevronUpIcon from '../ui/icons/ChevronUpIcon';
-import ChevronDownIcon from '../ui/icons/ChevronDownIcon';
 import UnsavedChangesDialog from './UnsavedChangesDialog';
 import PageConfigDialog from './PageConfigDialog';
+import ReorderablePageItem from './ReorderablePageItem';
 
 interface ReorderPagesDialogProps {
     pages: MathDocumentPage[];
@@ -32,6 +29,11 @@ const ReorderPagesDialog = ({ pages, isOpen, onOpenChange, onReorderPages }: Reo
     const [showUnsavedDialog, setShowUnsavedDialog] = useState(false);
     const [configDialogPage, setConfigDialogPage] = useState<MathDocumentPage | null>(null);
     const [showConfigDialog, setShowConfigDialog] = useState(false);
+
+    // Helper function to render page title with number
+    const renderPageTitle = (title: string, pageNumber: number) => {
+        return `${title} - ${pageNumber}`;
+    };
 
     React.useEffect(() => {
         if (isOpen) {
@@ -168,66 +170,18 @@ const ReorderPagesDialog = ({ pages, isOpen, onOpenChange, onReorderPages }: Reo
                                 <ScrollShadow LinearGradientComponent={LinearGradient} className='flex-1'>
                                     <ScrollView className='flex-1 max-h-[60vh]'>
                                         <Column gap={2} className='pb-4'>
-                                            {orderedPages.map((page, index) => {
-                                                const isAnimating = animatingPages.has(page.id);
-                                                return (
-                                                    <Row
-                                                        key={page.id}
-                                                        className={`border border-subtle-border bg-inner-background rounded-xl p-3 w-full justify-between transition-all duration-100 ease-in-out ${isAnimating ? 'scale-55 opacity-70' : ''
-                                                            }`}
-                                                    >
-
-
-                                                        <Row className='items-center w-full justify-between'>
-                                                            <Row gap={2}
-                                                            // className="bg-[#374559ae] rounded"
-                                                            >
-                                                                {index > 0 ? (
-                                                                    <AppButton variant='none' className='h-10 w-10' onPress={() => handleMoveUp(index)}>
-                                                                        <ChevronUpIcon size={24} color="black" />
-                                                                    </AppButton>
-                                                                ) : (
-                                                                    // <></>
-                                                                    <StatusIconButton
-                                                                        icon={<ChevronUpIcon size={20} color="white" />}
-                                                                        className="h-10 w-10"
-                                                                        variant="none"
-                                                                    />
-                                                                )}
-                                                            </Row>
-                                                            <Column className='flex-1 justify-center' gap={1}>
-                                                                <AppButton variant='none' className='flex-1' onPress={() => handlePagePress(page)}>
-                                                                    <Column className='flex-1 justify-center' gap={1}>
-                                                                        <PoppinsText weight='medium' className='text-center'>
-                                                                            {page.title || `Page ${page.pageNumber}`}
-                                                                        </PoppinsText>
-                                                                        <PoppinsText varient='subtext' className='text-xs text-center'>
-                                                                            Page {page.pageNumber}
-                                                                        </PoppinsText>
-                                                                    </Column>
-                                                                </AppButton>
-                                                            </Column>
-                                                            <Row gap={2}
-                                                            // className="bg-[#374559ae] rounded"
-                                                            >
-
-                                                                {index < orderedPages.length - 1 ? (
-                                                                    <AppButton variant='none' className='h-10 w-10' onPress={() => handleMoveDown(index)}>
-                                                                        <ChevronDownIcon size={24} color="black" />
-                                                                    </AppButton>
-                                                                ) : (
-                                                                    // <></>
-                                                                    <StatusIconButton
-                                                                        icon={<ChevronDownIcon size={20} color="white" />}
-                                                                        className="h-10 w-10"
-                                                                        variant="none"
-                                                                    />
-                                                                )}
-                                                            </Row>
-                                                        </Row>
-                                                    </Row>
-                                                );
-                                            })}
+                                            {orderedPages.map((page, index) => (
+                                                <ReorderablePageItem
+                                                    key={page.id}
+                                                    page={page}
+                                                    index={index}
+                                                    totalCount={orderedPages.length}
+                                                    isAnimating={animatingPages.has(page.id)}
+                                                    onPress={() => handlePagePress(page)}
+                                                    onMoveUp={() => handleMoveUp(index)}
+                                                    onMoveDown={() => handleMoveDown(index)}
+                                                />
+                                            ))}
                                         </Column>
                                     </ScrollView>
                                 </ScrollShadow>

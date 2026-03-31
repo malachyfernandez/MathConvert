@@ -18,6 +18,11 @@ const DEFAULT_PAGE_ASPECT_RATIO = 8.5 / 11;
 const ViewOnlyDocumentPage = ({ activeTab, page, onAspectRatioChange }: ViewOnlyDocumentPageProps) => {
     const [imageAspectRatio, setImageAspectRatio] = useState(DEFAULT_PAGE_ASPECT_RATIO);
 
+    // Helper function to render page title with number
+    const renderPageTitle = (title: string, pageNumber: number) => {
+        return `${title} - ${pageNumber}`;
+    };
+
     useEffect(() => {
         let isMounted = true;
 
@@ -51,7 +56,7 @@ const ViewOnlyDocumentPage = ({ activeTab, page, onAspectRatioChange }: ViewOnly
         <Column gap={3} className='w-full'>
             <Row gap={0} className={`px-1 mx-auto`}>
                 <PoppinsText weight='medium'>
-                    {page.title || `Page ${page.pageNumber}`}
+                    {renderPageTitle(page.title || 'Page', page.pageNumber)}
                 </PoppinsText>
                     {/* <PoppinsText varient='subtext'>
                         {activeTab === 'imageOverlay' ? 'Image overlay with readable MathJax underneath.' : 'Screen-readable MathJax page.'}
@@ -82,7 +87,7 @@ const ViewOnlyDocumentPage = ({ activeTab, page, onAspectRatioChange }: ViewOnly
                             backgroundColor: 'rgb(246, 238, 219)',
                             pointerEvents: activeTab === 'imageOverlay' ? 'none' : 'auto',
                         }}
-                        aria-label={`${page.title || `Page ${page.pageNumber}`}`}
+                        aria-label={renderPageTitle(page.title || 'Page', page.pageNumber)}
                         
                     />
                 </View>

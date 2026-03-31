@@ -20,6 +20,11 @@ const PageListItem = ({ page, isActive, onPress, onConfigure }: PageListItemProp
     const isGenerating = isPageGenerating(page.id);
     const isRecentlyCompleted = isPageRecentlyCompleted(page.id);
 
+    // Helper function to render page title with number
+    const renderPageTitle = (title: string, pageNumber: number) => {
+        return `${title} - ${pageNumber}`;
+    };
+
     const handlePress = () => {
         // Clear recently completed status when user interacts with the page
         if (isRecentlyCompleted) {
@@ -42,7 +47,7 @@ const PageListItem = ({ page, isActive, onPress, onConfigure }: PageListItemProp
             <Row className='items-center justify-between'>
                 <Column gap={1} className='flex-1'>
                     <PoppinsText weight='medium'>
-                        {page.title || `Page ${page.pageNumber}`}
+                        {renderPageTitle(page.title || 'Page', page.pageNumber)}
                     </PoppinsText>
                 </Column>
                 {isGenerating ? (

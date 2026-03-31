@@ -198,8 +198,8 @@ const NewPageDialog = ({ documentId, existingPageCount, onCreate, triggerButtonV
             setIsGenerating(true);
             setErrorMessage('');
 
-            // Generate pages sequentially
-            for (const page of pagesToCreate) {
+            // Generate pages in parallel
+            const generationPromises = pagesToCreate.map(async (page) => {
                 try {
                     setGeneratingPage(page.id, true);
 
@@ -208,7 +208,7 @@ const NewPageDialog = ({ documentId, existingPageCount, onCreate, triggerButtonV
                         guidance: aiGuidance.value,
                         currentMarkdown: '',
                         documentTitle: '', // You might want to pass document title here
-                        pageTitle: page.title,
+                        pageTitle: '', // Removed page title from generation
                     });
 
                     const updatedPage: MathDocumentPage = {
@@ -243,11 +243,27 @@ const NewPageDialog = ({ documentId, existingPageCount, onCreate, triggerButtonV
                         },
                         description: `Generated AI content for page - ${updatedPage.title}`
                     });
+
+                    return { success: true, pageId: page.id };
                 } catch (error) {
                     setErrorMessage(error instanceof Error ? error.message : 'AI conversion failed.');
+                    return { success: false, pageId: page.id, error };
                 } finally {
                     setGeneratingPage(page.id, false);
                 }
+            });
+
+            // Wait for all generations to complete
+            const results = await Promise.all(generationPromises);
+            
+            // Log results
+            const successful = results.filter(r => r.success).length;
+            const failed = results.filter(r => !r.success).length;
+            
+            if (failed > 0) {
+                console.log(`🔍 [AI_DEBUG] Generation completed: ${successful} successful, ${failed} failed`);
+            } else {
+                console.log(`✅ [AI_DEBUG] All ${successful} pages generated successfully`);
             }
         }
     };
@@ -378,7 +394,7 @@ const NewPageDialog = ({ documentId, existingPageCount, onCreate, triggerButtonV
                                     <>
                                         <AppButton variant='outline-alt' className='h-12 max-w-[150px] w-full' onPress={() => void handleCreate(false)}>
                                             <PoppinsText weight='medium'>
-                                                {draftPages.length === 1 ? 'No Generation' : `Create ${draftPages.length} Blank Pages`}
+                                                {draftPages.length === 1 ? 'No Generation' : `${draftPages.length} Blank Pages`}
                                             </PoppinsText>
                                         </AppButton>
                                         <AppButton variant={createButtonVariant} className='h-12 flex-1' onPress={() => void handleCreate(true)}>

@@ -15,6 +15,7 @@ import PoppinsText from "./components/ui/text/PoppinsText";
 import PoppinsTextInput from "./components/ui/forms/PoppinsTextInput";
 import { useAppAuth } from "../contexts/AppAuthContext";
 import { useToast } from "../contexts/ToastContext";
+import { getUserCodeFromCookie, setUserCodeCookie } from "../utils/userCodeCookie";
 
 const useWarmUpBrowser = () => {
   useEffect(() => {
@@ -36,6 +37,16 @@ export default function HomeScreen() {
   const [userCode, setUserCode] = useState("");
   const [isUserCodeLoading, setIsUserCodeLoading] = useState(false);
 
+  // Load saved user code from cookie on mount (web only)
+  useEffect(() => {
+    if (Platform.OS !== "web") return;
+    const savedCode = getUserCodeFromCookie();
+    if (savedCode) {
+      setUserCode(savedCode);
+      setShowUserCodeInput(true);
+    }
+  }, []);
+
   const authFlow = () =>
     startGoogleFlow(
       Platform.OS === "web"
@@ -54,6 +65,10 @@ export default function HomeScreen() {
 
     try {
       await signInWithUserCode(userCode);
+      // Save the code to cookie for future visits (web only)
+      if (Platform.OS === "web" && userCode.trim()) {
+        setUserCodeCookie(userCode.trim());
+      }
       setUserCode("");
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unable to sign in with that user code.";

@@ -3,6 +3,7 @@ import { useMutation, useQuery } from 'convex/react';
 import { useAuth, useClerk, useUser } from '@clerk/clerk-expo';
 import { api } from '../convex/_generated/api';
 import { userCodeSessionCache } from '../utils/userCodeSessionCache';
+import { clearUserCodeCookie } from '../utils/userCodeCookie';
 
 type AppAuthUser = {
   source: 'clerk' | 'userCode';
@@ -100,6 +101,7 @@ export function AppAuthProvider({ children }: { children: React.ReactNode }) {
     }
 
     await userCodeSessionCache.clearSessionToken();
+    clearUserCodeCookie();
     setStoredSessionToken(null);
   }, [isSignedIn, signOutClerk, signOutMutation, storedSessionToken]);
 

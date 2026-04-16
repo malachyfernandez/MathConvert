@@ -1,5 +1,6 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
+import { resolveAppUser } from "./userCodeAuth";
 
 type PrimitiveIndexValue = string | number | boolean;
 type Privacy = "PUBLIC" | "PRIVATE" | { allowList: string[] };
@@ -475,10 +476,11 @@ async function syncPermissions(
 export const get = query({
     args: {
         key: v.string(),
+        sessionToken: v.optional(v.string()),
     },
     handler: async (ctx, args) => {
-        const identity = await ctx.auth.getUserIdentity();
-        const userToken = identity?.subject;
+        const appUser = await resolveAppUser(ctx, args.sessionToken);
+        const userToken = appUser?.userToken;
 
         if (!userToken) return null;
 
@@ -499,10 +501,11 @@ export const length = query({
     args: {
         key: v.string(),
         filterFor: v.union(v.string(), v.number(), v.boolean()),
+        sessionToken: v.optional(v.string()),
     },
     handler: async (ctx, args) => {
-        const identity = await ctx.auth.getUserIdentity();
-        const viewerUserId = identity?.subject;
+        const appUser = await resolveAppUser(ctx, args.sessionToken);
+        const viewerUserId = appUser?.userToken;
 
         const publicCount = await ctx.db
             .query("user_var_public_counts")
@@ -561,6 +564,7 @@ export const set = mutation({
     args: {
         key: v.string(),
         value: v.any(),
+        sessionToken: v.optional(v.string()),
 
         privacy: v.optional(
             v.union(
@@ -578,10 +582,10 @@ export const set = mutation({
     },
 
     handler: async (ctx, args) => {
-        const identity = await ctx.auth.getUserIdentity();
-        if (!identity) throw new Error("Unauthorized");
+        const appUser = await resolveAppUser(ctx, args.sessionToken);
+        if (!appUser) throw new Error("Unauthorized");
 
-        const userToken = identity.subject;
+        const userToken = appUser.userToken;
 
         const existing = await ctx.db
             .query("user_vars")
@@ -728,6 +732,7 @@ export const set = mutation({
 export const updatePrivacy = mutation({
     args: {
         key: v.string(),
+        sessionToken: v.optional(v.string()),
         privacy: v.union(
             v.literal("PUBLIC"),
             v.literal("PRIVATE"),
@@ -735,10 +740,10 @@ export const updatePrivacy = mutation({
         ),
     },
     handler: async (ctx, args) => {
-        const identity = await ctx.auth.getUserIdentity();
-        if (!identity) throw new Error("Unauthorized");
+        const appUser = await resolveAppUser(ctx, args.sessionToken);
+        if (!appUser) throw new Error("Unauthorized");
 
-        const userToken = identity.subject;
+        const userToken = appUser.userToken;
 
         const record = await ctx.db
             .query("user_vars")

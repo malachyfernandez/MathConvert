@@ -1,10 +1,10 @@
 import { useMutation, useQuery } from "convex/react";
-import { useConvexAuth } from "convex/react";
 import { api } from "../convex/_generated/api";
 import { useEffect, useRef, useState } from "react";
 import { devWarn } from "../utils/devWarnings";
 import { userVarConfig } from "../utils/userVarConfig";
 import { decodeUserValue, encodeUserValue } from "./userValueSerialization";
+import { useAppAuth } from "../contexts/AppAuthContext";
 
 type ObjectKeys<T> = T extends object ? Extract<keyof T, string> : never;
 type PrimitiveIndexValue = string | number | boolean;
@@ -238,7 +238,8 @@ export function useUserVariable<T>({
     overwriteStoredPrivacy?: boolean;
     onOpStatusChange?: (info: UserVarOpStatusInfo<T>) => void;
 }): [UserVariableResult<T>, (newValue: T) => void] {
-    const record = useQuery(api.user_vars.get, { key });
+    const { isLoading: isAppAuthLoading, isAuthenticated: isAppAuthenticated, sessionToken } = useAppAuth();
+    const record = useQuery((api as any).user_vars.get, { key, sessionToken });
 
     const isSyncing = record === undefined;
 
@@ -261,8 +262,7 @@ export function useUserVariable<T>({
 
     const opIdRef = useRef(0);
     const didAutoCreateRef = useRef(false);
-    const { isLoading: isConvexAuthLoading, isAuthenticated: isConvexAuthenticated } = useConvexAuth();
-
+    
     const decodedRecordValue =
         record?.value === undefined
             ? undefined
@@ -304,15 +304,16 @@ export function useUserVariable<T>({
         shouldAutoResetOnTimeout,
     ]);
 
-    const setMutation = useMutation(api.user_vars.set).withOptimisticUpdate(
+    const setMutation = useMutation((api as any).user_vars.set).withOptimisticUpdate(
         (localStore, args) => {
-            const existing = localStore.getQuery(api.user_vars.get, {
+            const existing = localStore.getQuery((api as any).user_vars.get, {
                 key,
+                sessionToken,
             }) as any;
 
             const now = Date.now();
 
-            localStore.setQuery(api.user_vars.get, { key }, {
+            localStore.setQuery((api as any).user_vars.get, { key, sessionToken }, {
                 ...(existing ?? {}),
                 key,
                 value: args.value,
@@ -333,10 +334,10 @@ export function useUserVariable<T>({
     );
 
     const setValue = (newValue: T) => {
-        if (isConvexAuthLoading || !isConvexAuthenticated) {
+        if (isAppAuthLoading || !isAppAuthenticated) {
             devWarn(
                 "uservar_auth_not_ready",
-                `Blocked set for key="${key}" because Convex auth is not ready.`
+                `Blocked set for key="${key}" because app auth is not ready.`
             );
             return;
         }
@@ -407,6 +408,7 @@ export function useUserVariable<T>({
         const mutationPromise = setMutation({
             key,
             value: encodedValue,
+            sessionToken,
             privacy: backendPrivacy,
             filterKey,
             searchKeys,
@@ -467,14 +469,14 @@ export function useUserVariable<T>({
 
     useEffect(() => {
         if (didAutoCreateRef.current) return;
-        if (isConvexAuthLoading) return;
-        if (!isConvexAuthenticated) return;
+        if (isAppAuthLoading) return;
+        if (!isAppAuthenticated) return;
         if (record !== null) return;
         if (defaultValue === undefined) return;
 
         didAutoCreateRef.current = true;
         setValue(defaultValue as T);
-    }, [record, defaultValue, isConvexAuthLoading, isConvexAuthenticated]);
+    }, [record, defaultValue, isAppAuthLoading, isAppAuthenticated]);
 
     useEffect(() => {
         return () => {

@@ -1,5 +1,6 @@
 import { useQuery } from "convex/react";
 import { api } from "../convex/_generated/api";
+import { useAppAuth } from "../contexts/AppAuthContext";
 
 type PrimitiveIndexValue = string | number | boolean;
 
@@ -30,8 +31,11 @@ export function useUserVariableLength({
   key,
   filterFor,
 }: UseUserVariableLengthOptions) {
-  return useQuery(api.user_vars.length, {
+  const { sessionToken } = useAppAuth();
+
+  return useQuery((api as any).user_vars.length, {
     key,
     filterFor,
+    sessionToken,
   }) as number | undefined;
 }

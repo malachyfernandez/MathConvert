@@ -1,6 +1,7 @@
 import { useMutation } from "convex/react";
 import { api } from "../convex/_generated/api";
 import type { Privacy } from "./useUserList";
+import { useAppAuth } from "../contexts/AppAuthContext";
 
 /**
  * Change one whole list's access mode.
@@ -37,7 +38,8 @@ import type { Privacy } from "./useUserList";
  * - changing list privacy can change public/shared counts and getter visibility
  */
 export function useUserListPrivacy() {
-  const mutation = useMutation(api.user_lists.updatePrivacy);
+  const { sessionToken } = useAppAuth();
+  const mutation = useMutation((api as any).user_lists.updatePrivacy);
 
   return ({ key, privacy }: { key: string; privacy: Privacy }) => {
     const backendPrivacy = Array.isArray(privacy)
@@ -46,6 +48,7 @@ export function useUserListPrivacy() {
 
     return mutation({
       key,
+      sessionToken,
       privacy: backendPrivacy,
     });
   };

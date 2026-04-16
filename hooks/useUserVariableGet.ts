@@ -2,6 +2,7 @@ import { useQuery } from "convex/react";
 import { api } from "../convex/_generated/api";
 import type { UserVariableRecord } from "./useUserVariable";
 import { decodeUserValue } from "./userValueSerialization";
+import { useAppAuth } from "../contexts/AppAuthContext";
 
 type PrimitiveIndexValue = string | number | boolean;
 
@@ -62,13 +63,16 @@ export function useUserVariableGet<TValue = any>({
   returnTop,
   startAfter,
 }: UseUserVariableGetOptions) {
-  const results = useQuery(api.user_vars_get.search, {
+  const { sessionToken } = useAppAuth();
+
+  const results = useQuery((api as any).user_vars_get.search, {
     key,
     searchFor,
     filterFor,
     userIds,
     returnTop,
     startAfter,
+    sessionToken,
   });
 
   return results?.map((record) => ({

@@ -8,7 +8,7 @@ import PoppinsTextInput from '../ui/forms/PoppinsTextInput';
 import ConvexDialog from '../ui/dialog/ConvexDialog';
 import DialogHeader from '../ui/dialog/DialogHeader';
 import { useUserVariable } from 'hooks/useUserVariable';
-import { useClerk } from '@clerk/clerk-expo';
+import { useAppAuth } from '../../../contexts/AppAuthContext';
 
 interface UserProfileDialogProps {
     children?: React.ReactNode;
@@ -16,7 +16,7 @@ interface UserProfileDialogProps {
 
 const UserProfileDialog = ({ children }: UserProfileDialogProps) => {
     const [isOpen, setIsOpen] = useState(false);
-    const { signOut } = useClerk();
+    const { signOut } = useAppAuth();
 
     // Get user data from userVariables
     const [userData] = useUserVariable({
@@ -34,7 +34,7 @@ const UserProfileDialog = ({ children }: UserProfileDialogProps) => {
 
     const handleSignOut = () => {
         setIsOpen(false);
-        signOut();
+        void signOut();
     };
 
     return (

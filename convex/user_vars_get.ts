@@ -1,6 +1,7 @@
 import { v } from "convex/values";
 import { query } from "./_generated/server";
 import { Id } from "./_generated/dataModel";
+import { resolveAppUser } from "./userCodeAuth";
 
 type PrimitiveIndexValue = string | number | boolean;
 
@@ -80,10 +81,11 @@ export const search = query({
     userIds: v.optional(v.array(v.string())),
     returnTop: v.optional(v.number()),
     startAfter: v.optional(v.string()),
+    sessionToken: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    const viewerUserId = identity?.subject;
+    const appUser = await resolveAppUser(ctx, args.sessionToken);
+    const viewerUserId = appUser?.userToken;
     const limit = Math.max(1, Math.min(args.returnTop ?? 10, 200));
     const takeCount = args.startAfter
       ? Math.min(Math.max(limit * 10, 50), 500)

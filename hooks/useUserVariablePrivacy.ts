@@ -1,6 +1,7 @@
 import { useMutation } from "convex/react";
 import { api } from "../convex/_generated/api";
 import type { Privacy } from "./useUserVariable";
+import { useAppAuth } from "../contexts/AppAuthContext";
 
 /**
  * Change one variable's access mode only.
@@ -37,15 +38,17 @@ import type { Privacy } from "./useUserVariable";
  * - later `setValue(...)` calls keep that stored privacy unless config overwrite is enabled
  */
 export function useUserVariablePrivacy() {
-  const mutation = useMutation(api.user_vars.updatePrivacy).withOptimisticUpdate(
+  const { sessionToken } = useAppAuth();
+  const mutation = useMutation((api as any).user_vars.updatePrivacy).withOptimisticUpdate(
     (localStore, args) => {
-      const existing = localStore.getQuery(api.user_vars.get, {
+      const existing = localStore.getQuery((api as any).user_vars.get, {
         key: args.key,
+        sessionToken,
       }) as any;
 
       if (!existing) return;
 
-      localStore.setQuery(api.user_vars.get, { key: args.key }, {
+      localStore.setQuery((api as any).user_vars.get, { key: args.key, sessionToken }, {
         ...existing,
         privacy: args.privacy,
       });
@@ -59,6 +62,7 @@ export function useUserVariablePrivacy() {
 
     return mutation({
       key,
+      sessionToken,
       privacy: backendPrivacy,
     });
   };

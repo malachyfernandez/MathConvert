@@ -1,5 +1,6 @@
 import { useMutation } from "convex/react";
 import { api } from "../convex/_generated/api";
+import { useAppAuth } from "../contexts/AppAuthContext";
 
 /**
  * Removes one item from a user list.
@@ -18,9 +19,10 @@ import { api } from "../convex/_generated/api";
  * - deletes item row only (definition remains)
  */
 export function useUserListRemove() {
-  const mutation = useMutation(api.user_lists.remove);
+  const { sessionToken } = useAppAuth();
+  const mutation = useMutation((api as any).user_lists.remove);
 
   return ({ key, itemId }: { key: string; itemId: string }) => {
-    return mutation({ key, itemId });
+    return mutation({ key, itemId, sessionToken });
   };
 }

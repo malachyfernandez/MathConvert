@@ -2,6 +2,7 @@ import { useQuery } from "convex/react";
 import { useEffect, useRef } from "react";
 import { api } from "../convex/_generated/api";
 import { devWarn } from "../utils/devWarnings";
+import { useAppAuth } from "../contexts/AppAuthContext";
 
 type PrimitiveIndexValue = string | number | boolean;
 
@@ -51,18 +52,22 @@ export function useUserListLength({
 }: UseUserListLengthOptions) {
   const warnedSignatureRef = useRef<string | null>(null);
 
-  const count = useQuery(api.user_lists.length, {
+  const { sessionToken } = useAppAuth();
+
+  const count = useQuery((api as any).user_lists.length, {
     key,
     filterFor,
     itemId,
+    sessionToken,
   }) as number | undefined;
 
   const shouldWarnOnSharedItemId = useQuery(
-    api.user_lists.lengthSharedItemIdWarning,
+    (api as any).user_lists.lengthSharedItemIdWarning,
     {
       key,
       filterFor,
       itemId,
+      sessionToken,
     }
   ) as boolean | undefined;
 

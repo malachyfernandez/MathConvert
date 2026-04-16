@@ -3,18 +3,17 @@
 import "../polyfills";
 import { ClerkProvider, ClerkLoaded, useAuth } from "@clerk/clerk-expo";
 import { ConvexProviderWithClerk } from "convex/react-clerk";
-import { ConvexReactClient } from "convex/react";
 import { Slot } from "expo-router";
 import { HeroUINativeProvider } from "heroui-native/provider";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { PortalHost } from "@rn-primitives/portal";
 import { tokenCache } from '../utils/tokenCache';
+import convex from '../utils/convexClient';
 import { ToastProvider } from '../contexts/ToastContext';
 import { GenerationProvider } from '../contexts/GenerationContext';
 import { WebDropdownProvider } from '../contexts/WebDropdownProvider';
+import { AppAuthProvider } from '../contexts/AppAuthContext';
 import "../global.css";
-
-const convex = new ConvexReactClient(process.env.EXPO_PUBLIC_CONVEX_URL!);
 const publishableKey = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY!;
 
 export default function RootLayout() {
@@ -33,8 +32,10 @@ export default function RootLayout() {
               <ClerkLoaded>
                 <WebDropdownProvider>
                   <ConvexProviderWithClerk client={convex} useAuth={useAuth}>
-                    <Slot />
-                    <PortalHost />
+                    <AppAuthProvider>
+                      <Slot />
+                      <PortalHost />
+                    </AppAuthProvider>
                   </ConvexProviderWithClerk>
                 </WebDropdownProvider>
               </ClerkLoaded>

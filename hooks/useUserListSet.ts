@@ -2,6 +2,7 @@ import { useMutation } from "convex/react";
 import { api } from "../convex/_generated/api";
 import type { Privacy } from "./useUserList";
 import { encodeUserValue } from "./userValueSerialization";
+import { useAppAuth } from "../contexts/AppAuthContext";
 
 type ObjectKeys<T> = T extends object ? Extract<keyof T, string> : never;
 
@@ -58,7 +59,8 @@ type ObjectKeys<T> = T extends object ? Extract<keyof T, string> : never;
  * - use with care because it updates the shared list definition for that key
  */
 export function useUserListSet<T = any>() {
-  const mutation = useMutation(api.user_lists.set);
+  const { sessionToken } = useAppAuth();
+  const mutation = useMutation((api as any).user_lists.set);
 
   /**
    * Upsert one list item by key + itemId.
@@ -142,6 +144,7 @@ export function useUserListSet<T = any>() {
       key,
       itemId,
       value: encodedValue,
+      sessionToken,
       privacy: backendPrivacy,
       filterKey,
       searchKeys,

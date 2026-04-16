@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { devWarn } from "../utils/devWarnings";
 import { userVarConfig } from "../utils/userVarConfig";
 import { decodeUserValue, encodeUserValue } from "./userValueSerialization";
+import { useAppAuth } from "../contexts/AppAuthContext";
 
 type ObjectKeys<T> = T extends object ? Extract<keyof T, string> : never;
 type PrimitiveIndexValue = string | number | boolean;
@@ -230,7 +231,8 @@ export function useUserList<T>({
   overwriteStoredPrivacy?: boolean;
   onOpStatusChange?: (info: UserListOpStatusInfo<T>) => void;
 }): [UserListResult<T>, (newValue: T) => void] {
-  const record = useQuery(api.user_lists.get, { key, itemId });
+  const { isLoading: isAppAuthLoading, isAuthenticated: isAppAuthenticated, sessionToken } = useAppAuth();
+  const record = useQuery((api as any).user_lists.get, { key, itemId, sessionToken });
 
   const isSyncing = record === undefined;
 
@@ -296,16 +298,17 @@ export function useUserList<T>({
     shouldAutoResetOnTimeout,
   ]);
 
-  const setMutation = useMutation(api.user_lists.set).withOptimisticUpdate(
+  const setMutation = useMutation((api as any).user_lists.set).withOptimisticUpdate(
     (localStore, args) => {
-      const existing = localStore.getQuery(api.user_lists.get, {
+      const existing = localStore.getQuery((api as any).user_lists.get, {
         key,
         itemId,
+        sessionToken,
       }) as any;
 
       const now = Date.now();
 
-      localStore.setQuery(api.user_lists.get, { key, itemId }, {
+      localStore.setQuery((api as any).user_lists.get, { key, itemId, sessionToken }, {
         ...(existing ?? {}),
         key,
         itemId,
@@ -328,6 +331,14 @@ export function useUserList<T>({
   );
 
   const setValue = (newValue: T) => {
+    if (isAppAuthLoading || !isAppAuthenticated) {
+      devWarn(
+        "uservar_auth_not_ready",
+        `Blocked set for list key="${key}" itemId="${itemId}" because app auth is not ready.`
+      );
+      return;
+    }
+
     const startedAt = Date.now();
     const opId = (opIdRef.current += 1);
     const encodedValue = encodeUserValue(newValue);
@@ -397,6 +408,7 @@ export function useUserList<T>({
       key,
       itemId,
       value: encodedValue,
+      sessionToken,
       privacy: backendPrivacy,
       filterKey,
       searchKeys,
@@ -457,12 +469,14 @@ export function useUserList<T>({
 
   useEffect(() => {
     if (didAutoCreateRef.current) return;
+    if (isAppAuthLoading) return;
+    if (!isAppAuthenticated) return;
     if (record !== null) return;
     if (defaultValue === undefined) return;
 
     didAutoCreateRef.current = true;
     setValue(defaultValue as T);
-  }, [record, defaultValue]);
+  }, [record, defaultValue, isAppAuthLoading, isAppAuthenticated]);
 
   useEffect(() => {
     return () => {

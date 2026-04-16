@@ -2,6 +2,7 @@ import { useQuery } from "convex/react";
 import { api } from "../convex/_generated/api";
 import type { UserListRecord } from "./useUserList";
 import { decodeUserValue } from "./userValueSerialization";
+import { useAppAuth } from "../contexts/AppAuthContext";
 
 type PrimitiveIndexValue = string | number | boolean;
 
@@ -60,7 +61,9 @@ export function useUserListGet<TValue = any>({
   returnTop,
   startAfter,
 }: UseUserListGetOptions) {
-  const results = useQuery(api.user_lists_get.search, {
+  const { sessionToken } = useAppAuth();
+
+  const results = useQuery((api as any).user_lists_get.search, {
     key,
     itemId,
     searchFor,
@@ -68,6 +71,7 @@ export function useUserListGet<TValue = any>({
     userIds,
     returnTop,
     startAfter,
+    sessionToken,
   });
 
   return results?.map((record) => ({

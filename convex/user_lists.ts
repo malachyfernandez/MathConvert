@@ -1,6 +1,7 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { Id } from "./_generated/dataModel";
+import { resolveAppUser } from "./userCodeAuth";
 
 type PrimitiveIndexValue = string | number | boolean;
 type Privacy = "PUBLIC" | "PRIVATE" | { allowList: string[] };
@@ -586,10 +587,11 @@ export const get = query({
   args: {
     key: v.string(),
     itemId: v.string(),
+    sessionToken: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    const userToken = identity?.subject;
+    const appUser = await resolveAppUser(ctx, args.sessionToken);
+    const userToken = appUser?.userToken;
 
     if (!userToken) return null;
 
@@ -617,10 +619,11 @@ export const length = query({
     key: v.string(),
     filterFor: v.union(v.string(), v.number(), v.boolean()),
     itemId: v.optional(v.string()),
+    sessionToken: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    const viewerUserId = identity?.subject;
+    const appUser = await resolveAppUser(ctx, args.sessionToken);
+    const viewerUserId = appUser?.userToken;
     const countItemId = args.itemId;
 
     const publicCount = await ctx.db
@@ -687,14 +690,15 @@ export const lengthSharedItemIdWarning = query({
     key: v.string(),
     filterFor: v.union(v.string(), v.number(), v.boolean()),
     itemId: v.optional(v.string()),
+    sessionToken: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     if (!args.itemId) {
       return false;
     }
 
-    const identity = await ctx.auth.getUserIdentity();
-    const viewerUserId = identity?.subject;
+    const appUser = await resolveAppUser(ctx, args.sessionToken);
+    const viewerUserId = appUser?.userToken;
 
     if (!viewerUserId) {
       return false;
@@ -736,6 +740,7 @@ export const set = mutation({
     key: v.string(),
     itemId: v.string(),
     value: v.any(),
+    sessionToken: v.optional(v.string()),
     privacy: v.optional(privacyValidator),
     filterKey: v.optional(v.string()),
     searchKeys: v.optional(v.array(v.string())),
@@ -744,10 +749,10 @@ export const set = mutation({
     overwriteStoredPrivacy: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthorized");
+    const appUser = await resolveAppUser(ctx, args.sessionToken);
+    if (!appUser) throw new Error("Unauthorized");
 
-    const userToken = identity.subject;
+    const userToken = appUser.userToken;
     const now = Date.now();
     const overwriteStoredConfig = args.overwriteStoredConfig ?? false;
     const overwriteStoredPrivacy = args.overwriteStoredPrivacy ?? false;
@@ -997,12 +1002,13 @@ export const remove = mutation({
   args: {
     key: v.string(),
     itemId: v.string(),
+    sessionToken: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthorized");
+    const appUser = await resolveAppUser(ctx, args.sessionToken);
+    if (!appUser) throw new Error("Unauthorized");
 
-    const userToken = identity.subject;
+    const userToken = appUser.userToken;
     const definition = await getDefinitionByUserKey(ctx, userToken, args.key);
 
     const item = await ctx.db
@@ -1038,13 +1044,14 @@ export const remove = mutation({
 export const updatePrivacy = mutation({
   args: {
     key: v.string(),
+    sessionToken: v.optional(v.string()),
     privacy: privacyValidator,
   },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthorized");
+    const appUser = await resolveAppUser(ctx, args.sessionToken);
+    if (!appUser) throw new Error("Unauthorized");
 
-    const userToken = identity.subject;
+    const userToken = appUser.userToken;
 
     const definition = await getDefinitionByUserKey(ctx, userToken, args.key);
 

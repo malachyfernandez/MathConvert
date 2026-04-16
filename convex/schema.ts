@@ -226,4 +226,16 @@ export default defineSchema({
     "filterValue",
     "itemId",
   ]),
+
+  user_code_sessions: defineTable({
+    sessionToken: v.string(),
+    code: v.string(),
+    userId: v.string(),
+    name: v.string(),
+    email: v.string(),
+    createdAt: v.number(),
+    lastUsedAt: v.number(),
+  })
+    .index("by_session_token", ["sessionToken"])
+    .index("by_user_id", ["userId"]),
 });
